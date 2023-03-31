@@ -29,16 +29,20 @@ class RandomDataset(Dataset):
         Return audio sample rates and video frame rates
         """
         return {
-            [self.AUDIO_SAMPLE_RATE]*len(self),
-            [self.VIDEO_FRAME_RATE]*len(self),
+            [self.AUDIO_SAMPLE_RATE] * len(self),
+            [self.VIDEO_FRAME_RATE] * len(self),
         }
 
     def __getitem__(self, idx):
-        audio_samples = random.randint(MIN_SEC * AUDIO_SAMPLE_RATE, MAX_SEC * AUDIO_SAMPLE_RATE)
-        video_samples = random.randint(MIN_SEC * VIDEO_FRAME_RATE, MAX_SEC * VIDEO_FRAME_RATE)
-        
+        audio_samples = random.randint(
+            MIN_SEC * AUDIO_SAMPLE_RATE, MAX_SEC * AUDIO_SAMPLE_RATE
+        )
+        video_samples = random.randint(
+            MIN_SEC * VIDEO_FRAME_RATE, MAX_SEC * VIDEO_FRAME_RATE
+        )
+
         # frames, wav = torchvision.io.read_video(path, pts_unit="sec", output_format="TCHW")
-        wav = torch.randn(1,audio_samples)
+        wav = torch.randn(1, audio_samples)
         frames = torch.randn(video_samples, 3, HEIGHT, WIDTH)
         label = random.randint(0, self.class_num - 1)
         return wav, frames, label

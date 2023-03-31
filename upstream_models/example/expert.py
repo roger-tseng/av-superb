@@ -2,16 +2,16 @@
 Custom class for loading audio-visual model and extract features
 Modified from https://github.com/s3prl/s3prl/blob/main/s3prl/upstream/example/expert.py
 """
-from typing import Dict, List, Union, Tuple
+from typing import Dict, List, Tuple, Union
 
 import torch.nn as nn
+import torchaudio
+import torchvision
 from torch import Tensor
 from torch.nn.utils.rnn import pad_sequence
 
-import torchaudio
-import torchvision
-
 HIDDEN_DIM = 8
+
 
 class UpstreamExpert(nn.Module):
     def __init__(self, ckpt: str = None, model_config: str = None, **kwargs):
@@ -28,7 +28,7 @@ class UpstreamExpert(nn.Module):
         self.model1 = nn.Linear(1, HIDDEN_DIM)
         self.model2 = nn.Linear(HIDDEN_DIM, HIDDEN_DIM)
         self.audio_sample_rate = 16000
-        self.video_frame_size = (224,224)
+        self.video_frame_size = (224, 224)
         self.video_frame_rate = 25
 
     def preprocess_video(self, video, video_frame_rate):
@@ -39,7 +39,9 @@ class UpstreamExpert(nn.Module):
         # Resize video frames
         video_frames = []
         for frame in video:
-            video_frames.append(torchvision.transforms.functional.resize(frame, self.video_frame_size))
+            video_frames.append(
+                torchvision.transforms.functional.resize(frame, self.video_frame_size)
+            )
         video = torch.stack(video_frames)
 
         # Resample video
@@ -56,17 +58,21 @@ class UpstreamExpert(nn.Module):
         """
         # Resample audio
         if audio_sample_rate != self.audio_sample_rate:
-            audio = torchaudio.functional.resample(audio, audio_sample_rate, self.audio_sample_rate)
+            audio = torchaudio.functional.resample(
+                audio, audio_sample_rate, self.audio_sample_rate
+            )
 
         # Other preprocessing steps (e.g. trimming, pitch shift, etc.)
 
         return audio
 
-    def forward(self, source: List[Tuple[Tensor, Tensor]]) -> Dict[str, Union[Tensor, List[Tensor]]]:
+    def forward(
+        self, source: List[Tuple[Tensor, Tensor]]
+    ) -> Dict[str, Union[Tensor, List[Tensor]]]:
         """
         Replace this function run a forward pass with your model
-        source: list of audio-video Tensor tuples 
-                [(wav1,vid1), (wav2,vid2), ...] 
+        source: list of audio-video Tensor tuples
+                [(wav1,vid1), (wav2,vid2), ...]
                 in your input format
         """
         audio, video = zip(*source)
@@ -84,6 +90,4 @@ class UpstreamExpert(nn.Module):
         layer2 = self.model2(layer1)
 
         # Return intermediate layer representations for potential layer-wise experiments
-        return {
-            "hidden_states": [audio_feats, video_feats, layer1, layer2]
-        }
+        return {"hidden_states": [audio_feats, video_feats, layer1, layer2]}
