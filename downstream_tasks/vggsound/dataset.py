@@ -24,7 +24,7 @@ class VggsoundDataset(Dataset):
     def __init__(self, mode, vggsound_root, **kwargs):
         self.vggsound_root = vggsound_root
         self.mode = mode
-        self.class_num = 309
+        self.class_num = 310
 
         if mode == "train":
             self.path = kwargs["train_location"]
