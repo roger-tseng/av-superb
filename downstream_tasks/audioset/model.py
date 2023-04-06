@@ -11,4 +11,3 @@ class Model(nn.Module):
         pooled = features.mean(dim=1)
         predicted = self.linear(pooled)
         return predicted
-
