@@ -1,14 +1,12 @@
+import csv
+import os
 import random
 
 import torch
 import torch.nn as nn
-from torch.utils.data.dataset import Dataset
 import torchaudio
-
-import csv
-import os
+from torch.utils.data.dataset import Dataset
 from torchaudio.transforms import Resample
-
 
 SAMPLE_RATE = 16000
 

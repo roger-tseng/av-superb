@@ -1,16 +1,15 @@
-import os
 import math
-import torch
+import os
 import random
 
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader, DistributedSampler
 from torch.distributed import is_initialized
 from torch.nn.utils.rnn import pad_sequence
+from torch.utils.data import DataLoader, DistributedSampler
 
-from .model import Model
 from .dataset import KineticsDataset
+from .model import Model
 
 
 class DownstreamExpert(nn.Module):
