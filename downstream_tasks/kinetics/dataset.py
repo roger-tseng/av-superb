@@ -12,11 +12,12 @@ from torchaudio.transforms import Resample
 
 SAMPLE_RATE = 16000
 
+
 class KineticsDataset(Dataset):
     def __init__(self, mode, kinetics_root, **kwargs):
         self.kinetics_root = kinetics_root
         self.mode = mode
-        
+
         if mode == "train":
             self.path = kwargs["train_meta_location"]
         elif mode == "validation":
@@ -30,34 +31,27 @@ class KineticsDataset(Dataset):
         file.close()
         print("data example", data[0])
 
-        self.dataset = data 
-        self.class_num = 700 
-
-
-
+        self.dataset = data
+        self.class_num = 700
 
     def __getitem__(self, idx):
         audio_path = os.path.join(self.kinetics_root, self.dataset[idx][0])
 
         wav, sr = torchaudio.load(audio_path)
-        # print(wav.shape) 
+        # print(wav.shape)
         resampler = Resample(sr, SAMPLE_RATE)
         wav = resampler(wav).mean(dim=0).squeeze(0)
 
         # print(self.dataset[idx][0], "wav length", len(wav))
-        
-        label = int(self.dataset[idx][1]) 
+
+        label = int(self.dataset[idx][1])
 
         # print(audio_path, label)
 
         return wav, label
 
-
-
     def __len__(self):
-        return len(self.dataset) 
-
-
+        return len(self.dataset)
 
     def collate_fn(self, samples):
         wavs, labels = [], []
