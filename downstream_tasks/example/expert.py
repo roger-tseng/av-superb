@@ -10,11 +10,22 @@ import torch
 import torch.nn as nn
 from torch.distributed import is_initialized
 from torch.nn.utils.rnn import pad_sequence
-from torch.utils.data import DataLoader, DistributedSampler
+from torch.utils.data import Dataset, DataLoader, DistributedSampler
 
 from .dataset import RandomDataset
 from .model import Model
 
+def get_ddp_sampler(dataset: Dataset, epoch: int):
+    """
+    This function will create a DistributedSampler if DDP is initialized,
+    and will just return None if DDP is not initialized.
+    """
+    if is_initialized():
+        sampler = DistributedSampler(dataset)
+        sampler.set_epoch(epoch)
+    else:
+        sampler = None
+    return sampler
 
 class DownstreamExpert(nn.Module):
     """
@@ -88,8 +99,6 @@ class DownstreamExpert(nn.Module):
             return self._get_eval_dataloader(self.test_dataset)
 
     def _get_train_dataloader(self, dataset, epoch: int):
-        from s3prl.utility.data import get_ddp_sampler
-
         sampler = get_ddp_sampler(dataset, epoch)
         return DataLoader(
             dataset,
