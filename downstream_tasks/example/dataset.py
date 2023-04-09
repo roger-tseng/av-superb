@@ -42,7 +42,7 @@ class RandomDataset(Dataset):
         )
 
         # frames, wav = torchvision.io.read_video(path, pts_unit="sec", output_format="TCHW")
-        wav = torch.randn(1, audio_samples)
+        wav = torch.randn(audio_samples)
         frames = torch.randn(video_samples, 3, HEIGHT, WIDTH)
         label = random.randint(0, self.class_num - 1)
         return wav, frames, label
