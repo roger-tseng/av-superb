@@ -137,8 +137,8 @@ class UpstreamExpert(UpstreamBase):
         return feats
 
     def forward(self, processed_data):
-        audio = [item[0] for item in processed_data]
-        video = [item[1] for item in processed_data]
+        audio = [torch.from_numpy(item[0]) for item in processed_data]
+        video = [torch.from_numpy(item[1]) for item in processed_data]
         audio_length = torch.LongTensor([len(item) for item in audio])
         video_length = torch.LongTensor([len(item) for item in video])
         assert sum([a == v for a, v in zip(audio_length, video_length)]) == len(
