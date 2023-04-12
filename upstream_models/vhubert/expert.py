@@ -85,6 +85,7 @@ class UpstreamExpert(UpstreamBase):
     def processing_audio(self, audio, audio_sample_rate):
         # audio: (audio_channels, audio_length), where audio_channels is usually 1 or 2
         # since using av-hubert native implementation, needs to work with numpy objects
+        orig_device = audio.device
         audio = audio.cpu().numpy()
         if len(audio.shape) >= 3:
             raise NotImplementedError(
@@ -112,12 +113,13 @@ class UpstreamExpert(UpstreamBase):
             with torch.no_grad():
                 in_data = F.layer_norm(in_data, in_data.shape[1:])
         in_data = torch.unsqueeze(in_data, 0)
-        return in_data  # BxTxF
+        return in_data.to(orig_device)  # BxTxF
 
     def processing_video(self, video, video_frame_rate):
         # video: (video_length, video_channels, height, width), where video_channels is usually 3 for RGB or 1 for greyscale
         # avhubert will make image and audio have the same framerate so we can add them or concat them in feature dimension. image sample rate if 25Hz, audio sample rate is 100Hz (originally 16kHz, but after fbank it's 100Hz), four neighboring audio sample is stacked to get
         # since using av-hubert native implementation, needs to work with numpy objects
+        orig_device = video.device
         video = video.cpu().numpy()
         if video_frame_rate != self.video_frame_rate:
             if video_frame_rate > self.video_frame_rate:
@@ -134,11 +136,12 @@ class UpstreamExpert(UpstreamBase):
                 )
         feats = self.transform(video)
         feats = np.expand_dims(feats, axis=-1)
-        return feats
+        return feats.to(orig_device)
 
     def forward(self, processed_data):
-        audio = [torch.from_numpy(item[0]) for item in processed_data]
-        video = [torch.from_numpy(item[1]) for item in processed_data]
+        device = processed_data[0][0].device
+        audio = [item[0].squeeze(0) for item in processed_data]
+        video = [item[1].squeeze(0) for item in processed_data]
         audio_length = torch.LongTensor([len(item) for item in audio])
         video_length = torch.LongTensor([len(item) for item in video])
         assert sum([a == v for a, v in zip(audio_length, video_length)]) == len(
@@ -147,15 +150,15 @@ class UpstreamExpert(UpstreamBase):
         padding_mask = ~torch.lt(
             torch.arange(max(audio_length)).unsqueeze(0),
             (audio_length).unsqueeze(1),
-        )
-        padded_audio = pad_sequence(audio.squeeze(0), batch_first=True)
-        padded_video = pad_sequence(video.squeeze(0), batch_first=True)
+        ).to(device)
+        padded_audio = pad_sequence(audio, batch_first=True)
+        padded_video = pad_sequence(video, batch_first=True)
         source = {
-            "audio": padded_audio.transpose(1, 2).cuda(),
-            "video": padded_video.cuda(),
+            "audio": padded_audio.transpose(1, 2),
+            "video": padded_video,
         }
         result = self.model(
-            source, padding_mask=padding_mask.cuda(), mask=False, features_only=True
+            source, padding_mask=padding_mask, mask=False, features_only=True
         )
         return {"last_hidden_state": result["x"], "hidden_states": result["features"]}
         # ####################below will work for audio only s3prl#######################
