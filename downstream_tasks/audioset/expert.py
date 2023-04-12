@@ -2,9 +2,11 @@ import math
 import os
 import random
 
+import numpy as np
 import tensorflow as tf
 import torch
 import torch.nn as nn
+from sklearn.metrics import average_precision_score
 from torch.distributed import is_initialized
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader, DistributedSampler
@@ -173,16 +175,40 @@ class DownstreamExpert(nn.Module):
         # print(utterance_labels)
         #####
 
-        labels = torch.LongTensor(utterance_labels).to(features.device)
+        labels = torch.LongTensor(utterance_labels).to(
+            features.device
+        )  # accum_step*class_num
         # labels =pad_sequence(labels,padding_value=-1)
         # print(labels)
         # labels = labels.squeeze(1)
         loss = self.objective(predicted, labels)
-        # print(predicted)
         # predicted_classid = predicted.max(dim=-1).indices
-
         records["loss"].append(loss.item())
+        mAP = average_precision_score(
+            labels.cpu().detach().numpy(),
+            predicted.cpu().detach().numpy(),
+            average="samples",
+        )
+        # print(mAP)
+        # AP=[]
+        # for i in range(predicted.shape[1]):
+        #     y_target=[]
+        #     y_predicted=[]
+        #     for j in range (predicted.shape[0]):
+        #         y_predicted.append(1 if (predicted[j][i].item() > 0.5 ) else 0)
+        #         y_target.append(labels[j][i].item())
+        #     y_target=np.array(y_target)
+        #     y_predicted=np.array(y_predicted)
+        #     if y_target.mean(axis=0) == y_predicted.mean(axis=0) and y_predicted.mean(axis=0) == 0:
+        #         AP.append(1)
+        #     else:
+        #         AP.append(average_precision_score(y_target, y_predicted))
+        #     #if y_target.mean()
+        #     #print(AP)
+        # mAP=np.mean(AP)
+        records["mAP"].append(mAP)
         # records['acc'] += (predicted_classid == labels).view(-1).cpu().float().tolist()
+
         return loss
 
     # interface

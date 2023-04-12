@@ -30,3 +30,5 @@ downstream_expert:
 
   modelrc:
     input_dim: 512
+    hidden_dim : 512
+    hidden_layers : 2
