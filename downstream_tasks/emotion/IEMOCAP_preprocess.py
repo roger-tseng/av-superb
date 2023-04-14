@@ -71,8 +71,8 @@ def avi_preprocess(i, path):
     for avi in avi_all:
         video_filename = avi
         raw_name = os.path.splitext(avi.split('/')[-1])[0]
-        lab_F = DATA_DIR+path+'/dialog/lab/Ses0'+str(i)+'_F/'+raw_name+'.lab'
-        lab_M = DATA_DIR+path+'/dialog/lab/Ses0'+str(i)+'_M/'+raw_name+'.lab'
+        lab_F = DATA_DIR+path+'/dialog/lab/Ses0'+str(i+1)+'_F/'+raw_name+'.lab'
+        lab_M = DATA_DIR+path+'/dialog/lab/Ses0'+str(i+1)+'_M/'+raw_name+'.lab'
         clip_dir = DATA_DIR+path+'/sentences/avi_sentence/'+raw_name
         if not os.path.isdir(clip_dir):
                 os.mkdir(clip_dir)
