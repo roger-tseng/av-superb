@@ -4,9 +4,13 @@ import sys
 import re
 import json
 from librosa.util import find_files
+import shutil
+from moviepy.editor import*
+
 
 LABEL_DIR_PATH = 'dialog/EmoEvaluation'
 WAV_DIR_PATH = 'sentences/wav'
+DATA_DIR = './IEMOCAP/'
 
 
 def get_wav_paths(data_dirs):
@@ -51,8 +55,52 @@ def preprocess(data_dirs, paths, out_path):
     }
     with open(out_path, 'w') as f:
         json.dump(data, f)
+        
+def video_clip_store(video_filename, clip_filename, start_time, end_time):
+    video_clip = VideoFileClip(video_filename).subclip(start_time, end_time)
+    video_clip.write_videofile(clip_filename, codec = "libx264")
 
+def avi_preprocess(i, path):
+    avi_path = DATA_DIR+path+'/dialog/avi/DivX/'
+    avi_all = []
+    for root, dirs, files in os.walk(avi_path):
+        for file in files:
+            if file.endswith('.avi'):
+                avi_all.append(os.path.join(avi_path, file))
 
+    for avi in avi_all:
+        video_filename = avi
+        raw_name = os.path.splitext(avi.split('/')[-1])[0]
+        lab_F = DATA_DIR+path+'/dialog/lab/Ses0'+str(i)+'_F/'+raw_name+'.lab'
+        lab_M = DATA_DIR+path+'/dialog/lab/Ses0'+str(i)+'_M/'+raw_name+'.lab'
+        clip_dir = DATA_DIR+path+'/sentences/avi_sentence/'+raw_name
+        if not os.path.isdir(clip_dir):
+                os.mkdir(clip_dir)
+
+        f_F = open(lab_F, 'r', encoding='iso-8859-1')
+        line_F = f_F.readline()
+        sentences_F = []
+        while line_F:
+            line_F = f_F.readline().replace('\n','')
+            sentences_F.append(line_F)
+        f_F.close()
+
+        f_M = open(lab_M, 'r', encoding='iso-8859-1')
+        line_M = f_M.readline()
+        sentences_M = []
+        while line_M:
+            line_M = f_M.readline().replace('\n','')
+            sentences_M.append(line_M)
+        f_M.close()
+
+        for sen_F in sentences_F:
+            clip_filename = clip_dir+'/'+sen_F.split(' ')[-1]+'.mp4'
+            video_clip_store(video_filename, clip_filename, sen_F.split(' ')[0], sen_F.split(' ')[1])
+            
+        for sen_M in sentences_M:
+            clip_filename = clip_dir+'/'+sen_M.split(' ')[-1]+'.mp4'
+            video_clip_store(video_filename, clip_filename, sen_M.split(' ')[0], sen_M.split(' ')[1]) 
+          
 def main(data_dir):
     """Main function."""
     paths = list(os.listdir(data_dir))
@@ -64,7 +112,7 @@ def main(data_dir):
         os.makedirs(f"{out_dir}/{path}", exist_ok=True)
         preprocess(data_dir, paths[:i] + paths[i + 1:], path_join(f"{out_dir}/{path}", 'train_meta_data.json'))
         preprocess(data_dir, [path], path_join(f"{out_dir}/{path}", 'test_meta_data.json'))
-
+        avi_preprocess(i, path)
 
 if __name__ == "__main__":
     main(sys.argv[1])
