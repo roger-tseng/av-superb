@@ -17,7 +17,7 @@ import torchaudio
 from packaging import version
 from torch.nn.utils.rnn import pad_sequence
 
-from ..interfaces import UpstreamBase
+from interfaces import UpstreamBase
 from . import utils as custom_utils
 from .hubert import AVHubertConfig, AVHubertModel
 
@@ -82,19 +82,19 @@ class UpstreamExpert(UpstreamBase):
         )
         return feats
 
-    def processing_audio(self, audio, audio_sample_rate):
+    def preprocess_audio(self, audio, audio_sample_rate):
         # audio: (audio_channels, audio_length), where audio_channels is usually 1 or 2
         # since using av-hubert native implementation, needs to work with numpy objects
         orig_device = audio.device
         audio = audio.cpu().numpy()
         if len(audio.shape) >= 3:
             raise NotImplementedError(
-                f"input should be single sample, not a batch! shape of audio input to processing_audio: {audio.shape}"
+                f"input should be single sample, not a batch! shape of audio input to preprocess_audio: {audio.shape}"
             )
         elif len(audio.shape) == 2:
             assert (
                 audio.shape[0] == 1 or audio.shape[0] == 2
-            ), f"wrong audio shape to the processing_audio method: {audio.shape}"
+            ), f"wrong audio shape to the preprocess_audio method: {audio.shape}"
             audio = audio.mean(0)
         # it can indeed do batch processing
         if audio_sample_rate != self.audio_sample_rate:
@@ -115,7 +115,7 @@ class UpstreamExpert(UpstreamBase):
         in_data = torch.unsqueeze(in_data, 0)
         return in_data.to(orig_device)  # BxTxF
 
-    def processing_video(self, video, video_frame_rate):
+    def preprocess_video(self, video, video_frame_rate):
         # video: (video_length, video_channels, height, width), where video_channels is usually 3 for RGB or 1 for greyscale
         # avhubert will make image and audio have the same framerate so we can add them or concat them in feature dimension. image sample rate if 25Hz, audio sample rate is 100Hz (originally 16kHz, but after fbank it's 100Hz), four neighboring audio sample is stacked to get
         # since using av-hubert native implementation, needs to work with numpy objects
@@ -164,7 +164,7 @@ class UpstreamExpert(UpstreamBase):
         # ####################below will work for audio only s3prl#######################
         # new_audio = []
         # for audio in processed_data:
-        #     processed = self.processing_audio(audio.cpu(), 16000)
+        #     processed = self.preprocess_audio(audio.cpu(), 16000)
         #     new_audio.append(processed)
 
         # audio_length = torch.LongTensor([len(item) for item in new_audio])
