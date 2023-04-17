@@ -7,6 +7,7 @@
 
 import torch
 import torch.nn as nn
+from torch import functional as F
 
 __all__ = ["avid_r2plus1d_18"]
 
@@ -144,15 +145,24 @@ class R2Plus1D(nn.Module):
                 BasicR2P1DBlock(512, 512),
                 BasicR2P1DBlock(512, 512),
             )
-        self.pool = nn.AdaptiveMaxPool3d((1, 1, 1))
+        # original:
+        # self.pool = nn.AdaptiveMaxPool3d((1, 1, 1))
+
         self.output_dim = 512
 
     def forward(self, x, return_embs=False):
+        seq_len = x.shape[-3]
         x_c1 = self.conv1(x)
         x_b1 = self.conv2x(x_c1)
         x_b2 = self.conv3x(x_b1)
         x_b3 = self.conv4x(x_b2)
         x_b4 = self.conv5x(x_b3)
+
+        # original
+        # x_pool = self.pool(x_b4)
+        # revised: ( generalize temporal pooling to variabble sequence length)
+        x_pool = F.adaptive_max_pool3d(x_b4, (seq_len // 8, 1, 1), False)
+
         x_pool = self.pool(x_b4)
         if return_embs:
             return {

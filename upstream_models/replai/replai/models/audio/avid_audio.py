@@ -7,6 +7,7 @@
 
 import torch
 import torch.nn as nn
+from torch.nn import functional as F
 
 __all__ = [
     "avid_spec_cnn_9",
@@ -54,16 +55,23 @@ class Conv2D(nn.Module):
         self.block2 = Basic2DBlock(64, 128, stride=(2, 2))
         self.block3 = Basic2DBlock(128, 256, stride=(2, 2))
         self.block4 = Basic2DBlock(256, 512)
-        self.pool = nn.AdaptiveMaxPool2d((1, 1))
+        # original
+        # self.pool = nn.AdaptiveMaxPool2d((1, 1))
         self.output_dim = 512
 
     def forward(self, x, return_embs=False):
+        seq_len = x.shape[-2]
         x_c1 = self.conv1(x)
         x_b1 = self.block1(x_c1)
         x_b2 = self.block2(x_b1)
         x_b3 = self.block3(x_b2)
         x_b4 = self.block4(x_b3)
-        x_pool = self.pool(x_b4)
+
+        # original
+        # x_pool = self.pool(x_b4)
+        # revised: ( generalize temporal pooling to variabble sequence length)
+        x_pool = F.adaptive_max_pool2d(x_b4, (seq_len // 128, 1), False)
+
         if return_embs:
             return {
                 "conv2x": x_b1,
