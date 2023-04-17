@@ -188,8 +188,8 @@ class UpstreamExpert(nn.Module):
         video_feats = video_feats.reshape(bsz, 512, -1)
         video_feats = video_feats.permute(0, 2, 1)
 
-        # convert video_feats to shape (bsz,seq_length//128,hid_dim)\
-        # in RepLAI paper, the audio input size is fixed to 128 frames. Hence, we regard 8 frames as a chunck
+        # convert video_feats to shape (bsz,seq_length//128,hid_dim)
+        # in RepLAI paper, the audio input size is fixed to 128 frames. Hence, we regard 128 frames as a chunck
         audio_feats = audio_feats.reshape(bsz, 512, -1)
         audio_feats = audio_feats.permute(0, 2, 1)
 
