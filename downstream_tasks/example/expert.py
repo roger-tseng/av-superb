@@ -33,9 +33,32 @@ class DownstreamExpert(nn.Module):
     eg. downstream forward, metric computation, contents to log
     """
 
-    def __init__(self, upstream_dim, downstream_expert, expdir, **kwargs):
+    def __init__(self, preprocess_audio, preprocess_video, upstream_dim, downstream_expert, expdir, **kwargs):
         """
+        Your dataset should take two preprocessing transform functions,
+        preprocess_audio and preprocess_video as input.
+
+        These two functions will be defined by the upstream models, and
+        will transform raw waveform & video frames into the desired 
+        format of the upstream model.
+
+        They take two arguments, the input audio/video Tensor, and the 
+        audio sample rate/video frame rate, respectively.
+
+        Optionally, if you wish to obtain raw data for testing purposes,
+        you may also specify these functions to be None, and return the
+        raw data when the functions are not defined.
         Args:
+            preprocess_audio: function
+                Defined by specified upstream model, transforms raw waveform into 
+                desired input format.
+                Takes two arguments, input audio Tensor, and audio sample rate.
+                
+            preprocess_video: function
+                Defined by specified upstream model, transforms raw video frames
+                into desired input format.
+                Takes two arguments, input video Tensor, and video frame rate.
+                
             upstream_dim: int
                 Different upstream models will give different representation dimension
                 You might want to first project them to the same dimension
@@ -62,9 +85,9 @@ class DownstreamExpert(nn.Module):
         self.datarc = downstream_expert["datarc"]  # config for dataset
         self.modelrc = downstream_expert["modelrc"]  # config for model
 
-        self.train_dataset = RandomDataset(**self.datarc)
-        self.dev_dataset = RandomDataset(**self.datarc)
-        self.test_dataset = RandomDataset(**self.datarc)
+        self.train_dataset = RandomDataset(preprocess_audio, preprocess_video, **self.datarc)
+        self.dev_dataset = RandomDataset(preprocess_audio, preprocess_video, **self.datarc)
+        self.test_dataset = RandomDataset(preprocess_audio, preprocess_video, **self.datarc)
 
         self.connector = nn.Linear(upstream_dim, self.modelrc["input_dim"])
         self.model = Model(
