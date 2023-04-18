@@ -1,5 +1,6 @@
 import sys
 from typing import Callable, Dict, List, Tuple, Union
+import random
 
 import numpy as np
 import torch
@@ -7,10 +8,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
 
-from helper import show
+from utils.helper import show
 
-SAMPLE_RATE = 16000
 TOLERABLE_SEQLEN_DIFF = 5
+AUDIO_SAMPLE_RATE = 16000
+VIDEO_SAMPLE_RATE = 16
+HEIGHT = 112
+WIDTH = 112
 
 
 class Hook:
@@ -145,10 +149,31 @@ class Featurizer(nn.Module):
         self.name = "Featurizer"
 
         upstream.eval()
-        paired_wavs = [torch.randn(SAMPLE_RATE).to(upstream_device)]
+        audio_samples = random.randint(
+            2 * AUDIO_SAMPLE_RATE, 4 * AUDIO_SAMPLE_RATE
+        )
+        paired_wavs = [
+            (
+                torch.randn(audio_samples),
+                torch.randn(VIDEO_SAMPLE_RATE//2, 3, HEIGHT, WIDTH)
+            ) for i in range(2) 
+        ]
+    
         with torch.no_grad():
-            paired_features = upstream(paired_wavs)
-
+            if hasattr(upstream, "preprocess_audio") and hasattr(upstream, "preprocess_video"):
+                paired_input = [
+                    (upstream.preprocess_audio(audio, AUDIO_SAMPLE_RATE).to(upstream_device),
+                    upstream.preprocess_video(video, VIDEO_SAMPLE_RATE).to(upstream_device))
+                    for audio, video in paired_wavs
+                ]
+                paired_features = upstream(paired_input)
+            else:
+                show(
+                    f"[{self.name}] - Error: Your upstream model does not implement its preprocessing functions."
+                    f' Please follow upstream_models/example/expert.py to add your preprocess_audio and preprocess_video functions for your upstream.',
+                    file=sys.stderr,
+                )
+                raise NotImplementedError
         if feature_selection not in paired_features:
             if "hidden_states" in paired_features:
                 show(
@@ -190,15 +215,16 @@ class Featurizer(nn.Module):
             )
         else:
             self.downsample_rate = round(
-                max(len(wav) for wav in paired_wavs) / feature.size(1)
+                max(len(wav[0]) for wav in paired_wavs) / feature.size(1)
             )
-            show(
-                f"[{self.name}] - Warning: The provided upstream does not give statis downsample rate"
-                ' by the "get_downsample_rates" interface (see upstream/example/expert.py).'
-                " The downsample rate is calculated dynamically basing on the shape of the"
-                f" input waveforms v.s. the output features: {self.downsample_rate}",
-                file=sys.stderr,
-            )
+            # TODO: add back in downsample rates for padding
+            # show(
+            #     f"[{self.name}] - Warning: The provided upstream does not give statis downsample rate"
+            #     ' by the "get_downsample_rates" interface (see upstream/example/expert.py).'
+            #     " The downsample rate is calculated dynamically basing on the shape of the"
+            #     f" input waveforms v.s. the output features: {self.downsample_rate}",
+            #     file=sys.stderr,
+            # )
 
     def _select_feature(self, features):
         feature = features.get(self.feature_selection)
@@ -247,22 +273,24 @@ class Featurizer(nn.Module):
 
         return weighted_feature
 
-    def tolist(self, paired_wavs: List[Tensor], paired_feature: Tensor):
+    def tolist(self, paired_wavs: List[Tuple[Tensor, Tensor]], paired_feature: Tensor):
         assert paired_feature.dim() == 3, "(batch_size, max_seq_len, feat_dim)"
-        feature_len = [round(len(wav) / self.downsample_rate) for wav in paired_wavs]
-        length_diff = abs(
-            paired_feature.size(1)
-            - round(max([len(wav) for wav in paired_wavs]) / self.downsample_rate)
-        )
-        assert (
-            length_diff < TOLERABLE_SEQLEN_DIFF
-        ), f"{length_diff} >= {TOLERABLE_SEQLEN_DIFF}"
-        feature = [f[:l] for f, l in zip(paired_feature, feature_len)]
+        # TODO: check if this is needed
+        # feature_len = [round(len(wav[0]) / self.downsample_rate) for wav in paired_wavs]
+        # length_diff = abs(
+        #     paired_feature.size(1)
+        #     - round(max([len(wav[0]) for wav in paired_wavs]) / self.downsample_rate)
+        # )
+        # assert (
+        #     length_diff < TOLERABLE_SEQLEN_DIFF
+        # ), f"{length_diff} >= {TOLERABLE_SEQLEN_DIFF}, {paired_feature.size(1)}, {max([len(wav[0]) for wav in paired_wavs])}"
+        # feature = [f[:l] for f, l in zip(paired_feature, feature_len)]
+        feature = [f for f in paired_feature]
         return feature
 
     def forward(
         self,
-        paired_wavs: List[Tensor],
+        paired_wavs: List[Tuple[Tensor, Tensor]],
         paired_features: Dict[str, Union[Tensor, List[Tensor], Dict[str, Tensor]]],
     ):
         feature = self._select_feature(paired_features)

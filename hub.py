@@ -1,5 +1,4 @@
 from upstream_models.example.hubconf import *
-from upstream_models.s3prl.hubconf import *
 
 
 def options(only_registered_ckpt: bool = False):

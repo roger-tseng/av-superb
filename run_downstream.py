@@ -12,7 +12,7 @@ from torch.distributed import is_initialized, get_world_size
 
 import hub
 from runner import Runner
-from helper import backup, get_time_tag, hack_isinstance, is_leader_process, override
+from utils.helper import backup, get_time_tag, hack_isinstance, is_leader_process, override
 
 def get_downstream_args():
     parser = argparse.ArgumentParser()
@@ -56,6 +56,7 @@ def get_downstream_args():
         'Other upstreams download two files on-the-fly and cache them, so just -u is enough and -k/-g are not needed. '
         'Please check upstream/README.md for details. '
         f"Available options in S3PRL: {upstreams}. "
+        'If you do not see your upstream model here, check hub.py to see if your upstream folder is correctly imported.'
     )
     parser.add_argument('-k', '--upstream_ckpt', metavar='{PATH,URL,GOOGLE_DRIVE_ID}', help='Only set when the specified upstream need it')
     parser.add_argument('-g', '--upstream_model_config', help='The config file for constructing the pretrained model')

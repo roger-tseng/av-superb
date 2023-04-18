@@ -19,10 +19,10 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.distributed import is_initialized, get_rank, get_world_size
 
 import hub
-from optimizers import get_optimizer
-from schedulers import get_scheduler
+from utils.optimizers import get_optimizer
+from utils.schedulers import get_scheduler
 from interfaces import Featurizer
-from helper import is_leader_process, get_model_state, show, defaultdict
+from utils.helper import is_leader_process, get_model_state, show, defaultdict
 
 SAMPLE_RATE = 16000
 
@@ -46,7 +46,7 @@ class Runner():
 
         self.upstream = self._get_upstream()
         self.featurizer = self._get_featurizer()
-        self.downstream = self._get_downstream()
+        self.downstream = self._get_downstream(self.upstream.model.preprocess_audio, self.upstream.model.preprocess_video)
         self.all_entries = [self.upstream, self.featurizer, self.downstream]
 
 
@@ -93,7 +93,7 @@ class Runner():
             model = model,
             name = 'Upstream',
             trainable = self.args.upstream_trainable,
-            interfaces = ["get_downsample_rates"]
+            interfaces = ["preprocess_audio", "preprocess_video"]
         )
 
 
@@ -114,11 +114,13 @@ class Runner():
         )
 
 
-    def _get_downstream(self):
+    def _get_downstream(self, preprocess_audio, preprocess_video):
         expert = importlib.import_module(f"downstream_tasks.{self.args.downstream}.expert")
         Downstream = getattr(expert, "DownstreamExpert")
 
         model = Downstream(
+            preprocess_audio=preprocess_audio, 
+            preprocess_video=preprocess_video,
             upstream_dim = self.featurizer.model.output_dim,
             upstream_rate = self.featurizer.model.downsample_rate,
             **self.config,
@@ -207,7 +209,13 @@ class Runner():
                     global_step = pbar.n + 1
 
                     assert len(wavs) == len(frames)
-                    source = [(torch.FloatTensor(wav).to(self.args.device), torch.FloatTensor(frame).to(self.args.device)) for wav, frame in zip(wavs, frames)]
+                    source = [
+                        (
+                            torch.FloatTensor(wav).to(self.args.device),
+                            torch.FloatTensor(frame).to(self.args.device)
+                        ) 
+                        for wav, frame in zip(wavs, frames)
+                    ]
                     if self.upstream.trainable:
                         features = self.upstream.model(source)
                     else:
