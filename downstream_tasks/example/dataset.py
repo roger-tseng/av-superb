@@ -25,10 +25,10 @@ class RandomDataset(Dataset):
         preprocess_audio and preprocess_video as input.
 
         These two functions will be defined by the upstream models, and
-        will transform raw waveform & video frames into the desired 
+        will transform raw waveform & video frames into the desired
         format of the upstream model.
 
-        They take two arguments, the input audio/video Tensor, and the 
+        They take two arguments, the input audio/video Tensor, and the
         audio sample rate/video frame rate, respectively.
 
         Optionally, if you wish to obtain raw data for testing purposes,
@@ -36,8 +36,8 @@ class RandomDataset(Dataset):
         raw data when the functions are not defined.
         """
         self.class_num = 48
-        self.audio_sample_rates = [AUDIO_SAMPLE_RATE]*len(self)
-        self.video_frame_rates = [VIDEO_FRAME_RATE]*len(self)
+        self.audio_sample_rates = [AUDIO_SAMPLE_RATE] * len(self)
+        self.video_frame_rates = [VIDEO_FRAME_RATE] * len(self)
         self.preprocess_audio = preprocess_audio
         self.preprocess_video = preprocess_video
 

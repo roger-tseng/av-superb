@@ -37,8 +37,12 @@ class UpstreamExpert(nn.Module):
         self.video_frame_rate = 25
 
         # NOTE: Encoders should return (batch_size, seq_len, hidden_dims)
-        self.audio_encoder = lambda x: x.reshape(x.size(0), 1, -1).mean(dim=-1,keepdim=True)
-        self.video_encoder = lambda x: x.reshape(x.size(0), 1, -1).mean(dim=-1,keepdim=True)
+        self.audio_encoder = lambda x: x.reshape(x.size(0), 1, -1).mean(
+            dim=-1, keepdim=True
+        )
+        self.video_encoder = lambda x: x.reshape(x.size(0), 1, -1).mean(
+            dim=-1, keepdim=True
+        )
 
     def preprocess_video(self, video, video_frame_rate):
         """
@@ -49,11 +53,13 @@ class UpstreamExpert(nn.Module):
         video_frames = []
         for frame in video:
             video_frames.append(
-                torchvision.transforms.functional.resize(frame, self.video_frame_size, antialias=False)
+                torchvision.transforms.functional.resize(
+                    frame, self.video_frame_size, antialias=False
+                )
             )
         video = torch.stack(video_frames)
 
-        # Resample video 
+        # Resample video
         # (from https://github.com/pytorch/vision/blob/5b07d6c9c6c14cf88fc545415d63021456874744/torchvision/datasets/video_utils.py#L278)
         step = float(video_frame_rate) / self.video_frame_rate
         if step.is_integer():
@@ -84,7 +90,7 @@ class UpstreamExpert(nn.Module):
             )
 
         # Other preprocessing steps (e.g. trimming, transform to melspectrogram etc.)
-        mel_specgram = self.melspec_transform[0](audio).transpose(0,1)
+        mel_specgram = self.melspec_transform[0](audio).transpose(0, 1)
 
         return mel_specgram
 

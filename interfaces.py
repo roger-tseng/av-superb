@@ -1,6 +1,6 @@
+import random
 import sys
 from typing import Callable, Dict, List, Tuple, Union
-import random
 
 import numpy as np
 import torch
@@ -149,28 +149,35 @@ class Featurizer(nn.Module):
         self.name = "Featurizer"
 
         upstream.eval()
-        audio_samples = random.randint(
-            2 * AUDIO_SAMPLE_RATE, 4 * AUDIO_SAMPLE_RATE
-        )
+        audio_samples = random.randint(2 * AUDIO_SAMPLE_RATE, 4 * AUDIO_SAMPLE_RATE)
         paired_wavs = [
             (
                 torch.randn(audio_samples),
-                torch.randn(VIDEO_SAMPLE_RATE//2, 3, HEIGHT, WIDTH)
-            ) for i in range(2) 
+                torch.randn(VIDEO_SAMPLE_RATE // 2, 3, HEIGHT, WIDTH),
+            )
+            for i in range(2)
         ]
-    
+
         with torch.no_grad():
-            if hasattr(upstream, "preprocess_audio") and hasattr(upstream, "preprocess_video"):
+            if hasattr(upstream, "preprocess_audio") and hasattr(
+                upstream, "preprocess_video"
+            ):
                 paired_input = [
-                    (upstream.preprocess_audio(audio, AUDIO_SAMPLE_RATE).to(upstream_device),
-                    upstream.preprocess_video(video, VIDEO_SAMPLE_RATE).to(upstream_device))
+                    (
+                        upstream.preprocess_audio(audio, AUDIO_SAMPLE_RATE).to(
+                            upstream_device
+                        ),
+                        upstream.preprocess_video(video, VIDEO_SAMPLE_RATE).to(
+                            upstream_device
+                        ),
+                    )
                     for audio, video in paired_wavs
                 ]
                 paired_features = upstream(paired_input)
             else:
                 show(
                     f"[{self.name}] - Error: Your upstream model does not implement its preprocessing functions."
-                    f' Please follow upstream_models/example/expert.py to add your preprocess_audio and preprocess_video functions for your upstream.',
+                    f" Please follow upstream_models/example/expert.py to add your preprocess_audio and preprocess_video functions for your upstream.",
                     file=sys.stderr,
                 )
                 raise NotImplementedError
