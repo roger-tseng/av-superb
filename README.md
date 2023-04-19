@@ -3,6 +3,10 @@
 1. Create an branch for each of your respective models/tasks.
 2. Implement your respective models/tasks following the `example` folders.
 3. Push your progress to our repository before our meetings
+```
+Before pushing, please go to ./dev-support folder to run auto formatter and check your coding style
+After you push to github, you should see a green check adjcent to your commit indicating that your code comply with our coding format.
+```
 4. Before the interface connecting upstream models and downstream models has been finished, contributors may use the [S3PRL toolkit](https://github.com/s3prl/s3prl) to test the audio part of your models/tasks.
 
 ## Upstream Models
