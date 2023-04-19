@@ -4,8 +4,10 @@ Modified from https://github.com/s3prl/s3prl/blob/main/s3prl/upstream/example/ex
 """
 from typing import Dict, List, Tuple, Union
 
+import torch
 import torch.nn as nn
 import torchaudio
+import torchaudio.transforms as aT
 import torchvision
 from torch import Tensor
 from torch.nn.utils.rnn import pad_sequence
@@ -25,11 +27,22 @@ class UpstreamExpert(nn.Module):
         """
         super().__init__()
 
-        self.model1 = nn.Linear(1, HIDDEN_DIM)
+        self.model1 = nn.Linear(2, HIDDEN_DIM)
         self.model2 = nn.Linear(HIDDEN_DIM, HIDDEN_DIM)
+
         self.audio_sample_rate = 16000
+        self.melspec_transform = [aT.MelSpectrogram(self.audio_sample_rate, n_mels=80)]
+
         self.video_frame_size = (224, 224)
         self.video_frame_rate = 25
+
+        # NOTE: Encoders should return (batch_size, seq_len, hidden_dims)
+        self.audio_encoder = lambda x: x.reshape(x.size(0), 1, -1).mean(
+            dim=-1, keepdim=True
+        )
+        self.video_encoder = lambda x: x.reshape(x.size(0), 1, -1).mean(
+            dim=-1, keepdim=True
+        )
 
     def preprocess_video(self, video, video_frame_rate):
         """
@@ -40,20 +53,34 @@ class UpstreamExpert(nn.Module):
         video_frames = []
         for frame in video:
             video_frames.append(
-                torchvision.transforms.functional.resize(frame, self.video_frame_size)
+                torchvision.transforms.functional.resize(
+                    frame, self.video_frame_size, antialias=False
+                )
             )
         video = torch.stack(video_frames)
 
         # Resample video
-        assert video_frame_rate == self.video_frame_rate
+        # (from https://github.com/pytorch/vision/blob/5b07d6c9c6c14cf88fc545415d63021456874744/torchvision/datasets/video_utils.py#L278)
+        step = float(video_frame_rate) / self.video_frame_rate
+        if step.is_integer():
+            # optimization: if step is integer, don't need to perform
+            # advanced indexing
+            step = int(step)
+            idxs = slice(None, None, step)
+        else:
+            num_frames = len(video)
+            idxs = torch.arange(num_frames, dtype=torch.float32) * step
+            idxs = idxs.floor().to(torch.int64)
+        video = video[idxs]
 
-        # Other preprocessing steps (e.g. cropping, flipping, etc.)
-
+        # Other preprocessing steps (i.e. cropping, flipping, etc.)
+        # e.g. take first three frames to ensure all videos have same size
+        video = video[:3]
         return video
 
     def preprocess_audio(self, audio, audio_sample_rate):
         """
-        Replace this function to preprocessa audio waveforms into your input format
+        Replace this function to preprocess audio waveforms into your input format
         audio: (audio_channels, audio_length), where audio_channels is usually 1 or 2
         """
         # Resample audio
@@ -62,9 +89,10 @@ class UpstreamExpert(nn.Module):
                 audio, audio_sample_rate, self.audio_sample_rate
             )
 
-        # Other preprocessing steps (e.g. trimming, pitch shift, etc.)
+        # Other preprocessing steps (e.g. trimming, transform to melspectrogram etc.)
+        mel_specgram = self.melspec_transform[0](audio).transpose(0, 1)
 
-        return audio
+        return mel_specgram
 
     def forward(
         self, source: List[Tuple[Tensor, Tensor]]
@@ -78,16 +106,25 @@ class UpstreamExpert(nn.Module):
         audio, video = zip(*source)
 
         # Collate audio and video into batch
-        wavs = pad_sequence(audio, batch_first=True).unsqueeze(-1)
+        audios = pad_sequence(audio, batch_first=True)
         videos = torch.stack(video)
 
         # Run through audio and video encoders
-        audio_feats = audio_encoder(wavs)
-        video_feats = video_encoder(videos)
+        audio_feats = self.audio_encoder(audios)
+        video_feats = self.video_encoder(videos)
 
-        layer1 = self.model1(torch.cat(audio_feats, video_feats))
+        layer1 = self.model1(torch.cat((audio_feats, video_feats), dim=-1))
 
         layer2 = self.model2(layer1)
 
         # Return intermediate layer representations for potential layer-wise experiments
-        return {"hidden_states": [audio_feats, video_feats, layer1, layer2]}
+        # Dict should contain three items, with keys as listed below:
+        # video_feats: features that only use visual modality as input
+        # audio_feats: features that only use auditory modality as input
+        # fusion_feats: features that consider both modalities
+        # Each item should be a list of features that are of the same shape
+        return {
+            "video_feats": [video_feats],
+            "audio_feats": [audio_feats],
+            "fusion_feats": [layer1, layer2],
+        }
