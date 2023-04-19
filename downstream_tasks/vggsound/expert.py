@@ -1,16 +1,28 @@
-import os
 import math
-import torch
+import os
 import random
 
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader, DistributedSampler
 from torch.distributed import is_initialized
 from torch.nn.utils.rnn import pad_sequence
+from torch.utils.data import DataLoader, Dataset, DistributedSampler
+
+
 
 from .model import Model
 from .dataset import VggsoundDataset
+
+
+
+def get_ddp_sampler(dataset: Dataset, epoch: int):
+    if is_initialized():
+        sampler = DistributedSampler(dataset)
+        sampler.set_epoch(epoch)
+    else:
+        sampler = None
+    return sampler
+
 
 
 class DownstreamExpert(nn.Module):
@@ -19,7 +31,7 @@ class DownstreamExpert(nn.Module):
     eg. downstream forward, metric computation, contents to log
     """
 
-    def __init__(self, upstream_dim, upstream_rate, downstream_expert, expdir, **kwargs):
+    def __init__(self, preprocess_audio, preprocess_video , upstream_dim, upstream_rate, downstream_expert, expdir, **kwargs):
         """
         Args:
             upstream_dim: int
@@ -52,42 +64,45 @@ class DownstreamExpert(nn.Module):
         self.datarc = downstream_expert['datarc']
         self.modelrc = downstream_expert['modelrc']
 
-        self.train_dataset = VggsoundDataset("train",**self.datarc)
-        self.dev_dataset = VggsoundDataset("validation",**self.datarc)
-        self.test_dataset = VggsoundDataset("test",**self.datarc)
+        class_num = self.modelrc['output_num_class']
+
+        self.train_dataset = VggsoundDataset(
+                mode = "train",
+                class_num = class_num,
+                preprocess_audio = preprocess_audio,
+                preprocess_video = preprocess_video,
+                **self.datarc
+        )
+        
+        self.dev_dataset = VggsoundDataset(
+                mode = "validation",
+                class_num = class_num,
+                preprocess_audio = preprocess_audio,
+                preprocess_video = preprocess_video,
+                **self.datarc
+        )
+
+        self.test_dataset = VggsoundDataset(
+                mode = "test",
+                class_num = class_num,
+                preprocess_audio = preprocess_audio,
+                preprocess_video = preprocess_video,
+                **self.datarc
+        )
 
         self.connector = nn.Linear(upstream_dim, self.modelrc['input_dim'])
+
+        
         self.model = Model(
             output_class_num=self.train_dataset.class_num,
             **self.modelrc
         )
+
         self.objective = nn.CrossEntropyLoss()
         self.register_buffer('best_score', torch.zeros(1))
 
     # Interface
     def get_dataloader(self, split, epoch: int = 0):
-        """
-        Args:
-            split: string
-                'train'
-                    will always be called before the training loop
-
-                'dev', 'test', or more
-                    defined by the 'eval_dataloaders' field in your downstream config
-                    these will be called before the evaluation loops during the training loop
-
-        Return:
-            a torch.utils.data.DataLoader returning each batch in the format of:
-
-            [wav1, wav2, ...], your_other_contents1, your_other_contents2, ...
-
-            where wav1, wav2 ... are in variable length
-            each wav is torch.FloatTensor in cpu with:
-                1. dim() == 1
-                2. sample_rate == 16000
-                3. directly loaded by torchaudio
-        """
-
         if split == 'train':
             return self._get_train_dataloader(self.train_dataset, epoch)
         elif split == 'dev':
@@ -97,7 +112,6 @@ class DownstreamExpert(nn.Module):
 
 
     def _get_train_dataloader(self, dataset, epoch: int):
-        from s3prl.utility.data import get_ddp_sampler
         sampler = get_ddp_sampler(dataset, epoch)
         return DataLoader(
             dataset, batch_size=self.datarc['train_batch_size'],
@@ -117,7 +131,7 @@ class DownstreamExpert(nn.Module):
 
 
     # Interface
-    def forward(self, split, features, your_other_contents1, records, **kwargs):
+    def forward(self, split, features,your_other_contents1, records, **kwargs):
         """
         Args:
             split: string
@@ -154,17 +168,22 @@ class DownstreamExpert(nn.Module):
                 the loss to be optimized, should not be detached
                 a single scalar in torch.FloatTensor
         """
+
+        # print("Records got in vggsound.expert.py:",records)
+
         features = pad_sequence(features, batch_first=True)
         features = self.connector(features)
         predicted = self.model(features)
+        
 
         utterance_labels = your_other_contents1
-        # print(utterance_labels)
         labels = torch.LongTensor(utterance_labels).to(features.device)
         loss = self.objective(predicted, labels)
 
-        predicted_classid = predicted.max(dim=-1).indices
+        
 
+        predicted_classid = predicted.max(dim=-1).indices
+        
         records['loss'].append(loss.item())
         records['acc'] += (predicted_classid == labels).view(-1).cpu().float().tolist()
 
@@ -207,14 +226,20 @@ class DownstreamExpert(nn.Module):
                 according to the evaluation result, like the best.ckpt on the dev set
                 You can return nothing or an empty list when no need to save the checkpoint
         """
+
+        print()
+
         save_names = []
         for key, values in records.items():
             average = torch.FloatTensor(values).mean().item()
             logger.add_scalar(
-                f'example/{split}-{key}',
+                f'vggsound/{split}-{key}',
                 average,
                 global_step=global_step
             )
+
+            print(f"{split}_{key}: {average}")
+
             if split == 'dev' and key == 'acc' and average > self.best_score:
                 self.best_score = torch.ones(1) * average
                 save_names.append(f'{split}-best.ckpt')
