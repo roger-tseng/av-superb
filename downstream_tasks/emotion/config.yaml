@@ -40,10 +40,15 @@ downstream_expert:
     UtteranceLevel:
       pooling: MeanPooling
 
-    DeepModel:
-      model_type: CNNSelfAttention
-      hidden_dim: 80
-      kernel_size: 5
+#     DeepModel:
+#       model_type: CNNSelfAttention
+#       hidden_dim: 80
+#       kernel_size: 5
+#       padding: 2
+#       pooling: 5
+#       dropout: 0.4
+      
+    Model:
       padding: 2
       pooling: 5
       dropout: 0.4
