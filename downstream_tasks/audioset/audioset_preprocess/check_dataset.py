@@ -4,10 +4,13 @@ import os
 import random
 
 
+# def getFilename(l):
+#     filename = "_".join(
+#         [l[0], str(int(float(l[1]) * 1000)), str(int(float(l[2]) * 1000)) + ".flac"]
+#     )
+#     return filename
 def getFilename(l):
-    filename = "_".join(
-        [l[0], str(int(float(l[1]) * 1000)), str(int(float(l[2]) * 1000)) + ".flac"]
-    )
+    filename = "_".join([l[0] + ".mp4"])
     return filename
 
 

@@ -2,10 +2,19 @@ import csv
 import os
 import random
 
+import librosa
+import numpy as np
+import soundfile as sf
 import torch
 import torch.nn as nn
 import torchaudio
+import torchvision.io
+import torchvision.transforms as transforms
+from scipy import signal
 from torch.utils.data.dataset import Dataset
+from torchaudio.transforms import Resample
+
+from .myutils import *
 
 """
 SAMPLE_RATE = 16000
@@ -16,17 +25,38 @@ EXAMPLE_DATASET_SIZE = 200
 
 
 SAMPLE_RATE = 16000
+VIDEO_FRAME_RATE = 25
+SEC = 10
+HEIGHT = 224
+WIDTH = 224
 
 
 class AudiosetDataset(Dataset):
-    def __init__(self, csvname, audioset_root, **kwargs):
+    def __init__(
+        self,
+        csvname,
+        audioset_root,
+        preprocess_audio=None,
+        preprocess_video=None,
+        **kwargs
+    ):
         self.audioset_root = audioset_root
         self.class_num = 527
 
         with open(audioset_root + "/csv/" + csvname) as csvfile:
             self.data = list(csv.reader(csvfile))
 
+        self.preprocess_audio = preprocess_audio
+        self.preprocess_video = preprocess_video
+        print("dataset length:", len(self.data))
+        print("data example:", self.data[0])
+
+    def get_rates(self, idx):
+        return SAMPLE_RATE, VIDEO_FRAME_RATE
+
     def __getitem__(self, idx):
+        # Audio only part
+        """
         filename = "_".join(
             [
                 self.data[idx][0],
@@ -60,13 +90,56 @@ class AudiosetDataset(Dataset):
         # label = int(self.data[idx][3])
         # print(labels)
         return flac, labels
+        """
+        # video part
+        filename = "_".join(
+            [
+                self.data[idx][0] + ".mp4",
+            ]
+        )
+        filepath = "/".join(
+            [self.audioset_root, "data", "eval", "video_mp4_288p", filename]
+        )
+
+        frames, wav, meta = torchvision.io.read_video(
+            filepath, pts_unit="sec", output_format="TCHW"
+        )
+        # {'video_fps': 30.0, 'audio_fps': 44100}
+
+        wav = wav.mean(dim=0).squeeze(0)
+
+        # print(type(frames)) ; print(frames.size()) ; print(frames)
+
+        if self.preprocess_audio is not None:
+            processed_wav = self.preprocess_audio(wav, SAMPLE_RATE)
+        else:
+            processed_wav = wav
+
+        if self.preprocess_video is not None:
+            processed_frames = self.preprocess_video(frames, VIDEO_FRAME_RATE)
+        else:
+            processed_frames = frames
+
+        # label
+        origin_labels = [int(i) for i in self.data[idx][3:]]
+        # print(origin_labels)
+        labels = []
+        for i in range(self.class_num):
+            if i not in origin_labels:
+                labels.append(0)
+            else:
+                labels.append(1)
+        # label = int(self.data[idx][3])
+        # print(labels)
+        return processed_wav, processed_frames, labels
 
     def __len__(self):
         return len(self.data)
 
     def collate_fn(self, samples):
-        wavs, labels = [], []
-        for wav, label in samples:
+        wavs, videos, labels = [], [], []
+        for wav, frames, label in samples:
             wavs.append(wav)
+            videos.append(frames)
             labels.append(label)
-        return wavs, labels
+        return wavs, videos, labels

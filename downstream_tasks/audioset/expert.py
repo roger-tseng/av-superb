@@ -9,10 +9,19 @@ import torch.nn as nn
 from sklearn.metrics import average_precision_score
 from torch.distributed import is_initialized
 from torch.nn.utils.rnn import pad_sequence
-from torch.utils.data import DataLoader, DistributedSampler
+from torch.utils.data import DataLoader, Dataset, DistributedSampler
 
 from .dataset import AudiosetDataset
 from .model import Model
+
+
+def get_ddp_sampler(dataset: Dataset, epoch: int):
+    if is_initialized():
+        sampler = DistributedSampler(dataset)
+        sampler.set_epoch(epoch)
+    else:
+        sampler = None
+    return sampler
 
 
 class DownstreamExpert(nn.Module):
@@ -22,31 +31,47 @@ class DownstreamExpert(nn.Module):
     """
 
     def __init__(
-        self, upstream_dim, upstream_rate, downstream_expert, expdir, **kwargs
+        self,
+        preprocess_audio,
+        preprocess_video,
+        upstream_dim,
+        downstream_expert,
+        expdir,
+        **kwargs,
     ):
         """
+        Your dataset should take two preprocessing transform functions,
+        preprocess_audio and preprocess_video as input.
+        These two functions will be defined by the upstream models, and
+        will transform raw waveform & video frames into the desired
+        format of the upstream model.
+        They take two arguments, the input audio/video Tensor, and the
+        audio sample rate/video frame rate, respectively.
+        Optionally, if you wish to obtain raw data for testing purposes,
+        you may also specify these functions to be None, and return the
+        raw data when the functions are not defined.
         Args:
+            preprocess_audio: function
+                Defined by specified upstream model, transforms raw waveform into
+                desired input format.
+                Takes two arguments, input audio Tensor, and audio sample rate.
+            preprocess_video: function
+                Defined by specified upstream model, transforms raw video frames
+                into desired input format.
+                Takes two arguments, input video Tensor, and video frame rate.
             upstream_dim: int
-                Different upstream will give different representation dimension
+                Different upstream models will give different representation dimension
                 You might want to first project them to the same dimension
-
-            upstream_rate: int
-                160: for upstream with 10 ms per frame
-                320: for upstream with 20 ms per frame
-
             downstream_expert: dict
                 The 'downstream_expert' field specified in your downstream config file
                 eg. downstream/example/config.yaml
-
             expdir: string
                 The expdir from command-line argument, you should save all results into
                 this directory, like some logging files.
-
             **kwargs: dict
                 All the arguments specified by the argparser in run_downstream.py
                 and all the other fields in config.yaml, in case you need it.
-
-                Note1. Feel free to add new argument for __init__ as long as it is
+                Note. Feel free to add new argument for __init__ as long as it is
                 a command-line argument or a config field. You can check the constructor
                 code in downstream/runner.py
         """
@@ -57,16 +82,29 @@ class DownstreamExpert(nn.Module):
         self.modelrc = downstream_expert["modelrc"]
 
         self.train_dataset = AudiosetDataset(
-            "audioset_train.csv", "/work/u3933430/testAudioset", **self.datarc
+            csvname="audioset_train.csv",
+            audioset_root="/work/u3933430/testAudioset",
+            preprocess_audio=preprocess_audio,
+            preprocess_video=preprocess_video,
+            **self.datarc,
         )
         self.dev_dataset = AudiosetDataset(
-            "audioset_dev.csv", "/work/u3933430/testAudioset", **self.datarc
+            csvname="audioset_dev.csv",
+            audioset_root="/work/u3933430/testAudioset",
+            preprocess_audio=preprocess_audio,
+            preprocess_video=preprocess_video,
+            **self.datarc,
         )
         self.test_dataset = AudiosetDataset(
-            "audioset_test.csv", "/work/u3933430/testAudioset", **self.datarc
+            csvname="audioset_test.csv",
+            audioset_root="/work/u3933430/testAudioset",
+            preprocess_audio=preprocess_audio,
+            preprocess_video=preprocess_video,
+            **self.datarc,
         )
 
         self.connector = nn.Linear(upstream_dim, self.modelrc["input_dim"])
+
         self.model = Model(
             output_class_num=self.train_dataset.class_num, **self.modelrc
         )
@@ -76,28 +114,6 @@ class DownstreamExpert(nn.Module):
 
     # Interface
     def get_dataloader(self, split, epoch: int = 0):
-        """
-        Args:
-            split: string
-                'train'
-                    will always be called before the training loop
-
-                'dev', 'test', or more
-                    defined by the 'eval_dataloaders' field in your downstream config
-                    these will be called before the evaluation loops during the training loop
-
-        Return:
-            a torch.utils.data.DataLoader returning each batch in the format of:
-
-            [wav1, wav2, ...], your_other_contents1, your_other_contents2, ...
-
-            where wav1, wav2 ... are in variable length
-            each wav is torch.FloatTensor in cpu with:
-                1. dim() == 1
-                2. sample_rate == 16000
-                3. directly loaded by torchaudio
-        """
-
         if split == "train":
             return self._get_train_dataloader(self.train_dataset, epoch)
         elif split == "dev":
@@ -106,8 +122,6 @@ class DownstreamExpert(nn.Module):
             return self._get_eval_dataloader(self.test_dataset)
 
     def _get_train_dataloader(self, dataset, epoch: int):
-        from s3prl.utility.data import get_ddp_sampler
-
         sampler = get_ddp_sampler(dataset, epoch)
         return DataLoader(
             dataset,
