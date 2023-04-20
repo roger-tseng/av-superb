@@ -2,7 +2,7 @@
 Custom class for loading audio-visual data 
 Modified from https://github.com/s3prl/s3prl/blob/main/s3prl/downstream/example/dataset.py
 """
-import random
+import random, json, torchvision
 
 import torch
 import torch.nn as nn
@@ -13,6 +13,7 @@ DATASET_SIZE = 0
 for split in ['pretrain', 'trainval', 'test']:
     video_list = open(PATH_ROOT+split+'.txt').readlines()
     DATASET_SIZE += len(video_list)
+# This doesn't end up getting used, bc train and test sets are different sizes
 
 # Example parameters
 AUDIO_SAMPLE_RATE = 16000 # DONE
@@ -25,13 +26,15 @@ WIDTH = 224 # DONE
 
 
 class RandomDataset(Dataset):
-    def __init__(self, **kwargs):
-        self.class_num = 48 # TODO
+    def __init__(self, split='test', **kwargs):
+        self.class_num = 28 # DONE: Num chars plus one
         self.AUDIO_SAMPLE_RATE = AUDIO_SAMPLE_RATE
         self.VIDEO_FRAME_RATE = VIDEO_FRAME_RATE
-        # TODO: Load metadata
-
-
+        
+        if split == 'train':
+            self.dataset = json.load(open('/saltpool0/data/layneberry/lrs3/train_set_metadata_clean.json'))
+        else:
+            self.dataset = json.load(open('/saltpool0/data/layneberry/lrs3/test_set_metadata_clean.json'))
 
     def get_rates(self): # DONE
         """
@@ -42,22 +45,25 @@ class RandomDataset(Dataset):
             [self.VIDEO_FRAME_RATE] * len(self),
         }
 
-    def __getitem__(self, idx): # TODO
-        audio_samples = random.randint(
-            MIN_SEC * AUDIO_SAMPLE_RATE, MAX_SEC * AUDIO_SAMPLE_RATE
-        )
-        video_samples = random.randint(
-            MIN_SEC * VIDEO_FRAME_RATE, MAX_SEC * VIDEO_FRAME_RATE
-        )
+    def char2label(self, c):
+        if c == '\'':
+            return 26
+        elif c == '|':
+            return 27
+        else:
+            return ord(c)-65 # maps A-Z to 0-25
 
-        # frames, wav = torchvision.io.read_video(path, pts_unit="sec", output_format="TCHW")
-        wav = torch.randn(1, audio_samples)
-        frames = torch.randn(video_samples, 3, HEIGHT, WIDTH)
-        label = random.randint(0, self.class_num - 1) # TODO
-        return wav, frames, label
+    def __getitem__(self, idx): # DONE
+        frames, wav, meta = torchvision.io.read_video('/saltpool0/data/layneberry/lrs3/'+self.dataset[idx]['path'], pts_unit="sec", output_format="TCHW")
+        
+        wav = wav.squeeze()
+        frames = frames.float()
+
+        labels = torch.Tensor([self.char2label(c) for c in self.dataset[idx]['text']])
+        return wav, frames, labels
 
     def __len__(self): # DONE
-        return DATASET_SIZE
+        return len(self.dataset)
 
     def collate_fn(self, samples): # DONE
         wavs, videos, labels = [], [], []

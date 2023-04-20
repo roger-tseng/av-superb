@@ -37,7 +37,7 @@ class Model(nn.Module):
             nn.ReLU(inplace=True),
             nn.Conv1d(in_channels=2000, out_channels=2000, kernel_size=1, stride=1, padding=0),
             nn.ReLU(inplace=True),
-            nn.Conv1d(in_channels=2000, out_chennels=output_class_num, kernel_size=1, stride=1, padding=0),
+            nn.Conv1d(in_channels=2000, out_channels=output_class_num, kernel_size=1, stride=1, padding=0),
             nn.ReLU(inplace=True)
         )
 
