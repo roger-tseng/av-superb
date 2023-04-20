@@ -9,7 +9,7 @@ import torch.nn as nn
 class Model(nn.Module):
     def __init__(self, input_dim, output_class_num, **kwargs):
         super(Model, self).__init__()
-        # self.seq2seq = nn.TransformerDecoderLayer(input_dim, output_class_num) TODO: Implement this option
+        self.linear = nn.Linear(input_dim, output_class_num)
 
     def forward(self, features):
         pooled = features.mean(dim=1)
