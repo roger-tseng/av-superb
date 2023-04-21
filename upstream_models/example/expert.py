@@ -68,7 +68,7 @@ class UpstreamExpert(nn.Module):
             step = int(step)
             idxs = slice(None, None, step)
         else:
-            num_frames = len(video)
+            num_frames = int(len(video)/step)
             idxs = torch.arange(num_frames, dtype=torch.float32) * step
             idxs = idxs.floor().to(torch.int64)
         video = video[idxs]
