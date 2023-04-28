@@ -1,0 +1,32 @@
+downstream_expert:
+  datarc:
+    eval_batch_size: 16
+    num_workers: 4
+    test_location: /work/u3933430/vggaudiosetdl/vggsound/vggsound_test.csv
+    train_batch_size: 16
+    train_location: /work/u3933430/vggaudiosetdl/vggsound/vggsound_train.csv
+    val_location: /work/u3933430/vggaudiosetdl/vggsound/vggsound_dev.csv
+    vggsound_root: /work/u3933430/VGGSound/VGGSound
+  modelrc:
+    device: cuda
+    hidden_dim: 256
+    hidden_layers: 3
+    input_dim: 512
+    output_num_class: 310
+optimizer:
+  lr: 0.0003
+  name: AdamW
+runner:
+  eval_dataloaders:
+  - dev
+  - test
+  eval_step: 4000
+  gradient_accumulate_steps: 1
+  gradient_clipping: 1
+  log_step: 1
+  max_keep: 1
+  save_step: 2000
+  total_steps: 400000
+scheduler:
+  name: linear_schedule_with_warmup
+  num_warmup_steps: 2000
