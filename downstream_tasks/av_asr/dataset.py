@@ -26,20 +26,41 @@ WIDTH = 224 # DONE
 
 
 class RandomDataset(Dataset):
-    def __init__(self, split='test', **kwargs):
+    def __init__(self, preprocess_audio=None, preprocess_video=None, **kwargs):
+        """
+        Your dataset should take two preprocessing transform functions,
+        preprocess_audio and preprocess_video as input.
+
+        These two functions will be defined by the upstream models, and
+        will transform raw waveform & video frames into the desired
+        format of the upstream model.
+
+        They take two arguments, the input audio/video Tensor, and the
+        audio sample rate/video frame rate, respectively.
+
+        Optionally, if you wish to obtain raw data for testing purposes,
+        you may also specify these functions to be None, and return the
+        raw data when the functions are not defined.
+        """
+
         self.class_num = 28 # DONE: Num chars plus one
         self.AUDIO_SAMPLE_RATE = AUDIO_SAMPLE_RATE
         self.VIDEO_FRAME_RATE = VIDEO_FRAME_RATE
+        self.preprocess_audio = preprocess_audio
+        self.preprocess_video = preprocess_video
         
+        # print('Loading json')
         if split == 'train':
             self.dataset = json.load(open('/saltpool0/data/layneberry/lrs3/train_set_metadata_clean.json'))
         else:
             self.dataset = json.load(open('/saltpool0/data/layneberry/lrs3/test_set_metadata_clean.json'))
+        # print('Json loading done!')
 
-    def get_rates(self): # DONE
+    def get_rates(self, idx): # DONE
         """
         Return audio sample rates and video frame rates
         """
+        # This is constant for this dataset so don't need to use idx
         return {
             [self.AUDIO_SAMPLE_RATE] * len(self),
             [self.VIDEO_FRAME_RATE] * len(self),
@@ -54,10 +75,16 @@ class RandomDataset(Dataset):
             return ord(c)-65 # maps A-Z to 0-25
 
     def __getitem__(self, idx): # DONE
+        # print('Reading video at idx', idx)
         frames, wav, meta = torchvision.io.read_video('/saltpool0/data/layneberry/lrs3/'+self.dataset[idx]['path'], pts_unit="sec", output_format="TCHW")
+        assert(meta['audio_fps'] == self.AUDIO_SAMPLE_RATE)
+        assert(meta['video_fps'] == self.VIDEO_FRAME_RATE)
         
-        wav = wav.squeeze()
-        frames = frames.float()
+        wav = wav.squeeze(0)
+        if self.preprocess_audio != None:
+            wav = self.preprocess_audio(wav, self.AUDIO_SAMPLE_RATE)
+        if self.preprocess_video != None:
+            frames = self.preprocess_video(frames, self.VIDEO_FRAME_RATE)
 
         labels = torch.Tensor([self.char2label(c) for c in self.dataset[idx]['text']])
         return wav, frames, labels
@@ -66,6 +93,7 @@ class RandomDataset(Dataset):
         return len(self.dataset)
 
     def collate_fn(self, samples): # DONE
+        # print('Collating')
         wavs, videos, labels = [], [], []
         for wav, frames, label in samples:
             wavs.append(wav)

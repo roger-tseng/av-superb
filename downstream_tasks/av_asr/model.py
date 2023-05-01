@@ -43,5 +43,6 @@ class Model(nn.Module):
 
 
     def forward(self, features):
+        # print('in forward pass')
         x = self.acoustic_model(x.transpose(1, 2).continguous())
         return x.transpose(1, 2).contiguous()
