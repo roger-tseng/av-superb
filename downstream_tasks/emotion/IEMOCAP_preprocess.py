@@ -12,6 +12,18 @@ LABEL_DIR_PATH = 'dialog/EmoEvaluation'
 WAV_DIR_PATH = 'sentences/wav'
 DATA_DIR = './IEMOCAP/'
 
+miss = './IEMOCAP/miss.txt' 
+miss_list = []
+miss_filename = []
+with open(miss, 'r') as f:
+    line = f.readline()
+    while line:
+        line = f.readline().replace('\n','') #去掉換行
+        miss_list.append(line)
+        miss_filename.append((os.path.splitext(line)[0]).split('/')[-1])  
+f.close()
+
+
 
 def get_wav_paths(data_dirs):
     wav_paths = find_files(data_dirs)
@@ -94,12 +106,13 @@ def avi_preprocess(i, path):
         f_M.close()
 
         for sen_F in sentences_F:
-            clip_filename = clip_dir+'/'+sen_F.split(' ')[-1]+'.mp4'
-            video_clip_store(video_filename, clip_filename, sen_F.split(' ')[0], sen_F.split(' ')[1])
-            
+            if sen_F not in miss_filename:
+                clip_filename = clip_dir+'/'+sen_F.split(' ')[-1]+'.mp4'
+                video_clip_store(video_filename, clip_filename, sen_F.split(' ')[0], sen_F.split(' ')[1]) 
         for sen_M in sentences_M:
-            clip_filename = clip_dir+'/'+sen_M.split(' ')[-1]+'.mp4'
-            video_clip_store(video_filename, clip_filename, sen_M.split(' ')[0], sen_M.split(' ')[1]) 
+            if sen_M not in miss_filename:
+                clip_filename = clip_dir+'/'+sen_M.split(' ')[-1]+'.mp4'
+                video_clip_store(video_filename, clip_filename, sen_M.split(' ')[0], sen_M.split(' ')[1]) 
           
 def main(data_dir):
     """Main function."""
