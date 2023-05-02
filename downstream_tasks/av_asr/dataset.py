@@ -2,27 +2,33 @@
 Custom class for loading audio-visual data 
 Modified from https://github.com/s3prl/s3prl/blob/main/s3prl/downstream/example/dataset.py
 """
-import random, json, torchvision
+import json
+import random
 
 import torch
 import torch.nn as nn
+import torchvision
 from torch.utils.data.dataset import Dataset
 
-PATH_ROOT = '/saltpool0/data/layneberry/lrs3/lrs3_v0.4/'
+from .fairseq_dictionary import Dictionary
+
+PATH_ROOT = "/saltpool0/data/layneberry/lrs3/lrs3_v0.4/"
 DATASET_SIZE = 0
-for split in ['pretrain', 'trainval', 'test']:
-    video_list = open(PATH_ROOT+split+'.txt').readlines()
+for split in [
+    "trainval",
+    "test",
+]:  # removed pretrain from this list, as I don't end up using it
+    video_list = open(PATH_ROOT + split + ".txt").readlines()
     DATASET_SIZE += len(video_list)
 # This doesn't end up getting used, bc train and test sets are different sizes
 
-# Example parameters
-AUDIO_SAMPLE_RATE = 16000 # DONE
-VIDEO_FRAME_RATE = 25 # DONE
-MIN_SEC = .48 # DONE
-MAX_SEC = 6.2 # DONE
-# DATASET_SIZE = 200 # DONE: written above
-HEIGHT = 224 # DONE
-WIDTH = 224 # DONE
+# Other parameters
+AUDIO_SAMPLE_RATE = 16000
+VIDEO_FRAME_RATE = 25
+MIN_SEC = 0.48
+MAX_SEC = 6.2
+HEIGHT = 224
+WIDTH = 224
 
 
 class RandomDataset(Dataset):
@@ -43,20 +49,32 @@ class RandomDataset(Dataset):
         raw data when the functions are not defined.
         """
 
-        self.class_num = 28 # DONE: Num chars plus one
+        # Create Dictionary object
+        self.dictionary = Dictionary.load("downstream_tasks/av_asr/char.dict")
+        self.class_num = len(self.dictionary)
         self.AUDIO_SAMPLE_RATE = AUDIO_SAMPLE_RATE
         self.VIDEO_FRAME_RATE = VIDEO_FRAME_RATE
         self.preprocess_audio = preprocess_audio
         self.preprocess_video = preprocess_video
-        
-        # print('Loading json')
-        if split == 'train':
-            self.dataset = json.load(open('/saltpool0/data/layneberry/lrs3/train_set_metadata_clean.json'))
-        else:
-            self.dataset = json.load(open('/saltpool0/data/layneberry/lrs3/test_set_metadata_clean.json'))
-        # print('Json loading done!')
 
-    def get_rates(self, idx): # DONE
+        if split == "train":
+            self.dataset = json.load(
+                open(
+                    "/saltpool0/data/layneberry/lrs3/train_sampled_from_trainval_metadata_clean.json"
+                )
+            )
+        elif split == "val":
+            self.dataset = json.load(
+                open(
+                    "/saltpool0/data/layneberry/lrs3/val_sampled_from_trainval_metadata_clean.json"
+                )
+            )
+        else:
+            self.dataset = json.load(
+                open("/saltpool0/data/layneberry/lrs3/test_set_metadata_clean.json")
+            )
+
+    def get_rates(self, idx):
         """
         Return audio sample rates and video frame rates
         """
@@ -66,34 +84,32 @@ class RandomDataset(Dataset):
             [self.VIDEO_FRAME_RATE] * len(self),
         }
 
-    def char2label(self, c):
-        if c == '\'':
-            return 26
-        elif c == '|':
-            return 27
-        else:
-            return ord(c)-65 # maps A-Z to 0-25
+    def __getitem__(self, idx):
+        frames, wav, meta = torchvision.io.read_video(
+            "/saltpool0/data/layneberry/lrs3/" + self.dataset[idx]["path"],
+            pts_unit="sec",
+            output_format="TCHW",
+        )
+        assert meta["audio_fps"] == self.AUDIO_SAMPLE_RATE
+        assert meta["video_fps"] == self.VIDEO_FRAME_RATE
 
-    def __getitem__(self, idx): # DONE
-        # print('Reading video at idx', idx)
-        frames, wav, meta = torchvision.io.read_video('/saltpool0/data/layneberry/lrs3/'+self.dataset[idx]['path'], pts_unit="sec", output_format="TCHW")
-        assert(meta['audio_fps'] == self.AUDIO_SAMPLE_RATE)
-        assert(meta['video_fps'] == self.VIDEO_FRAME_RATE)
-        
         wav = wav.squeeze(0)
         if self.preprocess_audio != None:
             wav = self.preprocess_audio(wav, self.AUDIO_SAMPLE_RATE)
         if self.preprocess_video != None:
             frames = self.preprocess_video(frames, self.VIDEO_FRAME_RATE)
+        frames = frames.float()
 
-        labels = torch.Tensor([self.char2label(c) for c in self.dataset[idx]['text']])
+        labels = self.dictionary.encode_line(
+            " ".join(list(self.dataset[idx]["text"])),
+            line_tokenizer=lambda x: x.split(),
+        ).long()
         return wav, frames, labels
 
-    def __len__(self): # DONE
+    def __len__(self):
         return len(self.dataset)
 
-    def collate_fn(self, samples): # DONE
-        # print('Collating')
+    def collate_fn(self, samples):
         wavs, videos, labels = [], [], []
         for wav, frames, label in samples:
             wavs.append(wav)

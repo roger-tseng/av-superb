@@ -13,6 +13,7 @@ from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader, Dataset, DistributedSampler
 
 from .dataset import RandomDataset
+from .fairseq_dictionary import Dictionary
 from .model import Model
 
 
@@ -95,22 +96,28 @@ class DownstreamExpert(nn.Module):
         self.datarc = downstream_expert["datarc"]  # config for dataset
         self.modelrc = downstream_expert["modelrc"]  # config for model
 
+        self.dictionary = Dictionary.load("downstream_tasks/av_asr/char.dict")
+
         self.train_dataset = RandomDataset(
-            preprocess_audio, preprocess_video, **self.datarc
+            preprocess_audio, preprocess_video, split="train", **self.datarc
         )
         self.dev_dataset = RandomDataset(
-            preprocess_audio, preprocess_video, **self.datarc
+            preprocess_audio, preprocess_video, split="val", **self.datarc
         )
         self.test_dataset = RandomDataset(
-            preprocess_audio, preprocess_video, **self.datarc
+            preprocess_audio, preprocess_video, split="test", **self.datarc
         )
 
         self.connector = nn.Linear(upstream_dim, self.modelrc["input_dim"])
         self.model = Model(
             output_class_num=self.train_dataset.class_num, **self.modelrc
         )
-        self.objective = nn.CrossEntropyLoss()
-        self.register_buffer("best_score", torch.zeros(1))
+        self.blank = self.dictionary.bos()
+        self.objective = nn.CTCLoss(blank=self.blank, zero_infinity=True)
+        # TODO: Decoder?
+        self.register_buffer(
+            "best_score", torch.ones(1) * 1000
+        )  # increased from 100 since WER can be > 100, and we want at least one checkpoint to get saved
 
     # Interface
     def get_dataloader(self, split, epoch: int = 0):
@@ -157,6 +164,58 @@ class DownstreamExpert(nn.Module):
             collate_fn=dataset.collate_fn,
         )
 
+    def _compute_metrics(
+        self, pred_tokens_all, pred_words_all, target_tokens_all, target_words_all
+    ):
+        unit_error_sum = 0.0
+        word_error_sum = 0.0
+        unit_length_sum = 0
+        word_length_sum = 0
+
+        for pred_tokens, pred_words, target_tokens, target_words in zip(
+            pred_tokens_all, pred_words_all, target_tokens_all, target_words_all
+        ):
+            pred_tokens = pred_tokens.split()
+            target_tokens = target_tokens.split()
+            unit_error_sum += editdistance.eval(pred_tokens, target_tokens)
+            unit_length_sum += len(target_tokens)
+            word_error_sum += editdistance.eval(pred_words, target_words)
+            word_length_sum += len(target_words)
+
+        uer, wer = 100.0, 100.0
+        if unit_length_sum > 0:
+            uer = 100.0 * unit_error_sum / unit_length_sum
+        if word_length_sum > 0:
+            wer = 100.0 * word_error_sum / word_length_sum
+        return uer, wer
+
+    def _decode(self, log_probs, input_lens):
+        pred_tokens_batch = []
+        pred_words_batch = []
+        for log_prob, in_len in zip(log_probs, input_lens):
+            log_prob = log_prob[:in_len].unsqueeze(0)
+            pred_token_ids = log_prob.argmax(dim=-1).unique_consecutive()
+            pred_token_ids = pred_token_ids[pred_token_ids != self.blank].tolist()
+            pred_tokens = self.dictionary.string(pred_token_ids)
+            pred_words = pred_tokens.replace(" ", "").replace("|", " ").strip().split()
+            pred_tokens_batch.append(pred_tokens)
+            pred_words_batch.append(pred_words)
+        return pred_tokens_batch, pred_words_batch
+
+    def _get_log_probs(self, features):
+        features, features_len = self._get_lens_and_pad(features)
+        features = self.connector(features)
+        logits, log_probs_len = self.model(features, features_len)
+        log_probs = nn.functional.log_softmax(logits, dim=-1)
+        return log_probs, log_probs_len
+
+    def _get_lens_and_pad(self, seq_list, device=None):
+        if device is None:
+            device = seq_list[0].device
+        seq_lens = torch.IntTensor([len(seq) for seq in seq_list])
+        all_seqs = pad_sequence(seq_list, batch_first=True).to(device=device)
+        return all_seqs, seq_lens
+
     # Interface
     def forward(self, split, features, your_other_contents1, records, **kwargs):
         """
@@ -195,18 +254,40 @@ class DownstreamExpert(nn.Module):
                 the loss to be optimized, should not be detached
                 a single scalar in torch.FloatTensor
         """
-        features = pad_sequence(features, batch_first=True)
-        features = self.connector(features)
-        predicted = self.model(features)
 
-        utterance_labels = your_other_contents1
-        labels = torch.LongTensor(utterance_labels).to(features.device)
-        loss = self.objective(predicted, labels)
+        log_probs, log_probs_len = self._get_log_probs(features)
+        device = features[0].device
 
-        predicted_classid = predicted.max(dim=-1).indices
+        labels, labels_len = self._get_lens_and_pad(your_other_contents1, device)
 
+        loss = self.objective(
+            log_probs.transpose(0, 1), labels, log_probs_len, labels_len
+        )
         records["loss"].append(loss.item())
-        records["acc"] += (predicted_classid == labels).view(-1).cpu().float().tolist()
+
+        target_tokens_batch = []
+        target_words_batch = []
+        for label in labels:
+            label_idx = (label != self.dictionary.pad()) & (
+                label != self.dictionary.eos()
+            )
+            target_token_ids = label[label_idx].tolist()
+            target_tokens = self.dictionary.string(target_token_ids)
+            target_words = (
+                target_tokens.replace(" ", "").replace("|", " ").strip().split()
+            )
+
+            target_tokens_batch.append(target_tokens)
+
+        with torch.no_grad():
+            pred_tokens_batch, pred_words_batch = self._decode(
+                log_probs.float().contiguous().cpu(), log_probs_len
+            )
+
+        records["target_tokens"] += target_tokens_batch
+        records["target_words"] += target_words_batch
+        records["pred_tokens"] += pred_tokens_batch
+        records["pred_words"] += pred_words_batch
 
         return loss
 
@@ -248,13 +329,24 @@ class DownstreamExpert(nn.Module):
                 according to the evaluation result, like the best.ckpt on the dev set
                 You can return nothing or an empty list when no need to save the checkpoint
         """
+
+        loss = torch.FloatTensor(records["loss"]).mean().item()
+        print(f"{split} loss: {loss}")
+
+        uer, wer = self._compute_metrics(
+            records["pred_tokens"],
+            records["pred_words"],
+            records["target_tokens"],
+            records["target_words"],
+        )
+        logger.add_scalar(f"asr/{split}-loss", loss, global_step=global_step)
+        logger.add_scalar(f"asr/{split}-uer", uer, global_step=global_step)
+        logger.add_scalar(f"asr/{split}-wer", wer, global_step=global_step)
+        print(f"{split} uer: {uer}")
+        print(f"{split} wer: {wer}")
+
         save_names = []
-        for key, values in records.items():
-            average = torch.FloatTensor(values).mean().item()
-            logger.add_scalar(
-                f"example/{split}-{key}", average, global_step=global_step
-            )
-            if split == "dev" and key == "acc" and average > self.best_score:
-                self.best_score = torch.ones(1) * average
-                save_names.append(f"{split}-best.ckpt")
+        if split == "dev" and wer < self.best_score:
+            self.best_score = torch.ones(1) * wer
+            save_names.append("f{split}-best.ckpt")
         return save_names
