@@ -118,7 +118,6 @@ class ResNet(nn.Module):
                     m.bn2.weight.data.zero_()
 
     def _make_layer(self, block, planes, blocks, stride=1):
-
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
             downsample = self.downsample_block(

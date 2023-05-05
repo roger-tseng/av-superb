@@ -419,7 +419,6 @@ class AVHubertModel(BaseFairseqModel):
         else:
             mask_prob, mask_length = self.mask_prob_image, self.mask_length_image
         if mask_prob > 0:
-
             mask_indices, starts, ends, batch_indexes = compute_mask_indices(
                 (B, T),
                 padding_mask,
@@ -637,7 +636,7 @@ class AVHubertModel(BaseFairseqModel):
                 features, mask_indices, target_list
             )
 
-        features_pen = features.float().pow(2).mean()
+        # features_pen = features.float().pow(2).mean()
 
         features = features.transpose(1, 2)
         features = self.layer_norm(features)
@@ -668,7 +667,13 @@ class AVHubertModel(BaseFairseqModel):
         )
 
         if features_only:
-            return {"x": x, "padding_mask": padding_mask, "features": features}
+            return {
+                "x": x,
+                "padding_mask": padding_mask,
+                "features_audio": features_audio,
+                "features_video": features_video,
+                "features": features,  # input to transformer layers (concat/sum of features_audio & features_video, through layer norm + post_extract_proj)
+            }
         # should never go down below!
 
         label_embs_list = self.label_embs_concat.split(self.num_classes, 0)

@@ -7,7 +7,7 @@
 
 import torch
 import torch.nn as nn
-from torch import functional as F
+from torch.nn import functional as F
 
 __all__ = ["avid_r2plus1d_18"]
 
@@ -163,7 +163,7 @@ class R2Plus1D(nn.Module):
         # revised: ( generalize temporal pooling to variabble sequence length)
         x_pool = F.adaptive_max_pool3d(x_b4, (seq_len // 8, 1, 1), False)
 
-        x_pool = self.pool(x_b4)
+        # x_pool = self.pool(x_b4)
         if return_embs:
             return {
                 "conv1": x_c1,
