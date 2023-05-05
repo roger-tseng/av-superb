@@ -1,20 +1,7 @@
 """
-Custom class for loading audio-visual model and extract features
+Custom class for loading audio-visual model and extract features 
 Modified from https://github.com/s3prl/s3prl/blob/main/s3prl/upstream/example/expert.py
 """
-<<<<<<< HEAD
-from typing import Dict, List, Union, Tuple
-
-import torch.nn as nn
-from torch import Tensor
-from torch.nn.utils.rnn import pad_sequence
-
-import torchaudio
-import torchvision
-
-HIDDEN_DIM = 8
-
-=======
 from typing import Dict, List, Tuple, Union
 
 import torch
@@ -28,27 +15,17 @@ from torch.nn.utils.rnn import pad_sequence
 HIDDEN_DIM = 8
 
 
->>>>>>> origin/interface
 class UpstreamExpert(nn.Module):
     def __init__(self, ckpt: str = None, model_config: str = None, **kwargs):
         """
         Args:
             ckpt:
                 checkpoint path for loading pretrained weights.
-
             model_config:
                 config path for your model.
         """
         super().__init__()
 
-<<<<<<< HEAD
-        self.model1 = nn.Linear(1, HIDDEN_DIM)
-        self.model2 = nn.Linear(HIDDEN_DIM, HIDDEN_DIM)
-        self.audio_sample_rate = 16000
-        self.video_frame_size = (224,224)
-        self.video_frame_rate = 25
-
-=======
         self.model1 = nn.Linear(2, HIDDEN_DIM)
         self.model2 = nn.Linear(HIDDEN_DIM, HIDDEN_DIM)
 
@@ -66,7 +43,6 @@ class UpstreamExpert(nn.Module):
             dim=-1, keepdim=True
         )
 
->>>>>>> origin/interface
     def preprocess_video(self, video, video_frame_rate):
         """
         Replace this function to preprocess videos into your input format
@@ -75,16 +51,6 @@ class UpstreamExpert(nn.Module):
         # Resize video frames
         video_frames = []
         for frame in video:
-<<<<<<< HEAD
-            video_frames.append(torchvision.transforms.functional.resize(frame, self.video_frame_size))
-        video = torch.stack(video_frames)
-
-        # Resample video
-        assert video_frame_rate == self.video_frame_rate
-
-        # Other preprocessing steps (e.g. cropping, flipping, etc.)
-
-=======
             video_frames.append(
                 torchvision.transforms.functional.resize(
                     frame, self.video_frame_size, antialias=False
@@ -101,7 +67,7 @@ class UpstreamExpert(nn.Module):
             step = int(step)
             idxs = slice(None, None, step)
         else:
-            num_frames = len(video)
+            num_frames = int(len(video) / step)
             idxs = torch.arange(num_frames, dtype=torch.float32) * step
             idxs = idxs.floor().to(torch.int64)
         video = video[idxs]
@@ -109,33 +75,15 @@ class UpstreamExpert(nn.Module):
         # Other preprocessing steps (i.e. cropping, flipping, etc.)
         # e.g. take first three frames to ensure all videos have same size
         video = video[:3]
->>>>>>> origin/interface
         return video
 
     def preprocess_audio(self, audio, audio_sample_rate):
         """
-<<<<<<< HEAD
-        Replace this function to preprocessa audio waveforms into your input format
-=======
         Replace this function to preprocess audio waveforms into your input format
->>>>>>> origin/interface
         audio: (audio_channels, audio_length), where audio_channels is usually 1 or 2
         """
         # Resample audio
         if audio_sample_rate != self.audio_sample_rate:
-<<<<<<< HEAD
-            audio = torchaudio.functional.resample(audio, audio_sample_rate, self.audio_sample_rate)
-
-        # Other preprocessing steps (e.g. trimming, pitch shift, etc.)
-
-        return audio
-
-    def forward(self, source: List[Tuple[Tensor, Tensor]]) -> Dict[str, Union[Tensor, List[Tensor]]]:
-        """
-        Replace this function run a forward pass with your model
-        source: list of audio-video Tensor tuples 
-                [(wav1,vid1), (wav2,vid2), ...] 
-=======
             audio = torchaudio.functional.resample(
                 audio, audio_sample_rate, self.audio_sample_rate
             )
@@ -152,22 +100,11 @@ class UpstreamExpert(nn.Module):
         Replace this function run a forward pass with your model
         source: list of audio-video Tensor tuples
                 [(wav1,vid1), (wav2,vid2), ...]
->>>>>>> origin/interface
                 in your input format
         """
         audio, video = zip(*source)
 
         # Collate audio and video into batch
-<<<<<<< HEAD
-        wavs = pad_sequence(audio, batch_first=True).unsqueeze(-1)
-        videos = torch.stack(video)
-
-        # Run through audio and video encoders
-        audio_feats = audio_encoder(wavs)
-        video_feats = video_encoder(videos)
-
-        layer1 = self.model1(torch.cat(audio_feats, video_feats))
-=======
         audios = pad_sequence(audio, batch_first=True)
         videos = torch.stack(video)
 
@@ -176,15 +113,10 @@ class UpstreamExpert(nn.Module):
         video_feats = self.video_encoder(videos)
 
         layer1 = self.model1(torch.cat((audio_feats, video_feats), dim=-1))
->>>>>>> origin/interface
 
         layer2 = self.model2(layer1)
 
         # Return intermediate layer representations for potential layer-wise experiments
-<<<<<<< HEAD
-        return {
-            "hidden_states": [audio_feats, video_feats, layer1, layer2]
-=======
         # Dict should contain three items, with keys as listed below:
         # video_feats: features that only use visual modality as input
         # audio_feats: features that only use auditory modality as input
@@ -194,5 +126,4 @@ class UpstreamExpert(nn.Module):
             "video_feats": [video_feats],
             "audio_feats": [audio_feats],
             "fusion_feats": [layer1, layer2],
->>>>>>> origin/interface
         }
