@@ -49,12 +49,11 @@ class RandomDataset(Dataset):
         return self.audio_sample_rates[idx], self.video_frame_rates[idx]
 
     def __getitem__(self, idx):
-        audio_samples = random.randint(
-            MIN_SEC * AUDIO_SAMPLE_RATE, MAX_SEC * AUDIO_SAMPLE_RATE
+        length = random.randint(
+            MIN_SEC, MAX_SEC
         )
-        video_samples = random.randint(
-            MIN_SEC * VIDEO_FRAME_RATE, MAX_SEC * VIDEO_FRAME_RATE
-        )
+        audio_samples = length *  AUDIO_SAMPLE_RATE
+        video_samples = length * VIDEO_FRAME_RATE
         audio_sr, video_fps = self.get_rates(idx)
         # You may use the following function to read video data:
         # frames, wav = torchvision.io.read_video(path, pts_unit="sec", output_format="TCHW")
