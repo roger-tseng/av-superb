@@ -1,5 +1,5 @@
 """
-Custom class for loading audio-visual data 
+Custom class for loading audio-visual data
 Modified from https://github.com/s3prl/s3prl/blob/main/s3prl/downstream/example/dataset.py
 """
 import random
