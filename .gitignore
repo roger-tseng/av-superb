@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -165,3 +166,6 @@ docs/source/_autosummary/
 # ckpts and hidden states
 sample_hidden_states/
 converted_ckpts/
+=======
+__pycache__
+>>>>>>> origin/replai
