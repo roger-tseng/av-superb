@@ -1,5 +1,5 @@
 from upstream_models.example.hubconf import *
-
+from upstream_models.replai.hubconf import *
 
 def options(only_registered_ckpt: bool = False):
     all_options = []
