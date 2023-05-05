@@ -8,11 +8,8 @@ from torch.distributed import is_initialized
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader, Dataset, DistributedSampler
 
-
-
-from .model import Model
 from .dataset import VggsoundDataset
-
+from .model import Model
 
 
 def get_ddp_sampler(dataset: Dataset, epoch: int):
@@ -24,14 +21,22 @@ def get_ddp_sampler(dataset: Dataset, epoch: int):
     return sampler
 
 
-
 class DownstreamExpert(nn.Module):
     """
     Used to handle downstream-specific operations
     eg. downstream forward, metric computation, contents to log
     """
 
-    def __init__(self, preprocess_audio, preprocess_video , upstream_dim, upstream_rate, downstream_expert, expdir, **kwargs):
+    def __init__(
+        self,
+        preprocess_audio,
+        preprocess_video,
+        upstream_dim,
+        upstream_rate,
+        downstream_expert,
+        expdir,
+        **kwargs,
+    ):
         """
         Args:
             upstream_dim: int
@@ -41,7 +46,7 @@ class DownstreamExpert(nn.Module):
             upstream_rate: int
                 160: for upstream with 10 ms per frame
                 320: for upstream with 20 ms per frame
-            
+
             downstream_expert: dict
                 The 'downstream_expert' field specified in your downstream config file
                 eg. downstream/example/config.yaml
@@ -53,7 +58,7 @@ class DownstreamExpert(nn.Module):
             **kwargs: dict
                 All the arguments specified by the argparser in run_downstream.py
                 and all the other fields in config.yaml, in case you need it.
-                
+
                 Note1. Feel free to add new argument for __init__ as long as it is
                 a command-line argument or a config field. You can check the constructor
                 code in downstream/runner.py
@@ -61,77 +66,75 @@ class DownstreamExpert(nn.Module):
 
         super(DownstreamExpert, self).__init__()
         self.upstream_dim = upstream_dim
-        self.datarc = downstream_expert['datarc']
-        self.modelrc = downstream_expert['modelrc']
+        self.datarc = downstream_expert["datarc"]
+        self.modelrc = downstream_expert["modelrc"]
 
-        class_num = self.modelrc['output_num_class']
+        class_num = self.modelrc["output_num_class"]
 
         self.train_dataset = VggsoundDataset(
-                mode = "train",
-                class_num = class_num,
-                preprocess_audio = preprocess_audio,
-                preprocess_video = preprocess_video,
-                **self.datarc
+            mode="train",
+            class_num=class_num,
+            preprocess_audio=preprocess_audio,
+            preprocess_video=preprocess_video,
+            **self.datarc,
         )
-        
+
         self.dev_dataset = VggsoundDataset(
-                mode = "validation",
-                class_num = class_num,
-                preprocess_audio = preprocess_audio,
-                preprocess_video = preprocess_video,
-                **self.datarc
+            mode="validation",
+            class_num=class_num,
+            preprocess_audio=preprocess_audio,
+            preprocess_video=preprocess_video,
+            **self.datarc,
         )
 
         self.test_dataset = VggsoundDataset(
-                mode = "test",
-                class_num = class_num,
-                preprocess_audio = preprocess_audio,
-                preprocess_video = preprocess_video,
-                **self.datarc
+            mode="test",
+            class_num=class_num,
+            preprocess_audio=preprocess_audio,
+            preprocess_video=preprocess_video,
+            **self.datarc,
         )
 
-        self.connector = nn.Linear(upstream_dim, self.modelrc['input_dim'])
+        self.connector = nn.Linear(upstream_dim, self.modelrc["input_dim"])
 
-        
         self.model = Model(
-            output_class_num=self.train_dataset.class_num,
-            **self.modelrc
+            output_class_num=self.train_dataset.class_num, **self.modelrc
         )
 
         self.objective = nn.CrossEntropyLoss()
-        self.register_buffer('best_score', torch.zeros(1))
+        self.register_buffer("best_score", torch.zeros(1))
 
     # Interface
     def get_dataloader(self, split, epoch: int = 0):
-        if split == 'train':
+        if split == "train":
             return self._get_train_dataloader(self.train_dataset, epoch)
-        elif split == 'dev':
+        elif split == "dev":
             return self._get_eval_dataloader(self.dev_dataset)
-        elif split == 'test':
+        elif split == "test":
             return self._get_eval_dataloader(self.test_dataset)
-
 
     def _get_train_dataloader(self, dataset, epoch: int):
         sampler = get_ddp_sampler(dataset, epoch)
         return DataLoader(
-            dataset, batch_size=self.datarc['train_batch_size'],
+            dataset,
+            batch_size=self.datarc["train_batch_size"],
             shuffle=(sampler is None),
             sampler=sampler,
-            num_workers=self.datarc['num_workers'],
-            collate_fn=dataset.collate_fn
+            num_workers=self.datarc["num_workers"],
+            collate_fn=dataset.collate_fn,
         )
-
 
     def _get_eval_dataloader(self, dataset):
         return DataLoader(
-            dataset, batch_size=self.datarc['eval_batch_size'],
-            shuffle=False, num_workers=self.datarc['num_workers'],
-            collate_fn=dataset.collate_fn
+            dataset,
+            batch_size=self.datarc["eval_batch_size"],
+            shuffle=False,
+            num_workers=self.datarc["num_workers"],
+            collate_fn=dataset.collate_fn,
         )
 
-
     # Interface
-    def forward(self, split, features,your_other_contents1, records, **kwargs):
+    def forward(self, split, features, your_other_contents1, records, **kwargs):
         """
         Args:
             split: string
@@ -174,24 +177,22 @@ class DownstreamExpert(nn.Module):
         features = pad_sequence(features, batch_first=True)
         features = self.connector(features)
         predicted = self.model(features)
-        
 
         utterance_labels = your_other_contents1
         labels = torch.LongTensor(utterance_labels).to(features.device)
         loss = self.objective(predicted, labels)
 
-        
-
         predicted_classid = predicted.max(dim=-1).indices
-        
-        records['loss'].append(loss.item())
-        records['acc'] += (predicted_classid == labels).view(-1).cpu().float().tolist()
+
+        records["loss"].append(loss.item())
+        records["acc"] += (predicted_classid == labels).view(-1).cpu().float().tolist()
 
         return loss
 
-
     # interface
-    def log_records(self, split, records, logger, global_step, batch_ids, total_batch_num, **kwargs):
+    def log_records(
+        self, split, records, logger, global_step, batch_ids, total_batch_num, **kwargs
+    ):
         """
         Args:
             split: string
@@ -219,7 +220,7 @@ class DownstreamExpert(nn.Module):
 
             total_batch_num:
                 The total amount of batches in the dataloader
-        
+
         Return:
             a list of string
                 Each string is a filename we wish to use to save the current model
@@ -233,14 +234,12 @@ class DownstreamExpert(nn.Module):
         for key, values in records.items():
             average = torch.FloatTensor(values).mean().item()
             logger.add_scalar(
-                f'vggsound/{split}-{key}',
-                average,
-                global_step=global_step
+                f"vggsound/{split}-{key}", average, global_step=global_step
             )
 
             print(f"{split}_{key}: {average}")
 
-            if split == 'dev' and key == 'acc' and average > self.best_score:
+            if split == "dev" and key == "acc" and average > self.best_score:
                 self.best_score = torch.ones(1) * average
-                save_names.append(f'{split}-best.ckpt')
+                save_names.append(f"{split}-best.ckpt")
         return save_names
