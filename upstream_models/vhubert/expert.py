@@ -14,11 +14,12 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 import torchaudio
-from torchvision.transforms.functional import rgb_to_grayscale
 from packaging import version
 from torch.nn.utils.rnn import pad_sequence
+from torchvision.transforms.functional import rgb_to_grayscale
 
 from interfaces import UpstreamBase
+
 from . import utils as custom_utils
 from .hubert import AVHubertConfig, AVHubertModel
 
@@ -130,17 +131,17 @@ class UpstreamExpert(UpstreamBase):
             step = int(step)
             idxs = slice(None, None, step)
         else:
-            num_frames = int(len(video)/step)
+            num_frames = int(len(video) / step)
             idxs = torch.arange(num_frames, dtype=torch.float32) * step
             idxs = idxs.floor().to(torch.int64)
         video = video[idxs]
 
         # Transform to greyscale
         if video.shape[1] == 3:
-            video = 0.2989 * video[:,0] + 0.587 * video[:,1] + 0.114 * video[:,2] 
+            video = 0.2989 * video[:, 0] + 0.587 * video[:, 1] + 0.114 * video[:, 2]
         else:
             video = video.mean(dim=1)
-        feats = self.transform(video) 
+        feats = self.transform(video)
 
         # T, H, W
         if isinstance(feats, np.ndarray):
@@ -173,7 +174,7 @@ class UpstreamExpert(UpstreamBase):
             source, padding_mask=padding_mask, mask=False, features_only=True
         )
         return {
-            # "last_hidden_state": result["x"], 
+            # "last_hidden_state": result["x"],
             "video_feats": result["features_video"],
             "audio_feats": result["features_audio"],
             "fusion_feats": [result["features"], result["x"]],

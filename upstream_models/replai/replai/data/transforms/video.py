@@ -5,12 +5,12 @@
 # LICENSE file in the root directory of this source tree.
 #
 
-import cv2
 import math
 import numbers
 import random
 import warnings
 
+import cv2
 import numpy as np
 import PIL
 import torch

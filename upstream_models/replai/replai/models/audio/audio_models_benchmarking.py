@@ -94,7 +94,6 @@ def pad_framewise_output(framewise_output, frames_num):
 
 class ConvBlock(nn.Module):
     def __init__(self, in_channels, out_channels):
-
         super(ConvBlock, self).__init__()
 
         self.conv1 = nn.Conv2d(
@@ -127,7 +126,6 @@ class ConvBlock(nn.Module):
         init_bn(self.bn2)
 
     def forward(self, input, pool_size=(2, 2), pool_type="avg"):
-
         x = input
         x = F.relu_(self.bn1(self.conv1(x)))
         x = F.relu_(self.bn2(self.conv2(x)))
@@ -147,7 +145,6 @@ class ConvBlock(nn.Module):
 
 class ConvBlock5x5(nn.Module):
     def __init__(self, in_channels, out_channels):
-
         super(ConvBlock5x5, self).__init__()
 
         self.conv1 = nn.Conv2d(
@@ -168,7 +165,6 @@ class ConvBlock5x5(nn.Module):
         init_bn(self.bn1)
 
     def forward(self, input, pool_size=(2, 2), pool_type="avg"):
-
         x = input
         x = F.relu_(self.bn1(self.conv1(x)))
         if pool_type == "max":
@@ -293,7 +289,6 @@ class Cnn6(nn.Module):
 
 class Cnn10(nn.Module):
     def __init__(self, classes_num=527, pretrained=False):
-
         super(Cnn10, self).__init__()
         self.conv_block1 = ConvBlock(in_channels=1, out_channels=64)
         self.conv_block2 = ConvBlock(in_channels=64, out_channels=128)
@@ -354,7 +349,6 @@ class Cnn10(nn.Module):
 
 class Cnn14(nn.Module):
     def __init__(self, classes_num=527, pretrained=False):
-
         super(Cnn14, self).__init__()
 
         self.conv_block1 = ConvBlock(in_channels=1, out_channels=64)
@@ -745,7 +739,6 @@ class ResNet22(nn.Module):
 
 class ResNet38(nn.Module):
     def __init__(self, classes_num=527, pretrained=False):
-
         super(ResNet38, self).__init__()
 
         self.conv_block1 = ConvBlock(in_channels=1, out_channels=64)
@@ -811,7 +804,6 @@ class ResNet38(nn.Module):
 
 class ResNet54(nn.Module):
     def __init__(self, classes_num=527, pretrained=False):
-
         super(ResNet54, self).__init__()
 
         self.conv_block1 = ConvBlock(in_channels=1, out_channels=64)
@@ -877,7 +869,6 @@ class ResNet54(nn.Module):
 
 class MobileNetV1(nn.Module):
     def __init__(self, classes_num=527, pretrained=False):
-
         super(MobileNetV1, self).__init__()
 
         def conv_bn(inp, oup, stride):
@@ -1030,7 +1021,6 @@ class InvertedResidual(nn.Module):
 
 class MobileNetV2(nn.Module):
     def __init__(self, classes_num=527, pretrained=False):
-
         super(MobileNetV2, self).__init__()
 
         width_mult = 1.0
@@ -1321,7 +1311,6 @@ class _ResNetWav1d(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-
         x = self.layer1(x)
         x = self.layer2(x)
         x = self.layer3(x)
@@ -1576,7 +1565,6 @@ class Wavegram_Cnn14(nn.Module):
 
 class Wavegram_Logmel_Cnn14(nn.Module):
     def __init__(self, classes_num=527, pretrained=True):
-
         super(Wavegram_Logmel_Cnn14, self).__init__()
 
         self.pre_conv0 = nn.Conv1d(

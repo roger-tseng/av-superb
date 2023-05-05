@@ -49,10 +49,8 @@ class RandomDataset(Dataset):
         return self.audio_sample_rates[idx], self.video_frame_rates[idx]
 
     def __getitem__(self, idx):
-        length = random.randint(
-            MIN_SEC, MAX_SEC
-        )
-        audio_samples = length *  AUDIO_SAMPLE_RATE
+        length = random.randint(MIN_SEC, MAX_SEC)
+        audio_samples = length * AUDIO_SAMPLE_RATE
         video_samples = length * VIDEO_FRAME_RATE
         audio_sr, video_fps = self.get_rates(idx)
         # You may use the following function to read video data:

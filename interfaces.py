@@ -18,6 +18,7 @@ WIDTH = 112
 MIN_SEC = 2
 MAX_SEC = 4
 
+
 class Hook:
     def __init__(self, module_path, transform, unique_identifier=None):
         self.module_path = module_path
@@ -150,10 +151,8 @@ class Featurizer(nn.Module):
         self.name = "Featurizer"
 
         upstream.eval()
-        length = random.randint(
-            MIN_SEC, MAX_SEC
-        )
-        audio_samples = length *  AUDIO_SAMPLE_RATE
+        length = random.randint(MIN_SEC, MAX_SEC)
+        audio_samples = length * AUDIO_SAMPLE_RATE
         video_samples = length * VIDEO_SAMPLE_RATE
         paired_wavs = [
             (

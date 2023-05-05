@@ -105,7 +105,7 @@ class UpstreamExpert(nn.Module):
         )
 
         clips = {
-            "video": (video.numpy().transpose(0,2,3,1), video_frame_rate),
+            "video": (video.numpy().transpose(0, 2, 3, 1), video_frame_rate),
         }
 
         clips = _video_transform(clips)
@@ -169,8 +169,8 @@ class UpstreamExpert(nn.Module):
         audio = [a.squeeze() for a in audio]
         wavs = pad_sequence(audio, batch_first=True).unsqueeze(dim=1)
         # TODO: might need to pad video too
-        video = [v.permute(1,0,2,3) for v in video]
-        videos = pad_sequence(video, batch_first=True).permute(0,2,1,3,4)
+        video = [v.permute(1, 0, 2, 3) for v in video]
+        videos = pad_sequence(video, batch_first=True).permute(0, 2, 1, 3, 4)
         # videos = torch.stack(video)
 
         assert wavs.shape[0] == bsz
