@@ -24,6 +24,7 @@ def writecsv(datas, filepath):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
+    parser.add_argument("--split", type=str, required=True, help="Train or test")
     parser.add_argument("--csv", type=str, required=True, help="Path of original csv")
     parser.add_argument(
         "--dest", type=str, required=True, help="Path for output csv directory"
@@ -90,19 +91,27 @@ if __name__ == "__main__":
     print("starting split valid and train")
     random.seed(324)
     random.shuffle(train)
-    train_len = int(0.8 * len(train))
-    valid_len = int(0.1 * len(train))
-    test_len = int(0.1 * len(train))
-    test = train[valid_len + train_len :]
-    valid = train[train_len : train_len + valid_len]
-    train = train[:train_len]
+    if args.split == "train":
+        train_len = int(0.9 * len(train))
+        valid_len = int(0.1 * len(train))
+        test_len = int(0 * len(train))
+        test = train[valid_len + train_len :]
+        valid = train[train_len : train_len + valid_len]
+        train = train[:train_len]
+        print("writing train/valid csv")
+        writecsv(train, dest_folder + "audioset_train.csv")
+        writecsv(valid, dest_folder + "audioset_dev.csv")
+    elif args.split == "test":
+        train_len = int(0 * len(train))
+        valid_len = int(0 * len(train))
+        test_len = int(1 * len(train))
+        test = train[valid_len + train_len :]
+        valid = train[train_len : train_len + valid_len]
+        train = train[:train_len]
+        print("writing test csv")
+        writecsv(test, dest_folder + "audioset_test.csv")
     # valid_index = sorted(random.sample(range(len(train)),len(train)//10),reverse=True)
 
     # for i in valid_index:
     #     valid.append(train[i])
     #     del train[i]
-
-    print("writing train/valid/test csv")
-    writecsv(train, dest_folder + "audioset_train.csv")
-    writecsv(valid, dest_folder + "audioset_dev.csv")
-    writecsv(test, dest_folder + "audioset_test.csv")

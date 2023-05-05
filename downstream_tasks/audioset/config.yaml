@@ -1,9 +1,9 @@
 runner:
   total_steps: 20000
   gradient_clipping: 1
-  gradient_accumulate_steps: 2
+  gradient_accumulate_steps: 1
 
-  log_step: 10
+  log_step: 20
   eval_step: 1000
   save_step: 1000
   max_keep: 1
@@ -24,9 +24,13 @@ scheduler:
 
 downstream_expert:
   datarc:
-    num_workers: 12
+    csv_root: "/work/u3933430/testAudioset/csv"
+    train_root: "/work/u3933430/testAudioset/data/balanced_train/video_mp4_288p"
+    test_root: "/work/u3933430/testAudioset/data/eval/video_mp4_288p"
+    num_workers: 2
     train_batch_size: 16
     eval_batch_size: 16
+    threshold: 0.5
 
   modelrc:
     input_dim: 512

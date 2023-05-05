@@ -42,8 +42,9 @@ class AudiosetDataset(Dataset):
     ):
         self.audioset_root = audioset_root
         self.class_num = 527
-
-        with open(audioset_root + "/csv/" + csvname) as csvfile:
+        self.csv_root = kwargs["csv_root"]
+        csvpath = "/".join([self.csv_root, csvname])
+        with open(csvpath) as csvfile:
             self.data = list(csv.reader(csvfile))
 
         self.preprocess_audio = preprocess_audio
@@ -97,15 +98,13 @@ class AudiosetDataset(Dataset):
                 self.data[idx][0] + ".mp4",
             ]
         )
-        filepath = "/".join(
-            [self.audioset_root, "data", "eval", "video_mp4_288p", filename]
-        )
+        filepath = "/".join([self.audioset_root, filename])
 
         frames, wav, meta = torchvision.io.read_video(
             filepath, pts_unit="sec", output_format="TCHW"
         )
+        frames = frames.float()
         # {'video_fps': 30.0, 'audio_fps': 44100}
-
         wav = wav.mean(dim=0).squeeze(0)
 
         # print(type(frames)) ; print(frames.size()) ; print(frames)

@@ -28,6 +28,7 @@ class Model(nn.Module):
             nn.ReLU(),
             nn.Dropout(self.dropout),
             nn.Linear(hidden_dim, output_class_num),
+            nn.Sigmoid(),
         )
 
     def forward(self, features):
