@@ -225,6 +225,7 @@ class Runner:
                     global_step = pbar.n + 1
 
                     assert len(wavs) == len(frames)
+<<<<<<< HEAD
                     
 
                     source = [
@@ -232,6 +233,12 @@ class Runner:
                             torch.FloatTensor(wav).to(self.args.device),
                             #torch.FloatTensor(frame).to(self.args.device),
                             frame.type(torch.FloatTensor).to(self.args.device)
+=======
+                    source = [
+                        (
+                            torch.FloatTensor(wav).to(self.args.device),
+                            torch.FloatTensor(frame).to(self.args.device),
+>>>>>>> origin/interface
                         )
                         for wav, frame in zip(wavs, frames)
                     ]
@@ -407,8 +414,12 @@ class Runner:
             source = [
                 (
                     torch.FloatTensor(wav).to(self.args.device),
+<<<<<<< HEAD
                     #torch.FloatTensor(frame).to(self.args.device),
                     frame.type(torch.FloatTensor).to(self.args.device),
+=======
+                    torch.FloatTensor(frame).to(self.args.device),
+>>>>>>> origin/interface
                 )
                 for wav, frame in zip(wavs, frames)
             ]

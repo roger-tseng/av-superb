@@ -92,33 +92,40 @@ class VggsoundDataset(Dataset):
 
 
         # video part
-        filename = "_".join(
-                [
-                    self.data[idx][0],
-                    str(int(self.data[idx][1])*1000),
-                    str(int(self.data[idx][1])*1000+10000)+".mp4"
-                ]
-        )
-        filepath = "/".join([self.vggsound_root,"data","vggsound","video",filename])
+        #filename = "_".join(
+        #        [
+        #            self.data[idx][0],
+        #            str(int(self.data[idx][1])*1000),
+        #            str(int(self.data[idx][1])*1000+10000)+".mp4"
+        #        ]
+        #)
+        # filepath = "/".join([self.vggsound_root,"data","vggsound","video",filename])
+
+        filename = "_".join([self.data[idx][0],str(int(self.data[idx][1]))+".mkv"])
+        filepath = "/".join([self.vggsound_root,filename])
 
 
         frames, wav, meta = torchvision.io.read_video(filepath, pts_unit="sec", output_format="TCHW")
-        # {'video_fps': 30.0, 'audio_fps': 44100}
+        frames = frames.float()
+        # print(filename, len(frames) ,meta)    # {'video_fps': 30.0, 'audio_fps': 44100}
 
         wav = wav.mean(dim=0).squeeze(0)
         
         # print(type(frames)) ; print(frames.size()) ; print(frames)
 
         if self.preprocess_audio is not None:
-            processed_wav = self.preprocess_audio(wav, SAMPLE_RATE)
+            processed_wav = self.preprocess_audio(wav, meta['audio_fps'])
         else:
             processed_wav = wav
 
+        
         if self.preprocess_video is not None:
-            processed_frames = self.preprocess_video(frames, VIDEO_FRAME_RATE)
+            processed_frames = self.preprocess_video(frames, meta['video_fps'])
         else:
             processed_frames = frames
+        
 
+        # processed_frames = self.preprocess_video(frames, 15)
 
         
 
