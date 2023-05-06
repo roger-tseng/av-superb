@@ -88,7 +88,7 @@ class UpstreamExpert(UpstreamBase):
         # audio: (audio_channels, audio_length), where audio_channels is usually 1 or 2
         # since using av-hubert native implementation, needs to work with numpy objects
         orig_device = audio.device
-        audio = audio.cpu().numpy()
+        audio = audio.cpu()
         if len(audio.shape) >= 3:
             raise NotImplementedError(
                 f"input should be single sample, not a batch! shape of audio input to preprocess_audio: {audio.shape}"
@@ -151,10 +151,15 @@ class UpstreamExpert(UpstreamBase):
 
     def forward(self, processed_data):
         device = processed_data[0][0].device
-        # B, T, H -> T, H
-        audio = [item[0] for item in processed_data]
-        # B, T, H, W -> T, H, W
-        video = [item[1] for item in processed_data]
+
+        audio, video = [], []
+        for audio_feats, video_feats in processed_data:
+            diff = len(audio_feats) - len(video_feats)
+            if diff > 0:
+                audio_feats = audio_feats[:-diff] 
+            audio.append(audio_feats)
+            video.append(video_feats)
+
         audio_length = torch.LongTensor([len(item) for item in audio])
         video_length = torch.LongTensor([len(item) for item in video])
         assert sum([a == v for a, v in zip(audio_length, video_length)]) == len(
