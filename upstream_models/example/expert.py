@@ -1,5 +1,5 @@
 """
-Custom class for loading audio-visual model and extract features
+Custom class for loading audio-visual model and extract features 
 Modified from https://github.com/s3prl/s3prl/blob/main/s3prl/upstream/example/expert.py
 """
 from typing import Dict, List, Tuple, Union
@@ -68,7 +68,7 @@ class UpstreamExpert(nn.Module):
             step = int(step)
             idxs = slice(None, None, step)
         else:
-            num_frames = len(video)
+            num_frames = int(len(video) / step)
             idxs = torch.arange(num_frames, dtype=torch.float32) * step
             idxs = idxs.floor().to(torch.int64)
         video = video[idxs]
