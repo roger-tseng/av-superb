@@ -40,11 +40,6 @@ class RandomDataset(Dataset):
         you may also specify these functions to be None, and return the
         raw data when the functions are not defined.
         """
-        self.audio_sample_rates = [AUDIO_SAMPLE_RATE] * len(self)
-        self.video_frame_rates = [VIDEO_FRAME_RATE] * len(self)
-        self.preprocess_audio = preprocess_audio
-        self.preprocess_video = preprocess_video
-
         self.kinetics_root = kinetics_root
         self.mode = mode
 
@@ -63,6 +58,12 @@ class RandomDataset(Dataset):
 
         self.dataset = data
         self.class_num = 32
+        
+        self.audio_sample_rates = [AUDIO_SAMPLE_RATE] * len(self)
+        self.video_frame_rates = [VIDEO_FRAME_RATE] * len(self)
+        self.preprocess_audio = preprocess_audio
+        self.preprocess_video = preprocess_video
+
 
     # def get_rates(self, idx):
     #     """
@@ -93,7 +94,7 @@ class RandomDataset(Dataset):
             label = int(self.dataset[rand_idx][1])
             wav = wav.mean(dim=0).squeeze(0)
 
-        audio_sr, video_fps = meta['audio_fps'], meta['video_fps ']
+        audio_sr, video_fps = meta['audio_fps'], meta['video_fps']
         # self.get_rates(idx)
         
         # wav = torch.randn(audio_samples)
@@ -103,6 +104,7 @@ class RandomDataset(Dataset):
             processed_wav = wav
 
         # frames = torch.randn(video_samples, 3, HEIGHT, WIDTH)
+        frames = frames.float()
         if self.preprocess_video is not None:
             processed_frames = self.preprocess_video(frames, video_fps)
         else:

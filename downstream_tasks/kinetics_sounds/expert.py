@@ -96,14 +96,14 @@ class DownstreamExpert(nn.Module):
         self.modelrc = downstream_expert["modelrc"]  # config for model
 
         self.train_dataset = RandomDataset(
-            preprocess_audio, preprocess_video, **self.datarc
+            preprocess_audio, preprocess_video, "train", **self.datarc
         )
         self.dev_dataset = RandomDataset(
-            preprocess_audio, preprocess_video, **self.datarc
+            preprocess_audio, preprocess_video, "validation", **self.datarc
         )
-        self.test_dataset = RandomDataset(
-            preprocess_audio, preprocess_video, **self.datarc
-        )
+        # self.test_dataset = RandomDataset(
+        #     preprocess_audio, preprocess_video, "test", **self.datarc
+        # )
 
         self.connector = nn.Linear(upstream_dim, self.modelrc["input_dim"])
         self.model = Model(

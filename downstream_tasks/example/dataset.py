@@ -10,7 +10,7 @@ from torch.utils.data.dataset import Dataset
 
 # Example parameters
 AUDIO_SAMPLE_RATE = 16000
-VIDEO_FRAME_RATE = 25
+VIDEO_FRAME_RATE = 15
 MIN_SEC = 5
 MAX_SEC = 20
 DATASET_SIZE = 200
