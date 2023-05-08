@@ -11,3 +11,9 @@ requests
 transformers
 tensorboardX
 gdown
+# avhubert
+fairseq >=0.10.2        # tested with 0.12.2
+opencv-python-headless  # headless works better for twcc
+# replai
+munch
+pytorchvideo
