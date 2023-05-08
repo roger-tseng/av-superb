@@ -12,7 +12,7 @@ from torch.distributed import is_initialized
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader, Dataset, DistributedSampler
 
-from .dataset import RandomDataset
+from .dataset import UCF101Dataset
 from .model import Model
 
 
@@ -95,14 +95,14 @@ class DownstreamExpert(nn.Module):
         self.datarc = downstream_expert["datarc"]  # config for dataset
         self.modelrc = downstream_expert["modelrc"]  # config for model
 
-        self.train_dataset = RandomDataset(
-            preprocess_audio, preprocess_video, **self.datarc
+        self.train_dataset = UCF101Dataset(
+            "train", preprocess_audio, preprocess_video, **self.datarc
         )
-        self.dev_dataset = RandomDataset(
-            preprocess_audio, preprocess_video, **self.datarc
+        self.dev_dataset = UCF101Dataset(
+            "dev", preprocess_audio, preprocess_video, **self.datarc
         )
-        self.test_dataset = RandomDataset(
-            preprocess_audio, preprocess_video, **self.datarc
+        self.test_dataset = UCF101Dataset(
+            "test", preprocess_audio, preprocess_video, **self.datarc
         )
 
         self.connector = nn.Linear(upstream_dim, self.modelrc["input_dim"])
@@ -248,12 +248,16 @@ class DownstreamExpert(nn.Module):
                 according to the evaluation result, like the best.ckpt on the dev set
                 You can return nothing or an empty list when no need to save the checkpoint
         """
+        print("\n")
         save_names = []
         for key, values in records.items():
             average = torch.FloatTensor(values).mean().item()
             logger.add_scalar(
-                f"example/{split}-{key}", average, global_step=global_step
+                f"ucf101/{split}-{key}", average, global_step=global_step
             )
+
+            print(f"{split}_{key}: {average}")
+
             if split == "dev" and key == "acc" and average > self.best_score:
                 self.best_score = torch.ones(1) * average
                 save_names.append(f"{split}-best.ckpt")

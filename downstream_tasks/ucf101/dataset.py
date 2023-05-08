@@ -3,6 +3,8 @@ Custom class for loading audio-visual data
 Modified from https://github.com/s3prl/s3prl/blob/main/s3prl/downstream/example/dataset.py
 """
 import random
+import os
+import torchvision
 
 import torch
 import torch.nn as nn
@@ -11,15 +13,9 @@ from torch.utils.data.dataset import Dataset
 # Example parameters
 AUDIO_SAMPLE_RATE = 16000
 VIDEO_FRAME_RATE = 25
-MIN_SEC = 5
-MAX_SEC = 20
-DATASET_SIZE = 200
-HEIGHT = 224
-WIDTH = 224
 
-
-class RandomDataset(Dataset):
-    def __init__(self, preprocess_audio=None, preprocess_video=None, **kwargs):
+class UCF101Dataset(Dataset):
+    def __init__(self, split, preprocess_audio=None, preprocess_video=None, base_path=None, class_num=101, **kwargs):
         """
         Your dataset should take two preprocessing transform functions,
         preprocess_audio and preprocess_video as input.
@@ -35,7 +31,10 @@ class RandomDataset(Dataset):
         you may also specify these functions to be None, and return the
         raw data when the functions are not defined.
         """
-        self.class_num = 48
+        self.class_num = class_num
+        self.split = split
+        self.base_path = base_path
+        self.video_list = os.listdir(f'{base_path}/{split}')
         self.audio_sample_rates = [AUDIO_SAMPLE_RATE] * len(self)
         self.video_frame_rates = [VIDEO_FRAME_RATE] * len(self)
         self.preprocess_audio = preprocess_audio
@@ -49,31 +48,31 @@ class RandomDataset(Dataset):
         return self.audio_sample_rates[idx], self.video_frame_rates[idx]
 
     def __getitem__(self, idx):
-        audio_samples = random.randint(
-            MIN_SEC * AUDIO_SAMPLE_RATE, MAX_SEC * AUDIO_SAMPLE_RATE
-        )
-        video_samples = random.randint(
-            MIN_SEC * VIDEO_FRAME_RATE, MAX_SEC * VIDEO_FRAME_RATE
-        )
         audio_sr, video_fps = self.get_rates(idx)
+
         # You may use the following function to read video data:
-        # frames, wav = torchvision.io.read_video(path, pts_unit="sec", output_format="TCHW")
-        wav = torch.randn(audio_samples)
+        video_name = self.video_list[idx]
+        video_path = os.path.join(self.base_path, self.split, video_name)
+        frames, wav, _ = torchvision.io.read_video(video_path, pts_unit="sec", output_format="TCHW")
+        frames = frames.float()
+        wav = wav.mean(dim=0).squeeze(0)
+
         if self.preprocess_audio is not None:
             processed_wav = self.preprocess_audio(wav, audio_sr)
         else:
             processed_wav = wav
 
-        frames = torch.randn(video_samples, 3, HEIGHT, WIDTH)
         if self.preprocess_video is not None:
             processed_frames = self.preprocess_video(frames, video_fps)
         else:
             processed_frames = frames
-        label = random.randint(0, self.class_num - 1)
+
+        label = int(video_name.split(".")[0].split("_")[-1]) - 1
+
         return processed_wav, processed_frames, label
 
     def __len__(self):
-        return DATASET_SIZE
+        return len(self.video_list)
 
     def collate_fn(self, samples):
         wavs, videos, labels = [], [], []
