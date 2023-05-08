@@ -156,7 +156,7 @@ class UpstreamExpert(UpstreamBase):
         for audio_feats, video_feats in processed_data:
             diff = len(audio_feats) - len(video_feats)
             if diff > 0:
-                audio_feats = audio_feats[:-diff] 
+                audio_feats = audio_feats[:-diff]
             elif diff < 0:
                 audio_feats = F.pad(audio_feats, (0, 0, 0, -diff), "constant", 0)
             audio.append(audio_feats)
