@@ -252,9 +252,7 @@ class DownstreamExpert(nn.Module):
         save_names = []
         for key, values in records.items():
             average = torch.FloatTensor(values).mean().item()
-            logger.add_scalar(
-                f"ucf101/{split}-{key}", average, global_step=global_step
-            )
+            logger.add_scalar(f"ucf101/{split}-{key}", average, global_step=global_step)
 
             print(f"{split}_{key}: {average}")
 
