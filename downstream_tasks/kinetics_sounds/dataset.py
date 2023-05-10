@@ -17,14 +17,14 @@ from torchaudio.transforms import Resample
 # Example parameters
 AUDIO_SAMPLE_RATE = 16000
 VIDEO_FRAME_RATE = 25
-# MIN_SEC = 5
-# MAX_SEC = 20
-# HEIGHT = 224
-# WIDTH = 224
+MIN_SEC = 5
+MAX_SEC = 10
+HEIGHT = 224
+WIDTH = 224
 
 
 class RandomDataset(Dataset):
-    def __init__(self, preprocess_audio, preprocess_video, mode, kinetics_root, **kwargs):
+    def __init__(self, preprocess_audio, preprocess_video, mode, kinetics_root, class_num, **kwargs):
         """
         Your dataset should take two preprocessing transform functions,
         preprocess_audio and preprocess_video as input.
@@ -57,12 +57,14 @@ class RandomDataset(Dataset):
         print("data example", data[0])
 
         self.dataset = data
-        self.class_num = 32
+        self.class_num = class_num
         
         self.audio_sample_rates = [AUDIO_SAMPLE_RATE] * len(self)
         self.video_frame_rates = [VIDEO_FRAME_RATE] * len(self)
         self.preprocess_audio = preprocess_audio
         self.preprocess_video = preprocess_video
+
+        self.logs_file = open(kwargs["logs_file"], "w")
 
 
     # def get_rates(self, idx):
@@ -73,28 +75,46 @@ class RandomDataset(Dataset):
     #     return self.audio_sample_rates[idx], self.video_frame_rates[idx]
 
     def __getitem__(self, idx):
-        # audio_samples = random.randint(
-        #     MIN_SEC * AUDIO_SAMPLE_RATE, MAX_SEC * AUDIO_SAMPLE_RATE
-        # )
-        # video_samples = random.randint(
-        #     MIN_SEC * VIDEO_FRAME_RATE, MAX_SEC * VIDEO_FRAME_RATE
-        # )
         path = os.path.join(self.kinetics_root, self.dataset[idx][0])
 
         # You may use the following function to read video data:
         frames, wav, meta = torchvision.io.read_video(path, pts_unit="sec", output_format="TCHW")
+        audio_sr, video_fps = meta.get('audio_fps'), meta.get('video_fps')
+
         label = int(self.dataset[idx][1])
 
         wav = wav.mean(dim=0).squeeze(0)
-        while wav.shape[0] == 0:
-            print(path)
-            rand_idx = random.randint(0, len(self.dataset)-1)
-            path = os.path.join(self.kinetics_root, self.dataset[rand_idx][0])
-            frames, wav, meta = torchvision.io.read_video(path, pts_unit="sec", output_format="TCHW")
-            label = int(self.dataset[rand_idx][1])
-            wav = wav.mean(dim=0).squeeze(0)
 
-        audio_sr, video_fps = meta['audio_fps'], meta['video_fps']
+        if wav.shape[0] == 0 and frames.shape[0] == 0:
+            self.logs_file.write("{0}, '{1}', {2}\n".format(path, frames.shape, video_fps))
+            self.logs_file.flush()
+            print("no data", path)
+
+        if wav.shape[0] == 0:
+            print("no audio", audio_sr)
+            audio_samples = random.randint(
+                MIN_SEC * AUDIO_SAMPLE_RATE, MAX_SEC * AUDIO_SAMPLE_RATE
+            )
+            wav = torch.zeros(audio_samples)
+            audio_sr = AUDIO_SAMPLE_RATE
+            # print(path)
+            # rand_idx = random.randint(0, len(self.dataset)-1)
+            # path = os.path.join(self.kinetics_root, self.dataset[rand_idx][0])
+            # frames, wav, meta = torchvision.io.read_video(path, pts_unit="sec", output_format="TCHW")
+            # label = int(self.dataset[rand_idx][1])
+            # wav = wav.mean(dim=0).squeeze(0)
+
+        if frames.shape[0] == 0:
+            print("no video", video_fps)
+            video_samples = random.randint(
+                MIN_SEC * VIDEO_FRAME_RATE, MAX_SEC * VIDEO_FRAME_RATE
+            )
+            frames = torch.zeros([video_samples, 3, HEIGHT, WIDTH])
+            video_fps = VIDEO_FRAME_RATE
+
+        # if video_fps is None:
+        #     print("missing fps", path)
+        #     video_fps = VIDEO_FRAME_RATE
         # self.get_rates(idx)
         
         # wav = torch.randn(audio_samples)

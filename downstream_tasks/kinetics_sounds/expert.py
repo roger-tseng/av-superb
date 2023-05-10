@@ -254,6 +254,9 @@ class DownstreamExpert(nn.Module):
             logger.add_scalar(
                 f"example/{split}-{key}", average, global_step=global_step
             )
+
+            print(f"\n{split}_{key}: {average}")
+
             if split == "dev" and key == "acc" and average > self.best_score:
                 self.best_score = torch.ones(1) * average
                 save_names.append(f"{split}-best.ckpt")
