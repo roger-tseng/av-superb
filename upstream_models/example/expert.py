@@ -40,7 +40,7 @@ class UpstreamExpert(nn.Module):
         video_frames = []
         for frame in video:
             video_frames.append(
-                torchvision.transforms.functional.resize(frame, self.video_frame_size)
+                torchvision.transforms.functional.resize(frame / 255, self.video_frame_size)
             )
         video = torch.stack(video_frames)
 
