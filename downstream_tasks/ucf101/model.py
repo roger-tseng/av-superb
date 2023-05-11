@@ -8,7 +8,7 @@ import torch.nn as nn
 
 class Model(nn.Module):
     def __init__(
-        self, input_dim, hidden_dim, hidden_layers, dropout, output_class_num, **kwargs
+        self, input_dim, hidden_dim, hidden_layers, dropout, batchnorm, output_class_num, **kwargs
     ):
         super(Model, self).__init__()
 
@@ -23,17 +23,26 @@ class Model(nn.Module):
             batch_first=True,
         )
 
-        self.fc = nn.Sequential(
-            nn.BatchNorm1d(hidden_dim * 2),
-            nn.ReLU(),
-            nn.Dropout(self.dropout),
-            nn.Linear(hidden_dim * 2, hidden_dim),
-            nn.BatchNorm1d(hidden_dim),
-            nn.ReLU(),
-            nn.Dropout(self.dropout),
-            nn.Linear(hidden_dim, output_class_num),
-        )
-
+        if batchnorm:
+            self.fc = nn.Sequential(
+                nn.BatchNorm1d(hidden_dim * 2),
+                nn.ReLU(),
+                nn.Dropout(self.dropout),
+                nn.Linear(hidden_dim * 2, hidden_dim),
+                nn.BatchNorm1d(hidden_dim),
+                nn.ReLU(),
+                nn.Dropout(self.dropout),
+                nn.Linear(hidden_dim, output_class_num),
+            )
+        else:
+            self.fc = nn.Sequential(
+                nn.ReLU(),
+                nn.Dropout(self.dropout),
+                nn.Linear(hidden_dim * 2, hidden_dim),
+                nn.ReLU(),
+                nn.Dropout(self.dropout),
+                nn.Linear(hidden_dim, output_class_num),
+            )
     def forward(self, features):
         out, _ = self.lstm(features)
 
