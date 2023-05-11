@@ -73,6 +73,20 @@ class CenterCrop(object):
         """
         t, h, w = frames.shape
         th, tw = self.size
+        # Pad surrounding with zeros if smaller that target size
+        if tw > w or th > h:
+            padding = [
+                (0, 0),
+                ((th - h) // 2, (th - h + 1) // 2) if th > h else (0, 0),
+                ((tw - w) // 2, (tw - w + 1) // 2) if tw > w else (0, 0),
+            ]
+            frames = np.pad(
+                frames, padding, mode="constant", constant_values=0
+            )  # PIL uses fill value 0
+            t, h, w = frames.shape
+            if tw == w and th == h:
+                return frames
+
         delta_w = int(round((w - tw)) / 2.0)
         delta_h = int(round((h - th)) / 2.0)
         frames = frames[:, delta_h : delta_h + th, delta_w : delta_w + tw]
@@ -94,6 +108,20 @@ class RandomCrop(object):
         """
         t, h, w = frames.shape
         th, tw = self.size
+        # Pad surrounding with zeros if smaller that target size
+        if tw > w or th > h:
+            padding = [
+                (0, 0),
+                ((th - h) // 2, (th - h + 1) // 2) if th > h else (0, 0),
+                ((tw - w) // 2, (tw - w + 1) // 2) if tw > w else (0, 0),
+            ]
+            frames = np.pad(
+                frames, padding, mode="constant", constant_values=0
+            )  # PIL uses fill value 0
+            t, h, w = frames.shape
+            if tw == w and th == h:
+                return frames
+
         delta_w = random.randint(0, w - tw)
         delta_h = random.randint(0, h - th)
         frames = frames[:, delta_h : delta_h + th, delta_w : delta_w + tw]
