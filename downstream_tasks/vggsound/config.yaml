@@ -1,32 +1,33 @@
 runner:
-  total_steps: 400000
+  total_steps: 1000000
   gradient_clipping: 1
   gradient_accumulate_steps: 1
 
-  log_step: 50
-  eval_step: 4000
-  save_step: 1000
+  log_step: 10
+  eval_step: 8000
+  save_step: 8000
   max_keep: 1
   eval_dataloaders:
-    - dev
+    #- dev
     - test
 
 optimizer:
-        #name: TorchOptim
-        #torch_optim_name: Adam
-  name: AdamW
-  lr: 3.0e-4
+  name: TorchOptim
+  torch_optim_name: Adam
+        #name: AdamW
+  lr: 2.0e-3
 
 # comment the whole scheduler config block
 # to disable learning rate scheduling
-scheduler:
-  name: linear_schedule_with_warmup
-  num_warmup_steps: 4000
+#scheduler:
+# name: linear_schedule_with_warmup
+# num_warmup_steps: 20000
 
 downstream_expert:
   datarc:
     vggsound_root: "/work/u3933430/VGGSound/VGGSound"
     train_location: "/work/u3933430/vggaudiosetdl/vggsound/vggsound_train.csv"
+    #train_location: "/work/u3933430/vggaudiosetdl/vggsound/TEST.csv"
     val_location: "/work/u3933430/vggaudiosetdl/vggsound/vggsound_dev.csv"
     test_location: "/work/u3933430/vggaudiosetdl/vggsound/vggsound_test.csv"
     num_workers: 4
@@ -37,8 +38,10 @@ downstream_expert:
   modelrc:
     output_num_class: 310
     device: cuda
-    input_dim: 256
-    hidden_dim: 128
+    input_dim: 512
+    hidden_dim: 256
     hidden_layers: 2
+    dropout: 0.3
+    batchnorm: True
 
 

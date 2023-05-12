@@ -66,6 +66,7 @@ class VggsoundDataset(Dataset):
         # return self.audio_sample_rates[idx], self.video_frame_rates[idx]
 
     def __getitem__(self, idx):
+
         # only audio part
         """
         filename = "_".join(
@@ -82,8 +83,8 @@ class VggsoundDataset(Dataset):
 
         flac = resampler(flac)
         flac = flac.mean(dim=0).squeeze(0)
-
-        label = int(self.data[idx][2])
+        
+	label = int(self.data[idx][2])
 
         return flac, label
         """
@@ -107,24 +108,23 @@ class VggsoundDataset(Dataset):
         frames, wav, meta = torchvision.io.read_video(
             filepath, pts_unit="sec", output_format="TCHW"
         )
-        frames = frames.float()
-        # print(filename, len(frames) ,meta)    # {'video_fps': 30.0, 'audio_fps': 44100}
 
+        frames = frames.float()
         wav = wav.mean(dim=0).squeeze(0)
 
-        # print(type(frames)) ; print(frames.size()) ; print(frames)
-
         if self.preprocess_audio is not None:
+            #print("audio length before preprocess", wav.shape)
             processed_wav = self.preprocess_audio(wav, meta["audio_fps"])
+            #print("audio length after preprocess", processed_wav.shape)
         else:
             processed_wav = wav
 
         if self.preprocess_video is not None:
+            #print("video length before preprocess", frames.shape)
             processed_frames = self.preprocess_video(frames, meta["video_fps"])
+            #print("video length after preprocess", processed_frames.shape)
         else:
             processed_frames = frames
-
-        # processed_frames = self.preprocess_video(frames, 15)
 
         # label
         label = int(self.data[idx][2])

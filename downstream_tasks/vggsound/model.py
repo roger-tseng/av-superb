@@ -1,40 +1,53 @@
+"""
+Small probing model for downstream audio-visual tasks
+Modified from https://github.com/s3prl/s3prl/blob/main/s3prl/downstream/example/model.py
+"""
 import torch
 import torch.nn as nn
-import torchvision
-import torchvision.models as models
-from torch.autograd import Variable
 
 
 class Model(nn.Module):
     def __init__(
-        self, input_dim, hidden_dim, hidden_layers, output_class_num, **kwargs
+        self, input_dim, hidden_dim, hidden_layers, dropout, batchnorm, output_class_num, **kwargs
     ):
         super(Model, self).__init__()
 
-        self.hidden_dim = hidden_dim
-        self.hidden_layers = hidden_layers
+        self.dropout = dropout
+
         self.lstm = nn.LSTM(
             input_dim,
-            self.hidden_dim,
-            self.hidden_layers,
+            hidden_dim,
+            hidden_layers,
+            dropout=self.dropout,
+            bidirectional=True,
             batch_first=True,
-            dropout=0.2,
         )
-        self.fc1 = nn.Linear(hidden_dim, int(hidden_dim / 2))
-        self.relu = nn.ReLU()
-        self.fc2 = nn.Linear(int(hidden_dim / 2), int(hidden_dim / 2))
-        self.fc3 = nn.Linear(int(hidden_dim / 2), output_class_num)
 
-    def forward(self, x):
-        x = x.float()
-        h0 = Variable(
-            torch.zeros(self.hidden_layers, x.size(0), self.hidden_dim).float()
-        ).cuda()
-        c0 = Variable(
-            torch.zeros(self.hidden_layers, x.size(0), self.hidden_dim).float()
-        ).cuda()
-        out, _ = self.lstm(x, (h0, c0))
-        out = self.relu(self.fc1(out[:, -1, :]))
-        out = self.relu(self.fc2(out))
-        out = self.fc3(out)
-        return out
+        if batchnorm:
+            self.fc = nn.Sequential(
+                nn.BatchNorm1d(hidden_dim * 2),
+                nn.ReLU(),
+                nn.Dropout(self.dropout),
+                nn.Linear(hidden_dim * 2, hidden_dim),
+                nn.BatchNorm1d(hidden_dim),
+                nn.ReLU(),
+                nn.Dropout(self.dropout),
+                nn.Linear(hidden_dim, output_class_num),
+            )
+        else:
+            self.fc = nn.Sequential(
+                nn.ReLU(),
+                nn.Dropout(self.dropout),
+                nn.Linear(hidden_dim * 2, hidden_dim),
+                nn.ReLU(),
+                nn.Dropout(self.dropout),
+                nn.Linear(hidden_dim, output_class_num),
+            )
+    def forward(self, features):
+        out, _ = self.lstm(features)
+
+        out = out[:, -1, :]
+
+        predicted = self.fc(out)
+
+        return predicted
