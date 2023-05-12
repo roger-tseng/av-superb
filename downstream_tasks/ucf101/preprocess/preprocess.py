@@ -5,6 +5,8 @@ import ffmpeg
 import yaml
 
 train_group = [
+    "g08",
+    "g09",
     "g10",
     "g11",
     "g12",
@@ -22,7 +24,7 @@ train_group = [
     "g24",
     "g25",
 ]
-dev_group = ["g08", "g09"]
+dev_group = []
 test_group = ["g01", "g02", "g03", "g04", "g05", "g06", "g07"]
 classIndList = []
 
