@@ -64,6 +64,27 @@ class UpstreamExpert(UpstreamBase):
             ]
         )
 
+        self.model.feature_grad_mult = 0.0
+        self.model.encoder.layerdrop = 0.0
+
+        if len(self.hooks) == 0:
+            module_name = "self.model.encoder.layers"
+            for module_id in range(len(eval(module_name))):
+                self.add_hook(
+                    f"{module_name}[{module_id}]",
+                    lambda input, output: input[0].transpose(0, 1),
+                )
+            self.add_hook("self.model.encoder", lambda input, output: output[0])
+
+            def postprocess(xs):
+                names, hiddens = zip(*xs)
+                names = [name + "_fusion" for name in names]
+                unpad_len = min([hidden.size(1) for hidden in hiddens])
+                hiddens = [hidden[:, :unpad_len, :] for hidden in hiddens]
+                return list(zip(names, hiddens))
+
+            self.hook_postprocess = postprocess
+
     def stacker(self, feats, stack_order):
         """
         TODO: need to make this a batch processing method
@@ -156,7 +177,7 @@ class UpstreamExpert(UpstreamBase):
         for audio_feats, video_feats in processed_data:
             diff = len(audio_feats) - len(video_feats)
             if diff > 0:
-                audio_feats = audio_feats[:-diff] 
+                audio_feats = audio_feats[:-diff]
             elif diff < 0:
                 audio_feats = F.pad(audio_feats, (0, 0, 0, -diff), "constant", 0)
             audio.append(audio_feats)
@@ -181,8 +202,7 @@ class UpstreamExpert(UpstreamBase):
             source, padding_mask=padding_mask, mask=False, features_only=True
         )
         return {
-            # "last_hidden_state": result["x"],
-            "video_feats": result["features_video"],
-            "audio_feats": result["features_audio"],
-            "fusion_feats": [result["features"], result["x"]],
+            "video_feats": result["features_video"].transpose(1, 2),
+            "audio_feats": result["features_audio"].transpose(1, 2),
+            # fusion_feats are handled by UpstreamBase's hooks
         }

@@ -110,29 +110,32 @@ class UpstreamBase(nn.Module, metaclass=initHook):
         assert isinstance(result, dict)
 
         if len(self._hook_hiddens) > 0:
-            if (
-                result.get("_hidden_states_info") is not None
-                or result.get("hidden_states") is not None
-                or result.get("last_hidden_state") is not None
-            ):
-                show(
-                    "[UpstreamBase] - If there are registered hooks, '_hidden_states_info', 'hidden_states', and "
-                    "'last_hidden_state' are reserved and should not be included in child class's return dict.",
-                    file=sys.stderr,
-                )
-                raise ValueError
-
             hook_hiddens = self._hook_hiddens.copy()
             self._hook_hiddens.clear()
 
             if callable(self.hook_postprocess):
                 hook_hiddens = self.hook_postprocess(hook_hiddens)
 
-            result["_hidden_states_info"], result["hidden_states"] = zip(*hook_hiddens)
-            result["last_hidden_state"] = result["hidden_states"][-1]
+            names, hiddens = zip(*hook_hiddens)
+            if "fusion" in names[0]:
+                key = "fusion_feats"
+            elif "video" in names[0]:
+                key = "video_feats"
+            elif "audio" in names[0]:
+                key = "audio_feats"
 
-            for layer_id, hidden_state in enumerate(result["hidden_states"]):
-                result[f"hidden_state_{layer_id}"] = hidden_state
+            if (
+                result.get("_hidden_states_info") is not None
+                or result.get(key) is not None
+            ):
+                show(
+                    f"[UpstreamBase] - If there are registered hooks, '_hidden_states_info' and '{key}' "
+                    "are reserved and should not be included in child class's return dict.",
+                    file=sys.stderr,
+                )
+                raise ValueError
+
+            result["_hidden_states_info"], result[key] = names, hiddens
 
         return result
 
