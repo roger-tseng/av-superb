@@ -2,15 +2,12 @@ import csv
 import os
 import random
 
-import librosa
 import numpy as np
-import soundfile as sf
 import torch
 import torch.nn as nn
 import torchaudio
 import torchvision.io
 import torchvision.transforms as transforms
-from scipy import signal
 from torch.utils.data.dataset import Dataset
 from torchaudio.transforms import Resample
 
