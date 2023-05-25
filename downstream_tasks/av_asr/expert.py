@@ -108,13 +108,13 @@ class DownstreamExpert(nn.Module):
             preprocess_audio, preprocess_video, split="test", **self.datarc
         )
 
+        print('Building a Linear layer from', upstream_dim, 'to', self.modelrc['input_dim'])
         self.connector = nn.Linear(upstream_dim, self.modelrc["input_dim"])
         self.model = Model(
             output_class_num=self.train_dataset.class_num, **self.modelrc
         )
         self.blank = self.dictionary.bos()
         self.objective = nn.CTCLoss(blank=self.blank, zero_infinity=True)
-        # TODO: Decoder?
         self.register_buffer(
             "best_score", torch.ones(1) * 1000
         )  # increased from 100 since WER can be > 100, and we want at least one checkpoint to get saved
