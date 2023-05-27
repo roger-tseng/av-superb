@@ -68,15 +68,22 @@ class UCF101Dataset(Dataset):
         frames = frames.float()
         wav = wav.mean(dim=0).squeeze(0)
 
-        if self.preprocess_audio is not None:
-            processed_wav = self.preprocess_audio(wav, audio_sr)
+        # Run preprocessing only if features are not precomputed
+        feature_path = f"/work/b07901163/features/{self.upstream_name}/{video_path.rsplit('/')[-1].rsplit('.')[0]}.pt"
+        if os.path.exists(feature_path):
+            processed_wav, processed_frames = torch.load(feature_path)
         else:
-            processed_wav = wav
+            if self.preprocess_audio is not None:
+                processed_wav = self.preprocess_audio(wav, audio_sr)
+            else:
+                processed_wav = wav
 
-        if self.preprocess_video is not None:
-            processed_frames = self.preprocess_video(frames, video_fps)
-        else:
-            processed_frames = frames
+            if self.preprocess_video is not None:
+                processed_frames = self.preprocess_video(frames, video_fps)
+            else:
+                processed_frames = frames
+            # Uncomment the next line
+            torch.save([processed_wav, processed_frames], feature_path)
 
         label = int(video_name.split(".")[0].split("_")[-1]) - 1
 
