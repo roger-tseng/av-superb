@@ -3,14 +3,15 @@ Custom class for loading audio-visual data
 Modified from https://github.com/s3prl/s3prl/blob/main/s3prl/downstream/example/dataset.py
 """
 import random
+import os
 
 import torch
 import torch.nn as nn
 from torch.utils.data.dataset import Dataset
 
 # Example parameters
-AUDIO_SAMPLE_RATE = 16000
-VIDEO_FRAME_RATE = 25
+AUDIO_SAMPLE_RATE = 44100
+VIDEO_FRAME_RATE = 30
 MIN_SEC = 5
 MAX_SEC = 20
 DATASET_SIZE = 200
@@ -40,6 +41,7 @@ class RandomDataset(Dataset):
         self.video_frame_rates = [VIDEO_FRAME_RATE] * len(self)
         self.preprocess_audio = preprocess_audio
         self.preprocess_video = preprocess_video
+        self.upstream_name = kwargs['upstream']
 
     def get_rates(self, idx):
         """
@@ -56,16 +58,27 @@ class RandomDataset(Dataset):
         # You may use the following function to read video data:
         # frames, wav = torchvision.io.read_video(path, pts_unit="sec", output_format="TCHW")
         wav = torch.randn(audio_samples)
-        if self.preprocess_audio is not None:
-            processed_wav = self.preprocess_audio(wav, audio_sr)
-        else:
-            processed_wav = wav
+        frames = torch.randn(
+            video_samples, 3, random.randint(50, HEIGHT), random.randint(50, WIDTH)
+        )
 
-        frames = torch.randn(video_samples, 3, HEIGHT, WIDTH)
-        if self.preprocess_video is not None:
-            processed_frames = self.preprocess_video(frames, video_fps)
+        # Run preprocessing only if features are not precomputed
+        fname = "path to your video"
+        feature_path = f"/work/b07901163/features/{self.upstream_name}/{fname.rsplit('/')[-1].rsplit('.')[0]}.pt"
+        if os.path.exists(feature_path):
+            processed_wav, processed_frames = torch.load(feature_path)
         else:
-            processed_frames = frames
+            if self.preprocess_audio is not None:
+                processed_wav = self.preprocess_audio(wav, audio_sr)
+            else:
+                processed_wav = wav
+            if self.preprocess_video is not None:
+                processed_frames = self.preprocess_video(frames, video_fps)
+            else:
+                processed_frames = frames
+            # Uncomment the next line
+            # torch.save([processed_wav, processed_frames], feature_path)
+
         label = random.randint(0, self.class_num - 1)
         return processed_wav, processed_frames, label
 
