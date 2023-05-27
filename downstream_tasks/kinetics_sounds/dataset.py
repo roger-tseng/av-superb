@@ -15,15 +15,15 @@ import torchvision
 from torchaudio.transforms import Resample
 
 # Example parameters
-AUDIO_SAMPLE_RATE = 16000
-VIDEO_FRAME_RATE = 25
+AUDIO_SAMPLE_RATE = 44100
+VIDEO_FRAME_RATE = 30
 MIN_SEC = 5
 MAX_SEC = 10
 HEIGHT = 224
 WIDTH = 224
 
 
-class RandomDataset(Dataset):
+class KineticsSoundsDataset(Dataset):
     def __init__(self, preprocess_audio, preprocess_video, mode, kinetics_root, class_num, **kwargs):
         """
         Your dataset should take two preprocessing transform functions,
@@ -63,6 +63,7 @@ class RandomDataset(Dataset):
         self.video_frame_rates = [VIDEO_FRAME_RATE] * len(self)
         self.preprocess_audio = preprocess_audio
         self.preprocess_video = preprocess_video
+        self.upstream_name = kwargs['upstream']
 
         self.logs_file = open(kwargs["logs_file"], "w")
 
@@ -109,26 +110,25 @@ class RandomDataset(Dataset):
             video_samples = random.randint(
                 MIN_SEC * VIDEO_FRAME_RATE, MAX_SEC * VIDEO_FRAME_RATE
             )
-            frames = torch.zeros([video_samples, 3, HEIGHT, WIDTH])
+            frames = torch.zeros([video_samples, 3, random.randint(50, HEIGHT), random.randint(50, WIDTH)])
             video_fps = VIDEO_FRAME_RATE
-
-        # if video_fps is None:
-        #     print("missing fps", path)
-        #     video_fps = VIDEO_FRAME_RATE
-        # self.get_rates(idx)
         
-        # wav = torch.randn(audio_samples)
-        if self.preprocess_audio is not None:
-            processed_wav = self.preprocess_audio(wav, audio_sr)
+        # Run preprocessing only if features are not precomputed
+        fname = path
+        feature_path = f"/work/u8090533/features/{self.upstream_name}/{fname.rsplit('/')[-1].rsplit('.')[0]}.pt"
+        if os.path.exists(feature_path):
+            processed_wav, processed_frames = torch.load(feature_path)
         else:
-            processed_wav = wav
-
-        # frames = torch.randn(video_samples, 3, HEIGHT, WIDTH)
-        frames = frames.float()
-        if self.preprocess_video is not None:
-            processed_frames = self.preprocess_video(frames, video_fps)
-        else:
-            processed_frames = frames
+            if self.preprocess_audio is not None:
+                processed_wav = self.preprocess_audio(wav, audio_sr)
+            else:
+                processed_wav = wav
+            if self.preprocess_video is not None:
+                processed_frames = self.preprocess_video(frames, video_fps)
+            else:
+                processed_frames = frames
+            # Uncomment the next line
+            torch.save([processed_wav, processed_frames], feature_path)
 
         return processed_wav, processed_frames, label
 

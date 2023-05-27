@@ -12,7 +12,7 @@ from torch.distributed import is_initialized
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader, Dataset, DistributedSampler
 
-from .dataset import RandomDataset
+from .dataset import KineticsSoundsDataset
 from .model import Model
 
 
@@ -95,11 +95,11 @@ class DownstreamExpert(nn.Module):
         self.datarc = downstream_expert["datarc"]  # config for dataset
         self.modelrc = downstream_expert["modelrc"]  # config for model
 
-        self.train_dataset = RandomDataset(
-            preprocess_audio, preprocess_video, "train", **self.datarc
+        self.train_dataset = KineticsSoundsDataset(
+            preprocess_audio, preprocess_video, "train", upstream=kwargs['upstream'], **self.datarc
         )
-        self.dev_dataset = RandomDataset(
-            preprocess_audio, preprocess_video, "validation", **self.datarc
+        self.dev_dataset = KineticsSoundsDataset(
+            preprocess_audio, preprocess_video, "validation", upstream=kwargs['upstream'], **self.datarc
         )
         # self.test_dataset = RandomDataset(
         #     preprocess_audio, preprocess_video, "test", **self.datarc
