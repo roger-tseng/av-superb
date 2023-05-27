@@ -1,0 +1,19 @@
+torchaudio >=0.8.0
+torch >=1.8.0,!=1.10.0  # nllloss might have bug in 1.10.0
+torchvision
+tqdm >=4.56.0
+numpy >=1.21
+PyYAML >=5.4.1
+filelock
+omegaconf >=2.0.6
+setuptools ==59.5.0
+requests
+transformers
+tensorboardX
+gdown
+# avhubert
+fairseq >=0.10.2        # tested with 0.12.2
+opencv-python-headless  # headless works better for twcc
+# replai
+munch
+pytorchvideo

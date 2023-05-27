@@ -10,10 +10,23 @@ import torch
 import torch.nn as nn
 from torch.distributed import is_initialized
 from torch.nn.utils.rnn import pad_sequence
-from torch.utils.data import DataLoader, DistributedSampler
+from torch.utils.data import DataLoader, Dataset, DistributedSampler
 
 from .dataset import RandomDataset
 from .model import Model
+
+
+def get_ddp_sampler(dataset: Dataset, epoch: int):
+    """
+    This function will create a DistributedSampler if DDP is initialized,
+    and will just return None if DDP is not initialized.
+    """
+    if is_initialized():
+        sampler = DistributedSampler(dataset)
+        sampler.set_epoch(epoch)
+    else:
+        sampler = None
+    return sampler
 
 
 class DownstreamExpert(nn.Module):
@@ -22,9 +35,40 @@ class DownstreamExpert(nn.Module):
     eg. downstream forward, metric computation, contents to log
     """
 
-    def __init__(self, upstream_dim, downstream_expert, expdir, **kwargs):
+    def __init__(
+        self,
+        preprocess_audio,
+        preprocess_video,
+        upstream_dim,
+        downstream_expert,
+        expdir,
+        **kwargs,
+    ):
         """
+        Your dataset should take two preprocessing transform functions,
+        preprocess_audio and preprocess_video as input.
+
+        These two functions will be defined by the upstream models, and
+        will transform raw waveform & video frames into the desired
+        format of the upstream model.
+
+        They take two arguments, the input audio/video Tensor, and the
+        audio sample rate/video frame rate, respectively.
+
+        Optionally, if you wish to obtain raw data for testing purposes,
+        you may also specify these functions to be None, and return the
+        raw data when the functions are not defined.
         Args:
+            preprocess_audio: function
+                Defined by specified upstream model, transforms raw waveform into
+                desired input format.
+                Takes two arguments, input audio Tensor, and audio sample rate.
+
+            preprocess_video: function
+                Defined by specified upstream model, transforms raw video frames
+                into desired input format.
+                Takes two arguments, input video Tensor, and video frame rate.
+
             upstream_dim: int
                 Different upstream models will give different representation dimension
                 You might want to first project them to the same dimension
@@ -51,9 +95,15 @@ class DownstreamExpert(nn.Module):
         self.datarc = downstream_expert["datarc"]  # config for dataset
         self.modelrc = downstream_expert["modelrc"]  # config for model
 
-        self.train_dataset = RandomDataset(**self.datarc)
-        self.dev_dataset = RandomDataset(**self.datarc)
-        self.test_dataset = RandomDataset(**self.datarc)
+        self.train_dataset = RandomDataset(
+            preprocess_audio, preprocess_video, upstream=kwargs['upstream'], **self.datarc
+        )
+        self.dev_dataset = RandomDataset(
+            preprocess_audio, preprocess_video, upstream=kwargs['upstream'], **self.datarc
+        )
+        self.test_dataset = RandomDataset(
+            preprocess_audio, preprocess_video, upstream=kwargs['upstream'], **self.datarc
+        )
 
         self.connector = nn.Linear(upstream_dim, self.modelrc["input_dim"])
         self.model = Model(
@@ -88,8 +138,6 @@ class DownstreamExpert(nn.Module):
             return self._get_eval_dataloader(self.test_dataset)
 
     def _get_train_dataloader(self, dataset, epoch: int):
-        from s3prl.utility.data import get_ddp_sampler
-
         sampler = get_ddp_sampler(dataset, epoch)
         return DataLoader(
             dataset,
