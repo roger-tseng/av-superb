@@ -3,10 +3,13 @@ import csv
 import random
 import os
 
+# Get the video file name from raw data [Youtube ID, Start time, Label, split]
 def getFilename(l):
-    filename = "_".join([l[0],str(int(l[1])*1000),str(int(l[1])*1000+10000)+".flac"])
+    start_time = str(int(l[1]))
+    filename = "_".join([l[0], (6 - len(start_time)) * "0" + start_time + ".mp4"])
     return filename
 
+# Write train/dev/test csv file back
 def writecsv(datas, filepath):
     with open(filepath, 'w') as file:
         writer = csv.writer(file)
@@ -22,7 +25,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--csv",type=str,required=True,help='Path of original csv')
     parser.add_argument("--dest",type=str,required=True,help='Path for output csv directory')
-    parser.add_argument("--data",type=str,required=True,help='Path of audio dataset')
+    parser.add_argument("--data",type=str,required=True,help='Path of video dataset')
     parser.add_argument("--reduce_class",type=str,help='Reduced num of class')
 
 
@@ -36,88 +39,33 @@ if __name__ == '__main__':
     assert os.path.isdir(args.data), '\"' + args.data + '\" not found'
     assert os.path.isdir(args.dest), '\"' + args.dest + '\" not found'
 
-    data_folder = args.data
+    data_folder, dest_folder = args.data, args.dest
     if data_folder[-1] != "/":  data_folder += "/"
-
-    dest_folder = args.dest
     if dest_folder[-1] != "/":  dest_folder += "/"
 
-    datas = list([])
+    datas, train, valid, test = list(), list(), list(), list()
 
-    existing_data = [list([]) for i in range(num_classes)]
 
-    train = list([])
-    valid = list([])
-    test = list([])
-
-    with open(args.csv,"r") as csvfile:
-        datas = list(csv.reader(csvfile,delimiter=","))
+    with open(args.csv,"r") as csvfile:	datas = list(csv.reader(csvfile,delimiter=","))
 
     dictionary = dict([])
-    for data in datas:
-        dictionary[getFilename(data)] = data
+    for data in datas:	dictionary[getFilename(data)] = data
 
-    #existing_files = os.listdir(data_folder)
-    
-    #for filename in existing_files:
-    #    data = dictionary[filename]
-    #    if data[-1] == "test":
-    #        test.append(data)
-    #    else:
-    #        train.append(data)
 
     lsla = [i.split() for i in os.popen('ls {} -la'.format(data_folder)).read().split("\n")[1:-1]]
+    print("There're {} files in video directory".format(len(lsla)))
+
 
     for file in lsla:
-        filename = file[8]
-        filesize = int(file[4])
-        if filename == '.': continue
-        if filename == '..': continue
-        if filesize < 50000:   
-            continue
-        """
-        data = dictionary[filename]
-        if data[-1] == "test":
-            test.append(data)
-        else:
-            train.append(data)
-        """
-        data = dictionary[filename]
-        existing_data[int(data[2])].append(data)
+        filename, filesize = file[8], int(file[4])
+        if filename == '.' or filename == '..': continue
+        test.append(dictionary[filename]) if dictionary[filename][-1]=='test' else train.append(dictionary[filename])
 
-
-
-
-    print("starting split valid and train")
-
-
-    for i in range(num_classes):
-        random.shuffle(existing_data[i])
-
-    for i in range(chosen_class):
-        for j in range(len(existing_data[i])):
-            if j % 10 == 1:
-                valid.append(existing_data[i][j])
-            elif j % 10 == 2:
-                test.append(existing_data[i][j])
-            else:
-                train.append(existing_data[i][j])
-
-    random.shuffle(train)
-    random.shuffle(valid)
-    random.shuffle(test)
-
-    """
-    valid_index = sorted(random.sample(range(len(train)),len(train)//5),reverse=True)
-
-    for i in valid_index:
-        valid.append(train[i])
-        del train[i]
-    """
 
     print("train/valid/test csv length = {}/{}/{}".format(len(train),len(valid),len(test)))
 
-    print("writing train/valid/test csv")
+
+    print("Writing train/valid/test csv")
     writecsv(train, dest_folder + "vggsound_train.csv")
     writecsv(valid, dest_folder + "vggsound_dev.csv")
     writecsv(test, dest_folder + "vggsound_test.csv")

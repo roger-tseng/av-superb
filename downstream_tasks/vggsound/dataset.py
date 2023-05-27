@@ -64,38 +64,6 @@ class VggsoundDataset(Dataset):
 
     def __getitem__(self, idx):
 
-        # only audio part
-        """
-        filename = "_".join(
-                [
-                    self.data[idx][0],
-                    str(int(self.data[idx][1])*1000),
-                    str(int(self.data[idx][1])*1000+10000)+".flac"
-                ]
-        )
-        filepath = "/".join([self.vggsound_root,"data","vggsound","audio",filename])
-
-        flac, sr = torchaudio.load(filepath)    # sr = 48000
-        resampler = Resample(sr, SAMPLE_RATE)
-
-        flac = resampler(flac)
-        flac = flac.mean(dim=0).squeeze(0)
-        
-	label = int(self.data[idx][2])
-
-        return flac, label
-        """
-
-        # video part
-        # filename = "_".join(
-        #        [
-        #            self.data[idx][0],
-        #            str(int(self.data[idx][1])*1000),
-        #            str(int(self.data[idx][1])*1000+10000)+".mp4"
-        #        ]
-        # )
-        # filepath = "/".join([self.vggsound_root,"data","vggsound","video",filename])
-
         start_time = str(int(self.data[idx][1]))
         filename = "_".join(
             [self.data[idx][0], (6 - len(start_time)) * "0" + start_time + ".mp4"]
@@ -110,16 +78,12 @@ class VggsoundDataset(Dataset):
         wav = wav.mean(dim=0).squeeze(0)
 
         if self.preprocess_audio is not None:
-            #print("audio length before preprocess", wav.shape)
             processed_wav = self.preprocess_audio(wav, meta["audio_fps"])
-            #print("audio length after preprocess", processed_wav.shape)
         else:
             processed_wav = wav
 
         if self.preprocess_video is not None:
-            #print("video length before preprocess", frames.shape)
             processed_frames = self.preprocess_video(frames, meta["video_fps"])
-            #print("video length after preprocess", processed_frames.shape)
         else:
             processed_frames = frames
 
@@ -131,15 +95,6 @@ class VggsoundDataset(Dataset):
     # len of the dataset
     def __len__(self):
         return len(self.data)
-
-    """
-    def collate_fn(self, samples):
-        wavs, labels = [], []
-        for wav, label in samples:
-            wavs.append(wav)
-            labels.append(label)
-        return wavs, labels
-    """
 
     def collate_fn(self, samples):
         wavs, videos, labels = [], [], []
