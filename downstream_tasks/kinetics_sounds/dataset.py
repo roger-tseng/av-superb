@@ -77,48 +77,45 @@ class KineticsSoundsDataset(Dataset):
 
     def __getitem__(self, idx):
         path = os.path.join(self.kinetics_root, self.dataset[idx][0])
-
-        # You may use the following function to read video data:
-        frames, wav, meta = torchvision.io.read_video(path, pts_unit="sec", output_format="TCHW")
-        audio_sr, video_fps = meta.get('audio_fps'), meta.get('video_fps')
-
+        
         label = int(self.dataset[idx][1])
 
-        wav = wav.mean(dim=0).squeeze(0)
-
-        if wav.shape[0] == 0 and frames.shape[0] == 0:
-            self.logs_file.write("{0}, '{1}', {2}\n".format(path, frames.shape, video_fps))
-            self.logs_file.flush()
-            print("no data", path)
-
-        if wav.shape[0] == 0:
-            print("no audio", audio_sr)
-            audio_samples = random.randint(
-                MIN_SEC * AUDIO_SAMPLE_RATE, MAX_SEC * AUDIO_SAMPLE_RATE
-            )
-            wav = torch.zeros(audio_samples)
-            audio_sr = AUDIO_SAMPLE_RATE
-            # print(path)
-            # rand_idx = random.randint(0, len(self.dataset)-1)
-            # path = os.path.join(self.kinetics_root, self.dataset[rand_idx][0])
-            # frames, wav, meta = torchvision.io.read_video(path, pts_unit="sec", output_format="TCHW")
-            # label = int(self.dataset[rand_idx][1])
-            # wav = wav.mean(dim=0).squeeze(0)
-
-        if frames.shape[0] == 0:
-            print("no video", video_fps)
-            video_samples = random.randint(
-                MIN_SEC * VIDEO_FRAME_RATE, MAX_SEC * VIDEO_FRAME_RATE
-            )
-            frames = torch.zeros([video_samples, 3, random.randint(50, HEIGHT), random.randint(50, WIDTH)])
-            video_fps = VIDEO_FRAME_RATE
-        
         # Run preprocessing only if features are not precomputed
-        fname = path
-        feature_path = f"/work/u8090533/features/{self.upstream_name}/{fname.rsplit('/')[-1].rsplit('.')[0]}.pt"
+        feature_path = f"/work/u8090533/features/{self.upstream_name}/{path.rsplit('/')[-1].rsplit('.')[0]}.pt"
         if os.path.exists(feature_path):
             processed_wav, processed_frames = torch.load(feature_path)
         else:
+            # You may use the following function to read video data:
+            frames, wav, meta = torchvision.io.read_video(path, pts_unit="sec", output_format="TCHW")
+            audio_sr, video_fps = meta.get('audio_fps'), meta.get('video_fps')
+
+            wav = wav.mean(dim=0).squeeze(0)
+
+            # no audio && no video
+            if wav.shape[0] == 0 and frames.shape[0] == 0:
+                self.logs_file.write("{0}, '{1}', {2}\n".format(path, frames.shape, video_fps))
+                self.logs_file.flush()
+                print("no data", path)
+
+            # no audio
+            if wav.shape[0] == 0:
+                print("no audio", audio_sr)
+                audio_samples = random.randint(
+                    MIN_SEC * AUDIO_SAMPLE_RATE, MAX_SEC * AUDIO_SAMPLE_RATE
+                )
+                wav = torch.zeros(audio_samples)
+                audio_sr = AUDIO_SAMPLE_RATE
+
+            # no video
+            if frames.shape[0] == 0:
+                print("no video", video_fps)
+                video_samples = random.randint(
+                    MIN_SEC * VIDEO_FRAME_RATE, MAX_SEC * VIDEO_FRAME_RATE
+                )
+                frames = torch.zeros([video_samples, 3, random.randint(50, HEIGHT), random.randint(50, WIDTH)])
+                video_fps = VIDEO_FRAME_RATE
+
+            # preprocess
             if self.preprocess_audio is not None:
                 processed_wav = self.preprocess_audio(wav, audio_sr)
             else:
@@ -127,7 +124,8 @@ class KineticsSoundsDataset(Dataset):
                 processed_frames = self.preprocess_video(frames, video_fps)
             else:
                 processed_frames = frames
-            # Uncomment the next line
+            
+            # save
             torch.save([processed_wav, processed_frames], feature_path)
 
         return processed_wav, processed_frames, label
