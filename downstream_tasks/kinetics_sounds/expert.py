@@ -196,7 +196,8 @@ class DownstreamExpert(nn.Module):
                 a single scalar in torch.FloatTensor
         """
         features = pad_sequence(features, batch_first=True)
-        features = self.connector(features)
+        # upstream_dim for avhubert = 768
+        # features = self.connector(features) 
         predicted = self.model(features)
 
         utterance_labels = your_other_contents1
