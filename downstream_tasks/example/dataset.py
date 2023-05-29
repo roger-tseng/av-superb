@@ -51,23 +51,23 @@ class RandomDataset(Dataset):
         return self.audio_sample_rates[idx], self.video_frame_rates[idx]
 
     def __getitem__(self, idx):
-        length = random.randint(MIN_SEC, MAX_SEC)
-        audio_samples = length * AUDIO_SAMPLE_RATE
-        video_samples = length * VIDEO_FRAME_RATE
-        audio_sr, video_fps = self.get_rates(idx)
-        # You may use the following function to read video data:
-        # frames, wav = torchvision.io.read_video(path, pts_unit="sec", output_format="TCHW")
-        wav = torch.randn(audio_samples)
-        frames = torch.randn(
-            video_samples, 3, random.randint(50, HEIGHT), random.randint(50, WIDTH)
-        )
-
         # Run preprocessing only if features are not precomputed
         fname = "path to your video"
         feature_path = f"/work/b07901163/features/{self.upstream_name}/{fname.rsplit('/')[-1].rsplit('.')[0]}.pt"
         if os.path.exists(feature_path):
             processed_wav, processed_frames = torch.load(feature_path)
         else:
+            length = random.randint(MIN_SEC, MAX_SEC)
+            audio_samples = length * AUDIO_SAMPLE_RATE
+            video_samples = length * VIDEO_FRAME_RATE
+            audio_sr, video_fps = self.get_rates(idx)
+            # You may use the following function to read video data:
+            # frames, wav = torchvision.io.read_video(path, pts_unit="sec", output_format="TCHW")
+            wav = torch.randn(audio_samples)
+            frames = torch.randn(
+                video_samples, 3, random.randint(50, HEIGHT), random.randint(50, WIDTH)
+            )
+
             if self.preprocess_audio is not None:
                 processed_wav = self.preprocess_audio(wav, audio_sr)
             else:
