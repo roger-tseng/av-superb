@@ -12,7 +12,7 @@ import torchaudio.transforms as aT
 import torchvision
 from torch import Tensor
 from torch.nn.utils.rnn import pad_sequence
-from upstream_models.avbert.avbert.data import transform
+from .avbert.dataset import transform
 
 
 class UpstreamExpert(nn.Module):
