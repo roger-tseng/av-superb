@@ -37,6 +37,46 @@ class UpstreamExpert(nn.Module):
         self.video_frame_std = (0.225, 0.225, 0.225)
 
         # NOTE: Encoders should return (batch_size, seq_len, hidden_dims)
+    
+    def get_log_mel_spectrogram(
+        waveform,
+        audio_fps,
+        frequency,
+        time,
+    ):
+        """
+        Convert the input waveform to log-mel-scaled spectrogram.
+        args:
+            waveform (tensor): input waveform. The dimension is
+                `channel` x `time.`
+            `audio_fps` (int): sampling rate of `waveform`.
+            `frequency` (int): target frequecy dimension (number of mel bins).
+            `time` (int): target time dimension.
+        returns:
+            (tensor): log-mel-scaled spectrogram with dimension of
+                `channel` x `frequency` x `time`.
+        """
+        w = waveform.size(-1)
+        n_fft = 2 * (math.floor(w / time) + 1)
+        mel_spectrogram = torchaudio.transforms.MelSpectrogram(
+            audio_fps, n_fft=n_fft, n_mels=frequency,
+        )(waveform)
+        log_mel_spectrogram = torch.log(1e-6 + mel_spectrogram)
+        _nchannels, _frequency, _time = log_mel_spectrogram.size()
+        assert _frequency == frequency, \
+            f"frequency {_frequency} must be {frequency}"
+        if _time != time:
+            t = torch.zeros(
+                _nchannels,
+                frequency,
+                time,
+                dtype=log_mel_spectrogram.dtype,
+            )
+            min_time = min(time, _time)
+            t[:, :, :min_time] = log_mel_spectrogram[:, :, :min_time]
+            log_mel_spectrogram = t
+
+        return log_mel_spectrogram
 
     def preprocess_video(self, video, video_frame_rate):
         """
@@ -86,7 +126,7 @@ class UpstreamExpert(nn.Module):
         ratio = math.floor(audio.shape[-1] / (self.audio_sample_rate * 2)) + 1
 
         # Other preprocessing steps (e.g. trimming, transform to melspectrogram etc.)
-        log_mel_spectrogram = transform.get_log_mel_spectrogram(
+        log_mel_spectrogram = self.get_log_mel_spectrogram(
             audio,
             self.audio_sample_rate,
             self.audio_frequency,
