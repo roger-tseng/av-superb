@@ -31,8 +31,8 @@ classIndList = []
 with open("./config.yaml", "r") as file:
     config = yaml.safe_load(file)
 
-origin_base_path = config["dataset"]["origin_base_path"]
-preprocessed_base_path = config["dataset"]["preprocessed_base_path"]
+origin_base_path = config["dataset"]["base_path"] + "/UCF-101"
+preprocessed_base_path = config["dataset"]["base_path"] + "/UCF-101-VIDEO"
 
 subprocess.run(["mkdir", f"{preprocessed_base_path}"])
 subprocess.run(["mkdir", f"{preprocessed_base_path}/train"])

@@ -43,11 +43,25 @@ class Model(nn.Module):
                 nn.Dropout(self.dropout),
                 nn.Linear(hidden_dim, output_class_num),
             )
+
+        self.weight = nn.Linear(input_dim, 1)
+        self.linear = nn.Linear(input_dim, output_class_num)
+
+
     def forward(self, features):
-        out, _ = self.lstm(features)
 
-        out = out[:, -1, :]
+        # out, _ = self.lstm(features)
 
-        predicted = self.fc(out)
+        # out = out[:, -1, :]
+
+        # predicted = self.fc(out)
+
+        # weights = self.weight(features)
+
+        # pooled_features = torch.sum(features * weights, dim = 1)
+        
+        pooled_features = features.mean(dim = 1)
+
+        predicted = self.linear(pooled_features)
 
         return predicted

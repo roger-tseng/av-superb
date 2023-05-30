@@ -96,13 +96,13 @@ class DownstreamExpert(nn.Module):
         self.modelrc = downstream_expert["modelrc"]  # config for model
 
         self.train_dataset = UCF101Dataset(
-            "train", preprocess_audio, preprocess_video, **self.datarc
+            "train", preprocess_audio, preprocess_video, upstream = kwargs["upstream"], **self.datarc
         )
         self.dev_dataset = UCF101Dataset(
-            "dev", preprocess_audio, preprocess_video, **self.datarc
+            "dev", preprocess_audio, preprocess_video, upstream = kwargs["upstream"], **self.datarc
         )
         self.test_dataset = UCF101Dataset(
-            "test", preprocess_audio, preprocess_video, **self.datarc
+            "test", preprocess_audio, preprocess_video, upstream = kwargs["upstream"], **self.datarc
         )
 
         self.connector = nn.Linear(upstream_dim, self.modelrc["input_dim"])
@@ -196,7 +196,7 @@ class DownstreamExpert(nn.Module):
                 a single scalar in torch.FloatTensor
         """
         features = pad_sequence(features, batch_first=True)
-        features = self.connector(features)
+        # features = self.connector(features)
         predicted = self.model(features)
 
         utterance_labels = your_other_contents1

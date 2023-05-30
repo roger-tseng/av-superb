@@ -11,7 +11,7 @@ import torchvision
 from torch.utils.data.dataset import Dataset
 
 # Example parameters
-AUDIO_SAMPLE_RATE = 16000
+AUDIO_SAMPLE_RATE = 44100
 VIDEO_FRAME_RATE = 25
 
 
@@ -43,11 +43,12 @@ class UCF101Dataset(Dataset):
         self.class_num = class_num
         self.split = split
         self.base_path = base_path
-        self.video_list = os.listdir(f"{base_path}/{split}")
+        self.video_list = os.listdir(f"{base_path}/UCF-101-VIDEO/{split}")
         self.audio_sample_rates = [AUDIO_SAMPLE_RATE] * len(self)
         self.video_frame_rates = [VIDEO_FRAME_RATE] * len(self)
         self.preprocess_audio = preprocess_audio
         self.preprocess_video = preprocess_video
+        self.upstream_name = kwargs["upstream"]
 
     def get_rates(self, idx):
         """
@@ -61,18 +62,19 @@ class UCF101Dataset(Dataset):
 
         # You may use the following function to read video data:
         video_name = self.video_list[idx]
-        video_path = os.path.join(self.base_path, self.split, video_name)
-        frames, wav, _ = torchvision.io.read_video(
-            video_path, pts_unit="sec", output_format="TCHW"
-        )
-        frames = frames.float()
-        wav = wav.mean(dim=0).squeeze(0)
+        video_path = os.path.join(self.base_path, "UCF-101-VIDEO", self.split, video_name)
 
         # Run preprocessing only if features are not precomputed
-        feature_path = f"/work/b07901163/features/{self.upstream_name}/{video_path.rsplit('/')[-1].rsplit('.')[0]}.pt"
+        feature_path = f"{self.base_path}/features/{self.upstream_name}/{video_path.rsplit('/')[-1].rsplit('.')[0]}.pt"
         if os.path.exists(feature_path):
             processed_wav, processed_frames = torch.load(feature_path)
         else:
+            frames, wav, _ = torchvision.io.read_video(
+                video_path, pts_unit="sec", output_format="TCHW"
+            )
+            frames = frames.float()
+            wav = wav.mean(dim=0).squeeze(0)
+
             if self.preprocess_audio is not None:
                 processed_wav = self.preprocess_audio(wav, audio_sr)
             else:
