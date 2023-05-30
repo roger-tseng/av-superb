@@ -12,7 +12,6 @@ import torchaudio.transforms as aT
 import torchvision
 from torch import Tensor
 from torch.nn.utils.rnn import pad_sequence
-from .avbert.dataset import transform
 
 
 class UpstreamExpert(nn.Module):
@@ -39,6 +38,7 @@ class UpstreamExpert(nn.Module):
         # NOTE: Encoders should return (batch_size, seq_len, hidden_dims)
     
     def get_log_mel_spectrogram(
+        self,
         waveform,
         audio_fps,
         frequency,
@@ -118,6 +118,8 @@ class UpstreamExpert(nn.Module):
         audio: (audio_channels, audio_length), where audio_channels is usually 1 or 2
         """
         # Resample audio
+        if len(audio.shape) == 1:
+            audio = audio.unsqueeze(0)
         if audio_sample_rate != self.audio_sample_rate:
             audio = torchaudio.functional.resample(
                 audio, audio_sample_rate, self.audio_sample_rate
@@ -145,8 +147,6 @@ class UpstreamExpert(nn.Module):
                 in your input format
         """
         audio, video = zip(*source)
-
-        print(audio.shape, video.shape)
 
         # Collate audio and video into batch
         audios = pad_sequence(audio, batch_first=True)
