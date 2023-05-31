@@ -2,8 +2,8 @@
 Custom class for loading audio-visual data
 Modified from https://github.com/s3prl/s3prl/blob/main/s3prl/downstream/example/dataset.py
 """
-import random
 import os
+import random
 
 import torch
 import torch.nn as nn
@@ -41,7 +41,7 @@ class RandomDataset(Dataset):
         self.video_frame_rates = [VIDEO_FRAME_RATE] * len(self)
         self.preprocess_audio = preprocess_audio
         self.preprocess_video = preprocess_video
-        self.upstream_name = kwargs['upstream']
+        self.upstream_name = kwargs["upstream"]
 
     def get_rates(self, idx):
         """

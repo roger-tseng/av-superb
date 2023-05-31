@@ -9,7 +9,13 @@ import torch.nn as nn
 from sklearn.metrics import average_precision_score
 from torch.distributed import is_initialized
 from torch.nn.utils.rnn import pad_sequence
-from torch.utils.data import DataLoader, Dataset, DistributedSampler, WeightedRandomSampler
+from torch.utils.data import (
+    DataLoader,
+    Dataset,
+    DistributedSampler,
+    WeightedRandomSampler,
+)
+
 from .dataset import AudiosetDataset
 from .model import Model
 
@@ -79,14 +85,13 @@ class DownstreamExpert(nn.Module):
         self.upstream_dim = upstream_dim
         self.datarc = downstream_expert["datarc"]
         self.modelrc = downstream_expert["modelrc"]
-        
-        
+
         self.train_dataset = AudiosetDataset(
             csvname="audioset_train.csv",
             audioset_root=self.datarc["train_root"],
             preprocess_audio=preprocess_audio,
             preprocess_video=preprocess_video,
-            upstream=kwargs['upstream'],
+            upstream=kwargs["upstream"],
             **self.datarc,
         )
 
@@ -95,7 +100,7 @@ class DownstreamExpert(nn.Module):
             audioset_root=self.datarc["train_root"],
             preprocess_audio=preprocess_audio,
             preprocess_video=preprocess_video,
-            upstream=kwargs['upstream'],
+            upstream=kwargs["upstream"],
             **self.datarc,
         )
         self.test_dataset = AudiosetDataset(
@@ -103,18 +108,20 @@ class DownstreamExpert(nn.Module):
             audioset_root=self.datarc["test_root"],
             preprocess_audio=preprocess_audio,
             preprocess_video=preprocess_video,
-            upstream=kwargs['upstream'],
+            upstream=kwargs["upstream"],
             **self.datarc,
         )
 
-        #self.connector = nn.Linear(upstream_dim, self.modelrc["input_dim"])
+        # self.connector = nn.Linear(upstream_dim, self.modelrc["input_dim"])
 
         self.model = Model(
-            input_dim=upstream_dim, output_class_num=self.train_dataset.class_num, **self.modelrc
+            input_dim=upstream_dim,
+            output_class_num=self.train_dataset.class_num,
+            **self.modelrc,
         )
         # self.objective = nn.CrossEntropyLoss()
         # self.objective = nn.MultiLabelSoftMarginLoss()
-        #self.objective = nn.BCELoss()
+        # self.objective = nn.BCELoss()
         self.objective = nn.BCEWithLogitsLoss()
         self.register_buffer("best_score", torch.zeros(1))
         # for mAP
@@ -131,13 +138,15 @@ class DownstreamExpert(nn.Module):
             return self._get_eval_dataloader(self.test_dataset)
 
     def _get_train_dataloader(self, dataset, epoch: int):
-        csvname="audioset_train_weight.csv"
-        csvpath = "/".join([self.datarc['csv_root'], csvname])
-        train_samples_weight = np.loadtxt(csvpath, delimiter=',')
-        print('train_weight[0]=',train_samples_weight[0])
-        print('train_weight[1]=',train_samples_weight[1])
-        sampler = WeightedRandomSampler(train_samples_weight, len(train_samples_weight), replacement=True)
-        #sampler = get_ddp_sampler(dataset, epoch)
+        csvname = "audioset_train_weight.csv"
+        csvpath = "/".join([self.datarc["csv_root"], csvname])
+        train_samples_weight = np.loadtxt(csvpath, delimiter=",")
+        print("train_weight[0]=", train_samples_weight[0])
+        print("train_weight[1]=", train_samples_weight[1])
+        sampler = WeightedRandomSampler(
+            train_samples_weight, len(train_samples_weight), replacement=True
+        )
+        # sampler = get_ddp_sampler(dataset, epoch)
         return DataLoader(
             dataset,
             batch_size=self.datarc["train_batch_size"],
@@ -195,7 +204,7 @@ class DownstreamExpert(nn.Module):
                 a single scalar in torch.FloatTensor
         """
         features = pad_sequence(features, batch_first=True)
-        #features = self.connector(features)
+        # features = self.connector(features)
         predicted = self.model(features)
 
         utterance_labels = your_other_contents1

@@ -1,6 +1,7 @@
-#ref:https://github.com/YuanGongND/psla/blob/main/src/gen_weight_file.py
+# ref:https://github.com/YuanGongND/psla/blob/main/src/gen_weight_file.py
 import argparse
 import csv
+
 import numpy as np
 
 parser = argparse.ArgumentParser()
@@ -10,10 +11,10 @@ parser.add_argument(
 )
 parser.add_argument("--split", type=str, required=True, help="Train or test")
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = parser.parse_args()
 
-    num_class = 527 
+    num_class = 527
     label_count = np.zeros(num_class)
 
     datas = list([])
@@ -36,6 +37,6 @@ if __name__ == '__main__':
     dest_folder = args.dest
     if dest_folder[-1] != "/":
         dest_folder += "/"
-    np.savetxt(dest_folder+f'audioset_{args.split}_weight.csv', sample_weight, delimiter=',')
-
-
+    np.savetxt(
+        dest_folder + f"audioset_{args.split}_weight.csv", sample_weight, delimiter=","
+    )

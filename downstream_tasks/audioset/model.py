@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 
-
 # class Model(nn.Module):
 #     def __init__(
 #         self, input_dim, hidden_dim, hidden_layers, output_class_num, **kwargs
@@ -38,6 +37,7 @@ import torch.nn as nn
 #         out = out[:, -1, :]
 
 #         predicted = self.fc(out)
+
 
 #         return predicted
 class Model(nn.Module):

@@ -14,7 +14,6 @@ from scipy import signal
 from torch.utils.data.dataset import Dataset
 from torchaudio.transforms import Resample
 
-
 """
 SAMPLE_RATE = 16000
 EXAMPLE_WAV_MIN_SEC = 5
@@ -37,7 +36,7 @@ class AudiosetDataset(Dataset):
         audioset_root,
         preprocess_audio=None,
         preprocess_video=None,
-        **kwargs
+        **kwargs,
     ):
         self.audioset_root = audioset_root
         self.class_num = 527
@@ -48,9 +47,9 @@ class AudiosetDataset(Dataset):
 
         self.preprocess_audio = preprocess_audio
         self.preprocess_video = preprocess_video
-        self.upstream_name = kwargs['upstream']
-        #print("dataset length:", len(self.data))
-        #print("data example:", self.data[0])
+        self.upstream_name = kwargs["upstream"]
+        # print("dataset length:", len(self.data))
+        # print("data example:", self.data[0])
 
     def get_rates(self, idx):
         return SAMPLE_RATE, VIDEO_FRAME_RATE
@@ -93,7 +92,11 @@ class AudiosetDataset(Dataset):
         return flac, labels
         """
         # video part
-        filename = "_".join([self.data[idx][0] + ".mp4",])
+        filename = "_".join(
+            [
+                self.data[idx][0] + ".mp4",
+            ]
+        )
         filepath = "/".join([self.audioset_root, filename])
 
         frames, wav, meta = torchvision.io.read_video(
@@ -107,7 +110,7 @@ class AudiosetDataset(Dataset):
         feature_path = f"/work/u7196393/features/{self.upstream_name}/{filepath.rsplit('/')[-1].rsplit('.')[0]}.pt"
         if os.path.exists(feature_path):
             processed_wav, processed_frames = torch.load(feature_path)
-        else:    
+        else:
             if self.preprocess_audio is not None:
                 processed_wav = self.preprocess_audio(wav, SAMPLE_RATE)
             else:

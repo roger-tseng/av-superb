@@ -123,7 +123,7 @@ class UpstreamExpert(nn.Module):
         """
         if len(audio.shape) == 2:
             audio = audio.mean(dim=0)
-        
+
         _audio_length_sec = len(audio) / audio_sample_rate
         num_temporal_frames = int(_audio_length_sec / 2.0 * 128)
         _audio_transform = build_transforms(

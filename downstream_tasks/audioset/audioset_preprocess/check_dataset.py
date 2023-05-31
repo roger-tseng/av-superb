@@ -22,7 +22,6 @@ def writecsv(datas, filepath):
 
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--split", type=str, required=True, help="Train or test")
     parser.add_argument("--csv", type=str, required=True, help="Path of original csv")
