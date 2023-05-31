@@ -12,7 +12,7 @@ import torchaudio.transforms as aT
 import torchvision
 from torch import Tensor
 from torch.nn.utils.rnn import pad_sequence
-from .avbert.config import get_cfg
+from .avbert.config import get_audio_cfg, get_multi_cfg, get_video_cfg
 from .avbert.models.video_model_builder import ResNet
 from .avbert.models.audio_model_builder import AudioResNet
 from .avbert.models.avbert import AVBert
@@ -41,9 +41,11 @@ class UpstreamExpert(nn.Module):
 
         # NOTE: Encoders should return (batch_size, seq_len, hidden_dims)
 
-        cfg = get_cfg()
+        cfg = get_video_cfg()
         self.video_encoder = ResNet(cfg)
+        cfg = get_audio_cfg()
         self.audio_encoder = AudioResNet(cfg)
+        cfg = get_multi_cfg()
         self.multi_encoder = AVBert(cfg)
     
     def get_log_mel_spectrogram(

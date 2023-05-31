@@ -523,10 +523,41 @@ _C.DATA_LOADER.NUM_WORKERS = 16
 _C.DATA_LOADER.PIN_MEMORY = True
 
 
-def get_cfg():
+def get_video_cfg():
     """
     Get a copy of the default config.
     """
     config = _C.clone()
+    config.MODEL.TASK = "VisualClassify"
+    config.MODEL.DOWNSTREAM_FUSION = "late"
+    config.MODEL.DROPOUT_RATE = 0.5
+    config.MODEL.POOLING = False
+    config.MODEL.USE_TRANSFORMER = False
+
+    return config
+
+def get_audio_cfg():
+    """
+    Get a copy of the default config.
+    """
+    config = _C.clone()
+    config.MODEL.TASK = "AudioClassify"
+    config.MODEL.DOWNSTREAM_FUSION = "late"
+    config.MODEL.DROPOUT_RATE = 0.1
+    config.MODEL.POOLING = True
+    config.MODEL.USE_TRANSFORMER = False
+
+    return config
+
+def get_multi_cfg():
+    """
+    Get a copy of the default config.
+    """
+    config = _C.clone()
+    config.MODEL.TASK = "MultimodalSequenceClassify"
+    config.MODEL.DOWNSTREAM_FUSION = "concat"
+    config.MODEL.DROPOUT_RATE = 0.5
+    config.MODEL.POOLING = True
+    config.MODEL.USE_TRANSFORMER = True
 
     return config
