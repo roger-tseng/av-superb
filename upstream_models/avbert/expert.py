@@ -12,6 +12,7 @@ import torchaudio.transforms as aT
 import torchvision
 from torch import Tensor
 from torch.nn.utils.rnn import pad_sequence
+from .avbert.utils import checkpoint as cu
 from .avbert.config import get_audio_cfg, get_multi_cfg, get_video_cfg
 from .avbert.models.video_model_builder import ResNet
 from .avbert.models.audio_model_builder import AudioResNet
@@ -47,6 +48,28 @@ class UpstreamExpert(nn.Module):
         self.audio_encoder = AudioResNet(cfg)
         cfg = get_multi_cfg()
         self.multi_encoder = AVBert(cfg)
+
+        checkpoint = torch.load(
+            ckpt, map_location='cpu'
+        )
+        cu.load_finetune_checkpoint(
+            self.video_encoder,
+            checkpoint['state_dict'],
+            cfg.NUM_GPUS > 1,
+            cfg.MODEL.USE_TRANSFORMER,
+        )
+        cu.load_finetune_checkpoint(
+            self.audio_encoder,
+            checkpoint['state_dict'],
+            cfg.NUM_GPUS > 1,
+            cfg.MODEL.USE_TRANSFORMER,
+        )
+        cu.load_finetune_checkpoint(
+            self.multi_encoder,
+            checkpoint['state_dict'],
+            cfg.NUM_GPUS > 1,
+            cfg.MODEL.USE_TRANSFORMER,
+        )
     
     def get_log_mel_spectrogram(
         self,
@@ -100,6 +123,8 @@ class UpstreamExpert(nn.Module):
             resized_frame = torchvision.transforms.functional.resize(
                 frame, self.video_frame_size, antialias=False
             )
+            resized_frame = resized_frame.float()
+            resized_frame = resized_frame / 255.0
             normalized_frame = torchvision.transforms.functional.normalize(
                 resized_frame, self.video_frame_mean, self.video_frame_std
             )
@@ -121,6 +146,8 @@ class UpstreamExpert(nn.Module):
         video = video[idxs]
 
         # Other preprocessing steps (i.e. cropping, flipping, etc.)
+        video = video.transpose(0, 1).contiguous()
+
         return video
 
     def preprocess_audio(self, audio, audio_sample_rate):
@@ -165,15 +192,17 @@ class UpstreamExpert(nn.Module):
 
         # Run through audio and video encoders
         audio_feats = self.audio_encoder.get_feature_map(audios)
-        video_feats = self.video_encoder.get_feature_map(videos)
+        print(audio_feats.shape)
+        video_feats = self.video_encoder.get_feature_map([videos])[0]
+        print(video_feats.shape)
 
-        conv_outputs, single_outputs, multi_output = self.avbert(
+        conv_outputs, single_outputs, multi_output = self.multi_encoder(
             visual_seq=videos, audio_seq=audios
         )
         fusion_feats = (conv_outputs[0], conv_outputs[1], multi_output)
         fusion_feats = (
-            self.avbert.visual_conv.head(fusion_feats[0]),
-            self.avbert.audio_conv.head(fusion_feats[1]),
+            self.multi_encoder.visual_conv.head(fusion_feats[0]),
+            self.multi_encoder.audio_conv.head(fusion_feats[1]),
             fusion_feats[2],
         )
 
