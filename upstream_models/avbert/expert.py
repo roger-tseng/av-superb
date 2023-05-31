@@ -36,7 +36,7 @@ class UpstreamExpert(nn.Module):
         self.audio_time = 128
 
         self.video_frame_size = (128, 128)
-        self.video_frame_rate = 16
+        self.video_frame_rate = 30
         self.video_frame_mean = (0.45, 0.45, 0.45)
         self.video_frame_std = (0.225, 0.225, 0.225)
 
@@ -196,15 +196,15 @@ class UpstreamExpert(nn.Module):
         video_feats = self.video_encoder.get_feature_map([videos])[0]
         print(video_feats.shape)
 
-        conv_outputs, single_outputs, multi_output = self.multi_encoder(
-            visual_seq=videos, audio_seq=audios
-        )
-        fusion_feats = (conv_outputs[0], conv_outputs[1], multi_output)
-        fusion_feats = (
-            self.multi_encoder.visual_conv.head(fusion_feats[0]),
-            self.multi_encoder.audio_conv.head(fusion_feats[1]),
-            fusion_feats[2],
-        )
+        #conv_outputs, single_outputs, multi_output = self.multi_encoder(
+        #    visual_seq=videos, audio_seq=audios
+        #)
+        #fusion_feats = (conv_outputs[0], conv_outputs[1], multi_output)
+        #fusion_feats = (
+        #    self.multi_encoder.visual_conv.head(fusion_feats[0]),
+        #    self.multi_encoder.audio_conv.head(fusion_feats[1]),
+        #    fusion_feats[2],
+        #)
 
         # Return intermediate layer representations for potential layer-wise experiments
         # Dict should contain three items, with keys as listed below:
@@ -215,5 +215,5 @@ class UpstreamExpert(nn.Module):
         return {
             "video_feats": [video_feats],
             "audio_feats": [audio_feats],
-            "fusion_feats": [fusion_feats],
+            "fusion_feats": [],
         }
