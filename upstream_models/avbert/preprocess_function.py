@@ -37,14 +37,10 @@ def get_visual_clip(
         end_idx,
         video_num_frames,
     )
-
     # Convert frames of the uint type in the range [0, 255] to
     # a torch.FloatTensor in the range [0.0, 1.0]
     clip = clip.float()
     clip = clip / 255.0
-
-    # T H W C -> T C H W
-    clip = clip.permute(0, 3, 1, 2)
 
     # Visual transformations.
     clip = apply_visual_transform(
@@ -59,7 +55,6 @@ def get_visual_clip(
     return clip
 
 def apply_visual_transform(
-    cfg,
     frames,
     spatial_idx,
     crop_size = 128,

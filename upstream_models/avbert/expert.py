@@ -42,7 +42,7 @@ class UpstreamExpert(nn.Module):
         self.video_frame_rate = 30
         self.video_num_frames = 32
         self.video_temporal_samples = 10
-        self.video_spatial_samples = 10
+        self.video_spatial_samples = 3
 
         # NOTE: Encoders should return (batch_size, seq_len, hidden_dims)
         
@@ -107,7 +107,7 @@ class UpstreamExpert(nn.Module):
                 )
                 visual_clips.append(visual_clip)
 
-        visual_clip = torch.stack(visual_clip)
+        visual_clips = torch.stack(visual_clips)
 
         return visual_clips
 
@@ -163,13 +163,22 @@ class UpstreamExpert(nn.Module):
         audios = pad_sequence(audio, batch_first=True)
         videos = torch.stack(video)
 
-        print(audios[0].shape, videos[0].shape)
-
         # Run through audio and video encoders
-        audio_feats = self.audio_encoder.get_feature_map(audios)
-        print(audio_feats.shape)
-        video_feats = self.video_encoder.get_feature_map([videos])[0]
-        print(video_feats.shape)
+        audios = audios.transpose(0, 1).contiguous()
+        videos = videos.transpose(0, 1).contiguous()
+        audio_feats = []
+        video_feats = []
+        for i in range(audios.shape[0]):
+            audio_feats.append(self.audio_encoder.get_feature_map(audios[i]))
+        for i in range(videos.shape[0]):
+            video_feats.append(self.video_encoder.get_feature_map([videos[i]])[0])
+
+        audio_feats = torch.cat(audio_feats, 3)
+        video_feats = torch.cat(video_feats, 2)
+        audio_feats = audio_feats.permute(0, 3, 1, 2)
+        video_feats = video_feats.permute(0, 2, 1, 3, 4)
+        audio_feats = audio_feats.reshape(audio_feats.shape[0], audio_feats.shape[1], audio_feats.shape[2] * audio_feats.shape[3])
+        video_feats = video_feats.reshape(video_feats.shape[0], video_feats.shape[1], video_feats.shape[2] * video_feats.shape[3] * video_feats.shape[4])
 
         # conv_outputs, single_outputs, multi_output = self.multi_encoder(
         #     visual_seq=videos, audio_seq=audios
