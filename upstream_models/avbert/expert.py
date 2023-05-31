@@ -12,6 +12,10 @@ import torchaudio.transforms as aT
 import torchvision
 from torch import Tensor
 from torch.nn.utils.rnn import pad_sequence
+from .avbert.config import get_cfg
+from .avbert.models.video_model_builder import ResNet
+from .avbert.models.audio_model_builder import AudioResNet
+from .avbert.models.avbert import AVBert
 
 
 class UpstreamExpert(nn.Module):
@@ -36,6 +40,11 @@ class UpstreamExpert(nn.Module):
         self.video_frame_std = (0.225, 0.225, 0.225)
 
         # NOTE: Encoders should return (batch_size, seq_len, hidden_dims)
+
+        cfg = get_cfg()
+        self.video_encoder = ResNet(cfg)
+        self.audio_encoder = AudioResNet(cfg)
+        self.multi_encoder = AVBert(cfg)
     
     def get_log_mel_spectrogram(
         self,
@@ -153,12 +162,18 @@ class UpstreamExpert(nn.Module):
         videos = torch.stack(video)
 
         # Run through audio and video encoders
-        audio_feats = self.audio_encoder(audios)
-        video_feats = self.video_encoder(videos)
+        audio_feats = self.audio_encoder.get_feature_map(audios)
+        video_feats = self.video_encoder.get_feature_map(videos)
 
-        layer1 = self.model1(torch.cat((audio_feats, video_feats), dim=-1))
-
-        layer2 = self.model2(layer1)
+        conv_outputs, single_outputs, multi_output = self.avbert(
+            visual_seq=videos, audio_seq=audios
+        )
+        fusion_feats = (conv_outputs[0], conv_outputs[1], multi_output)
+        fusion_feats = (
+            self.avbert.visual_conv.head(fusion_feats[0]),
+            self.avbert.audio_conv.head(fusion_feats[1]),
+            fusion_feats[2],
+        )
 
         # Return intermediate layer representations for potential layer-wise experiments
         # Dict should contain three items, with keys as listed below:
@@ -169,5 +184,5 @@ class UpstreamExpert(nn.Module):
         return {
             "video_feats": [video_feats],
             "audio_feats": [audio_feats],
-            "fusion_feats": [layer1, layer2],
+            "fusion_feats": [fusion_feats],
         }
