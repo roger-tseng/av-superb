@@ -11,10 +11,10 @@ import torch
 import torch.nn as nn
 from io import open
 
-from models.bert import (ACT2FN, BaseConfig, prune_linear_layer,
+from .bert import (ACT2FN, BaseConfig, prune_linear_layer,
                          BertEmbeddings, BertSelfAttention, BaseModel)
 
-from models.factor_linear import FactorLinear
+from .factor_linear import FactorLinear
 
 
 class AlbertConfig(BaseConfig):

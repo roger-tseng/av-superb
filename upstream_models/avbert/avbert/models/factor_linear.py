@@ -2,9 +2,9 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
-from models.expRNN.orthogonal import Orthogonal
-from models.expRNN.initialization import henaff_init_, cayley_init_
-from models.expRNN.trivializations import cayley_map, expm
+from .expRNN.orthogonal import Orthogonal
+from .expRNN.initialization import henaff_init_, cayley_init_
+from .expRNN.trivializations import cayley_map, expm
 
 
 class FactorLinear(nn.Module):

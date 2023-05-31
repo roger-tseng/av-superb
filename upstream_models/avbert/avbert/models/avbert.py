@@ -4,14 +4,14 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from models.build import MODEL_REGISTRY
-from models.encoding_helper import SummaryEncoding
-from models.bert import (
+from .build import MODEL_REGISTRY
+from .encoding_helper import SummaryEncoding
+from .bert import (
     BertConfig,
     BertEmbeddings,
     Bert
 )
-from models.albert import (
+from .albert import (
     AlbertConfig,
     AlbertEmbeddings,
     Albert

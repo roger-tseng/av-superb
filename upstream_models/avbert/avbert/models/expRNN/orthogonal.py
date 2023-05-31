@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from models.expRNN.parametrization import Parametrization
+from .parametrization import Parametrization
 
 
 class Orthogonal(Parametrization):

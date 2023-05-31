@@ -4,12 +4,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from models.head_helper import ResNetBasicHead as VisualHead
-from models.audio_head_helper import ResNetBasicHead as AudioHead
-from models.video_model_builder import _POOL1
+from .head_helper import ResNetBasicHead as VisualHead
+from .audio_head_helper import ResNetBasicHead as AudioHead
+from .video_model_builder import _POOL1
 from utils.weight_init_helper import init_weights
-from models.build import MODEL_REGISTRY
-from models.avbert import AVBert
+from .build import MODEL_REGISTRY
+from .avbert import AVBert
 
 
 def get_visual_dim_in(

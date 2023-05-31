@@ -1,6 +1,6 @@
 import torch
 
-from models.expRNN.expm32 import expm32, differential
+from .expm32 import expm32, differential
 
 def cayley_map(X):
     n = X.size(0)

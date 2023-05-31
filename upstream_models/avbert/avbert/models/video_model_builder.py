@@ -4,8 +4,8 @@ import torch
 import torch.nn as nn
 import math
 
-from models import head_helper, resnet_helper, stem_helper
-from models.build import MODEL_REGISTRY
+from . import head_helper, resnet_helper, stem_helper
+from .build import MODEL_REGISTRY
 
 # Number of blocks for different stages given the model depth.
 _MODEL_STAGE_DEPTH = {18: (2, 2, 2, 2), 34: (3, 4, 6, 3), 50: (3, 4, 6, 3), 101: (3, 4, 23, 3)}

@@ -10,7 +10,7 @@ from io import open
 import torch
 from torch import nn
 
-from models.factor_linear import FactorLinear
+from .factor_linear import FactorLinear
 
 
 def gelu(x):
