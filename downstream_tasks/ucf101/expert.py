@@ -105,7 +105,7 @@ class DownstreamExpert(nn.Module):
             "test", preprocess_audio, preprocess_video, upstream = kwargs["upstream"], **self.datarc
         )
 
-        self.connector = nn.Linear(upstream_dim, self.modelrc["input_dim"])
+        # self.connector = nn.Linear(upstream_dim, self.modelrc["input_dim"])
         self.model = Model(
             output_class_num=self.train_dataset.class_num, input_dim=upstream_dim, **self.modelrc
         )
