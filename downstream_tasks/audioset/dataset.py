@@ -14,7 +14,6 @@ from scipy import signal
 from torch.utils.data.dataset import Dataset
 from torchaudio.transforms import Resample
 
-from .myutils import *
 
 """
 SAMPLE_RATE = 16000
@@ -24,8 +23,8 @@ EXAMPLE_DATASET_SIZE = 200
 """
 
 
-SAMPLE_RATE = 16000
-VIDEO_FRAME_RATE = 25
+SAMPLE_RATE = 44100
+VIDEO_FRAME_RATE = 30
 SEC = 10
 HEIGHT = 224
 WIDTH = 224
@@ -49,8 +48,9 @@ class AudiosetDataset(Dataset):
 
         self.preprocess_audio = preprocess_audio
         self.preprocess_video = preprocess_video
-        print("dataset length:", len(self.data))
-        print("data example:", self.data[0])
+        self.upstream_name = kwargs['upstream']
+        #print("dataset length:", len(self.data))
+        #print("data example:", self.data[0])
 
     def get_rates(self, idx):
         return SAMPLE_RATE, VIDEO_FRAME_RATE
@@ -93,11 +93,7 @@ class AudiosetDataset(Dataset):
         return flac, labels
         """
         # video part
-        filename = "_".join(
-            [
-                self.data[idx][0] + ".mp4",
-            ]
-        )
+        filename = "_".join([self.data[idx][0] + ".mp4",])
         filepath = "/".join([self.audioset_root, filename])
 
         frames, wav, meta = torchvision.io.read_video(
@@ -108,16 +104,20 @@ class AudiosetDataset(Dataset):
         wav = wav.mean(dim=0).squeeze(0)
 
         # print(type(frames)) ; print(frames.size()) ; print(frames)
+        feature_path = f"/work/u7196393/features/{self.upstream_name}/{filepath.rsplit('/')[-1].rsplit('.')[0]}.pt"
+        if os.path.exists(feature_path):
+            processed_wav, processed_frames = torch.load(feature_path)
+        else:    
+            if self.preprocess_audio is not None:
+                processed_wav = self.preprocess_audio(wav, SAMPLE_RATE)
+            else:
+                processed_wav = wav
 
-        if self.preprocess_audio is not None:
-            processed_wav = self.preprocess_audio(wav, SAMPLE_RATE)
-        else:
-            processed_wav = wav
-
-        if self.preprocess_video is not None:
-            processed_frames = self.preprocess_video(frames, VIDEO_FRAME_RATE)
-        else:
-            processed_frames = frames
+            if self.preprocess_video is not None:
+                processed_frames = self.preprocess_video(frames, VIDEO_FRAME_RATE)
+            else:
+                processed_frames = frames
+            torch.save([processed_wav, processed_frames], feature_path)
 
         # label
         origin_labels = [int(i) for i in self.data[idx][3:]]

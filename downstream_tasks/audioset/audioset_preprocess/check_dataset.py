@@ -92,8 +92,8 @@ if __name__ == "__main__":
     random.seed(324)
     random.shuffle(train)
     if args.split == "train":
-        train_len = int(0.9 * len(train))
-        valid_len = int(0.1 * len(train))
+        train_len = int(1.0 * len(train))
+        valid_len = int(0 * len(train))
         test_len = int(0 * len(train))
         test = train[valid_len + train_len :]
         valid = train[train_len : train_len + valid_len]

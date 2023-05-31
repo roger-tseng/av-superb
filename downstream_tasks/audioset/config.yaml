@@ -1,38 +1,39 @@
 runner:
   total_steps: 20000
   gradient_clipping: 1
-  gradient_accumulate_steps: 1
+  gradient_accumulate_steps: 10
 
   log_step: 20
   eval_step: 1000
   save_step: 1000
-  max_keep: 1
+  max_keep: 20
   eval_dataloaders:
-    - dev
+   #- dev
     - test
 
 optimizer:
   name: AdamW
-  lr: 2.0e-4
+  lr: 1.0e-3
 
 
 # comment the whole scheduler config block
 # # to disable learning rate scheduling
-scheduler:
-  name: linear_schedule_with_warmup
-  num_warmup_steps: 1400
+#scheduler:
+#  name: linear_schedule_with_warmup
+#  num_warmup_steps: 1400
 
 downstream_expert:
   datarc:
-    csv_root: "/work/u3933430/testAudioset/csv"
-    train_root: "/work/u3933430/testAudioset/data/balanced_train/video_mp4_288p"
-    test_root: "/work/u3933430/testAudioset/data/eval/video_mp4_288p"
-    num_workers: 2
-    train_batch_size: 16
-    eval_batch_size: 16
-    threshold: 0.5
+    csv_root: "/work/u7196393/testAudioset/csv"
+    train_root: "/work/u7196393/testAudioset/data/balanced_train/video_mp4_288p"
+    test_root: "/work/u7196393/testAudioset/data/eval/video_mp4_288p"
+    num_workers: 4
+    train_batch_size: 10
+    eval_batch_size: 10
+    #threshold: 0.5
 
   modelrc:
-    input_dim: 512
+    #input_dim: 512
     hidden_dim : 512
-    hidden_layers : 2
+    hidden_layers : 5
+
