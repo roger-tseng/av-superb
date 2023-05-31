@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from .head_helper import ResNetBasicHead as VisualHead
 from .audio_head_helper import ResNetBasicHead as AudioHead
 from .video_model_builder import _POOL1
-from utils.weight_init_helper import init_weights
+from ..utils.weight_init_helper import init_weights
 from .build import MODEL_REGISTRY
 from .avbert import AVBert
 
