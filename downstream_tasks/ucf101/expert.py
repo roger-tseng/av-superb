@@ -107,7 +107,7 @@ class DownstreamExpert(nn.Module):
 
         self.connector = nn.Linear(upstream_dim, self.modelrc["input_dim"])
         self.model = Model(
-            output_class_num=self.train_dataset.class_num, **self.modelrc
+            output_class_num=self.train_dataset.class_num, input_dim=upstream_dim, **self.modelrc
         )
         self.objective = nn.CrossEntropyLoss()
         self.register_buffer("best_score", torch.zeros(1))
