@@ -3,7 +3,7 @@ import torchaudio
 import math
 import numpy as np
 
-def get_visual_clip(
+def get_visual_seq(
     frames,
     start_idx,
     end_idx,
@@ -12,12 +12,13 @@ def get_visual_clip(
     spatial_sample_index,
 ):
     """
-    Sample a clip from the input video, and apply visual transformations.
+    Sample a sequence of clips from the input video, and apply
+    visual transformations.
     args:
         frames (tensor): a tensor of video frames, dimension is
             `num frames` x `height` x `width` x `channel`.
-        start_idx (float): the index of the start frame.
-        end_idx (float): the index of the end frame.
+        start_idx (list): list of the index of the start frame of each clip.
+        end_idx (list): list of the index of the end frame of each clip.
         min_scale (int): the minimal size of scaling.
         max_scale (int): the maximal size of scaling.
         crop_size (int): the size of height and width used to crop the
@@ -27,32 +28,52 @@ def get_visual_clip(
             larger than height, and perform top, center, buttom crop if
             height is larger than width.
     returns:
-        clip (tensor): sampled frames. The dimension is
-            `channel` x `num frames` x `height` x `width`.
+        clip_seq (tensor): a sequence of sampled frames. The dimension is
+            `sequence length` x `channel` x `num frames` x `height` x `width`.
     """
     # Temporal sampling.
-    clip = temporal_sampling(
-        frames,
-        start_idx,
-        end_idx,
-        video_num_frames,
-    )
+    clip_seq = []
+    for s, e in zip(start_idx, end_idx):
+        clip_seq.append(
+            temporal_sampling(
+                frames,
+                s,
+                e,
+                video_num_frames,
+            )
+        )
+    clip_seq = torch.stack(clip_seq, dim=0)
+
     # Convert frames of the uint type in the range [0, 255] to
     # a torch.FloatTensor in the range [0.0, 1.0]
-    clip = clip.float()
-    clip = clip / 255.0
+    clip_seq = clip_seq.float()
+    clip_seq = clip_seq / 255.0
 
+    # S T H W C -> SxT C H W
+    clip_seq = clip_seq.view(
+        clip_seq.shape[0] * clip_seq.shape[1],
+        clip_seq.shape[2],
+        clip_seq.shape[3],
+        clip_seq.shape[4],
+    )
+    clip_seq = clip_seq.permute(0, 3, 1, 2)
     # Visual transformations.
-    clip = apply_visual_transform(
-        clip,
+    clip_seq = apply_visual_transform(
+        clip_seq,
         spatial_idx=spatial_sample_index,
         crop_size=crop_size,
     )
+    # SxT C H W -> S C T H W
+    clip_seq = clip_seq.reshape(
+        len(start_idx),
+        video_num_frames,
+        clip_seq.shape[1],
+        clip_seq.shape[2],
+        clip_seq.shape[3],
+    )
+    clip_seq = clip_seq.transpose(1, 2).contiguous()
 
-    # T C H W -> C T H W
-    clip = clip.transpose(0, 1).contiguous()
-
-    return clip
+    return clip_seq
 
 def apply_visual_transform(
     frames,
@@ -202,38 +223,66 @@ def temporal_sampling(frames, start_idx, end_idx, num_samples):
     frames = torch.index_select(frames, 0, index)
     return frames
 
-def get_audio(
+def get_audio_seq(
     waveform,
     start_idx,
-    clip_length,
+    end_idx,
     audio_fps,
     frequency,
     time
 ):
     """
-    Sample a clip from the input audio, and apply audio transformations.
+    Sample a sequence of clips from the input audio, and apply
+    audio transformations.
     args:
         waveform (tensor): a tensor of audio waveform, dimension is
             `channel` x `time`.
-        start_idx (int): the start index.
-        clip_length (int): the size of audio clip.
+        start_idx (list): list of the start index.
+        end_idx (list): list of the end index (not inclusive).
         apply_transform (bool): whether to apply transformations.
     returns:
-        (tensor): log-mel-scaled spectrogram with dimension of
-            `channel` x `frequency` x `time`.
+        (tensor): a sequence of log-mel-scaled spectrogram with dimension of
+            `sequence length` x `channel` x `frequency` x `time`.
     """
-    # Temporal sampling.
-    waveform_view = waveform[:, start_idx:start_idx + clip_length]
-    # Convert it to log-mel-scaled spectrogram.
-    log_mel_spectrogram = get_log_mel_spectrogram(
-        waveform_view,
-        audio_fps,
-        frequency,
-        time,
-    )
+    audio_seq = []
+    for s, e in zip(start_idx, end_idx):
+        # Temporal sampling.
+        waveform_view = waveform[:, s:e]
+        # Convert it to log-mel-scaled spectrogram.
+        log_mel_spectrogram = get_log_mel_spectrogram(
+            waveform_view,
+            audio_fps,
+            frequency,
+            time
+        )
+        audio_seq.append(log_mel_spectrogram)
+    # S x C x F x T
+    audio_seq = torch.stack(audio_seq, dim=0)
 
-    return log_mel_spectrogram
+    return audio_seq
 
+def resample(waveform, orig_freq, new_freq, use_mono=True):
+    """
+    Resample the input waveform to ``new_freq``.
+    args:
+        waveform (tensor): waveform to perform resampling. The dimension is
+            `channel` x `frequency` x `width`.
+        `orig_freq` (int): original sampling rate of `waveform`.
+        `new_freq` (int): target sampling rate of `waveform`.
+        `use_mono` (bool): If True, first convert `waveform` to a monophonic signal.
+    returns:
+         (tensor): waveform with dimension of
+            `channel` x `time`.
+    """
+    if waveform.size(0) != 1 and use_mono:
+        waveform = waveform.mean(0, keepdim=True)
+
+    if orig_freq != new_freq:
+        waveform = torchaudio.transforms.Resample(
+            orig_freq, new_freq,
+        )(waveform)
+
+    return waveform
 
 def get_log_mel_spectrogram(
     waveform,

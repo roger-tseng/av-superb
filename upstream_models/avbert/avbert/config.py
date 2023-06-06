@@ -45,7 +45,7 @@ _C.TRAIN = CfgNode()
 _C.TRAIN.ENABLE = True
 
 # Dataset.
-_C.TRAIN.DATASET = "UCF101"
+_C.TRAIN.DATASET = "KineticsSounds"
 
 # Dataset split.
 _C.TRAIN.DATASET_SPLIT = 1
@@ -54,7 +54,7 @@ _C.TRAIN.DATASET_SPLIT = 1
 _C.TRAIN.NUM_SAMPLES = 10
 
 # Total mini-batch size.
-_C.TRAIN.BATCH_SIZE = 32
+_C.TRAIN.BATCH_SIZE = 5
 
 # Evaluate model on validation data every eval period epochs.
 _C.TRAIN.EVAL_PERIOD = 1
@@ -63,7 +63,7 @@ _C.TRAIN.EVAL_PERIOD = 1
 _C.TRAIN.TEST_PERIOD = 1
 
 # Save model checkpoint every checkpoint period epochs.
-_C.TRAIN.SAVE_EVERY_EPOCH = 1
+_C.TRAIN.SAVE_EVERY_EPOCH = 30
 
 # Path to the checkpoint to load the initial weight.
 _C.TRAIN.CHECKPOINT_FILE_PATH = ""
@@ -81,7 +81,7 @@ _C.VAL = CfgNode()
 _C.VAL.ENABLE = False
 
 # Dataset for validation.
-_C.VAL.DATASET = "UCF101"
+_C.VAL.DATASET = "KineticsSounds"
 
 # Dataset split.
 _C.VAL.DATASET_SPLIT = 1
@@ -96,13 +96,13 @@ _C.TEST = CfgNode()
 _C.TEST.ENABLE = False
 
 # Dataset for testing.
-_C.TEST.DATASET = "UCF101"
+_C.TEST.DATASET = "KineticsSounds"
 
 # Dataset split.
 _C.TEST.DATASET_SPLIT = 1
 
 # Total mini-batch size
-_C.TEST.BATCH_SIZE = 16
+_C.TEST.BATCH_SIZE = 5
 
 # Path to the checkpoint to load the initial weight.
 _C.TEST.CHECKPOINT_FILE_PATH = ""
@@ -214,10 +214,10 @@ _C.AUDIO_RESNET.DILATIONS = [1, 1, 1, 1]
 _C.MODEL = CfgNode()
 
 # Downstream task.
-_C.MODEL.TASK = "VisualClassify"
+_C.MODEL.TASK = "MultimodalSequenceClassify"
 
 # Modality fusion strategy for downstream task.
-_C.MODEL.DOWNSTREAM_FUSION = "late"
+_C.MODEL.DOWNSTREAM_FUSION = "concat"
 
 # The std to initialize the fc layer(s).
 _C.MODEL.FC_INIT_STD = 0.01
@@ -232,7 +232,7 @@ _C.MODEL.EPSILON = 1e-5
 _C.MODEL.MOMENTUM = 0.1
 
 # The number of classes to predict for the model.
-_C.MODEL.NUM_CLASSES = 101
+_C.MODEL.NUM_CLASSES = 32
 
 # Dropout rate.
 _C.MODEL.DROPOUT_RATE = 0.5
@@ -241,7 +241,7 @@ _C.MODEL.DROPOUT_RATE = 0.5
 # them into another models (e.g. Transformers).
 # If False, average-pool feature maps from convolutional models and directly
 # perform prediction.
-_C.MODEL.POOLING = False
+_C.MODEL.POOLING = True
 
 # Loss function.
 _C.MODEL.LOSS_FUNC = "cross_entropy"
@@ -259,7 +259,7 @@ _C.MODEL.ARCH = "visual_audio"
 _C.MODEL.FUSION = "mid"
 
 # Whether to use Transformers.
-_C.MODEL.USE_TRANSFORMER = False
+_C.MODEL.USE_TRANSFORMER = True
 
 
 # -----------------------------------------------------------------------------
@@ -415,7 +415,7 @@ _C.DATA.SEQUENCE_LENGTH = 10
 _C.SOLVER = CfgNode()
 
 # Base learning rate.
-_C.SOLVER.BASE_LR = 0.03
+_C.SOLVER.BASE_LR = 0.001
 
 # Base finetuning learning rate
 _C.SOLVER.FINETUNE_LR = 0.0001
@@ -451,10 +451,10 @@ _C.SOLVER.WEIGHT_DECAY = 5e-6
 _C.SOLVER.FINETUNE_WEIGHT_DECAY = 5e-6
 
 # The start learning rate of the warm up.
-_C.SOLVER.WARMUP_START_LR = 0.01
+_C.SOLVER.WARMUP_START_LR = 0.0
 
 # The start finetuning learning rate of the warm up.
-_C.SOLVER.WARMUP_START_FINETUNE_LR = 0.01
+_C.SOLVER.WARMUP_START_FINETUNE_LR = 0.0
 
 # Gradually warm up the lrs over this number of steps.
 _C.SOLVER.WARMUP_STEPS = -1
@@ -517,47 +517,15 @@ _C.DIST_BACKEND = "nccl"
 _C.DATA_LOADER = CfgNode()
 
 # Number of data loader workers per training process.
-_C.DATA_LOADER.NUM_WORKERS = 16
+_C.DATA_LOADER.NUM_WORKERS = 10
 
 # Load data to pinned host memory.
 _C.DATA_LOADER.PIN_MEMORY = True
 
-
-def get_video_cfg():
+def get_cfg():
     """
     Get a copy of the default config.
     """
     config = _C.clone()
-    config.MODEL.TASK = "VisualClassify"
-    config.MODEL.DOWNSTREAM_FUSION = "late"
-    config.MODEL.DROPOUT_RATE = 0.5
-    config.MODEL.POOLING = False
-    config.MODEL.USE_TRANSFORMER = False
-
-    return config
-
-def get_audio_cfg():
-    """
-    Get a copy of the default config.
-    """
-    config = _C.clone()
-    config.MODEL.TASK = "AudioClassify"
-    config.MODEL.DOWNSTREAM_FUSION = "late"
-    config.MODEL.DROPOUT_RATE = 0.1
-    config.MODEL.POOLING = True
-    config.MODEL.USE_TRANSFORMER = False
-
-    return config
-
-def get_multi_cfg():
-    """
-    Get a copy of the default config.
-    """
-    config = _C.clone()
-    config.MODEL.TASK = "MultimodalSequenceClassify"
-    config.MODEL.DOWNSTREAM_FUSION = "concat"
-    config.MODEL.DROPOUT_RATE = 0.5
-    config.MODEL.POOLING = True
-    config.MODEL.USE_TRANSFORMER = True
 
     return config

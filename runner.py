@@ -53,7 +53,7 @@ class Runner:
         self.upstream = self._get_upstream()
         self.featurizer = self._get_featurizer()
         self.downstream = self._get_downstream(
-            self.upstream.model.preprocess_audio, self.upstream.model.preprocess_video
+            self.upstream.model.preprocess ,self.upstream.model.preprocess_audio, self.upstream.model.preprocess_video
         )
         self.all_entries = [self.upstream, self.featurizer, self.downstream]
 
@@ -123,13 +123,14 @@ class Runner:
             interfaces=["output_dim", "downsample_rate"],
         )
 
-    def _get_downstream(self, preprocess_audio, preprocess_video):
+    def _get_downstream(self, preprocess, preprocess_audio, preprocess_video):
         expert = importlib.import_module(
             f"downstream_tasks.{self.args.downstream}.expert"
         )
         Downstream = getattr(expert, "DownstreamExpert")
 
         model = Downstream(
+            preprocess=preprocess,
             preprocess_audio=preprocess_audio,
             preprocess_video=preprocess_video,
             upstream_dim=self.featurizer.model.output_dim,
