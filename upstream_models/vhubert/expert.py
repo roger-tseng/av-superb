@@ -171,12 +171,21 @@ class UpstreamExpert(UpstreamBase):
             torch.arange(max(audio_length)).unsqueeze(0),
             (audio_length).unsqueeze(1),
         ).to(device)
+        # import pdb; pdb.set_trace()
+
         padded_audio = pad_sequence(audio, batch_first=True)
         padded_video = pad_sequence(video, batch_first=True)
-        source = {
+        
+        
+        if padded_audio.dim() == 2:
+            padded_audio = torch.unsqueeze(padded_audio, 0) 
+        # try:   
+        source = { 
             "audio": padded_audio.transpose(1, 2),
             "video": padded_video.unsqueeze(dim=1),
         }
+        # except:
+        #     import pdb; pdb.set_trace()
         result = self.model(
             source, padding_mask=padding_mask, mask=False, features_only=True
         )
