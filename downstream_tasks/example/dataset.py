@@ -20,7 +20,7 @@ WIDTH = 224
 
 
 class RandomDataset(Dataset):
-    def __init__(self, preprocess_audio=None, preprocess_video=None, **kwargs):
+    def __init__(self, preprocess=None , preprocess_audio=None, preprocess_video=None, **kwargs):
         """
         Your dataset should take two preprocessing transform functions,
         preprocess_audio and preprocess_video as input.
@@ -39,6 +39,7 @@ class RandomDataset(Dataset):
         self.class_num = 48
         self.audio_sample_rates = [AUDIO_SAMPLE_RATE] * len(self)
         self.video_frame_rates = [VIDEO_FRAME_RATE] * len(self)
+        self.preprocess = preprocess
         self.preprocess_audio = preprocess_audio
         self.preprocess_video = preprocess_video
         self.upstream_name = kwargs['upstream']
@@ -68,12 +69,8 @@ class RandomDataset(Dataset):
         if os.path.exists(feature_path):
             processed_wav, processed_frames = torch.load(feature_path)
         else:
-            if self.upstream_name == "avbert":
-                if self.preprocess is not None:
-                    processed_frames, processed_wav = self.preprocess(frames, wav, video_fps, audio_sr)
-                else:
-                    processed_frames = frames
-                    processed_wav = wav
+            if self.preprocess is not None:
+                processed_frames, processed_wav = self.preprocess(frames, wav, video_fps, audio_sr)
             else:    
                 if self.preprocess_audio is not None:
                     processed_wav = self.preprocess_audio(wav, audio_sr)

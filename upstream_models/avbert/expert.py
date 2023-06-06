@@ -12,11 +12,9 @@ import torchaudio.transforms as aT
 import torchvision
 from torch import Tensor
 from torch.nn.utils.rnn import pad_sequence
-from .preprocess_function import get_audio, get_audio_seq, get_visual_clip, get_visual_seq, resample
+from .preprocess_function import get_audio_seq, get_visual_seq, resample
 from .avbert.utils import checkpoint as cu
-from .avbert.config import get_audio_cfg, get_cfg, get_multi_cfg, get_video_cfg
-from .avbert.models.video_model_builder import ResNet
-from .avbert.models.audio_model_builder import AudioResNet
+from .avbert.config import get_cfg
 from .avbert.models.avbert import AVBert
 
 
@@ -65,6 +63,8 @@ class UpstreamExpert(nn.Module):
         return audio
     
     def preprocess(self, video, audio, video_frame_rate, audio_sample_rate):
+        
+        video = video.permute(0, 2, 3 ,1)
 
         visual_seqs = []
 
@@ -98,6 +98,8 @@ class UpstreamExpert(nn.Module):
                 spatial_sample_index,
             )
             visual_seqs.append(visual_seq)
+
+        visual_seqs = torch.stack(visual_seqs)
 
         if len(audio.shape) == 1:
             waveform = audio.unsqueeze(0)
@@ -143,8 +145,10 @@ class UpstreamExpert(nn.Module):
         audios = pad_sequence(audio, batch_first=True)
         videos = torch.stack(video)
 
+        videos = videos.transpose(0, 1).contiguous()
+
         conv_outputs, single_outputs, multi_output = self.multi_encoder(
-            visual_seq=videos[0], audio_seq=audios
+            visual_seq=[videos[0]], audio_seq=audios
         )
 
         # Return intermediate layer representations for potential layer-wise experiments
