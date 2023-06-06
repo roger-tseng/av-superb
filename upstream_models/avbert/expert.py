@@ -12,9 +12,9 @@ import torchaudio.transforms as aT
 import torchvision
 from torch import Tensor
 from torch.nn.utils.rnn import pad_sequence
-from .preprocess_function import get_audio, get_visual_clip
+from .preprocess_function import get_audio, get_audio_seq, get_visual_clip, get_visual_seq, resample
 from .avbert.utils import checkpoint as cu
-from .avbert.config import get_audio_cfg, get_multi_cfg, get_video_cfg
+from .avbert.config import get_audio_cfg, get_cfg, get_multi_cfg, get_video_cfg
 from .avbert.models.video_model_builder import ResNet
 from .avbert.models.audio_model_builder import AudioResNet
 from .avbert.models.avbert import AVBert
@@ -32,17 +32,7 @@ class UpstreamExpert(nn.Module):
         """
         super().__init__()
 
-        self.audio_sample_rate = 44100
-        self.audio_duration = 2
-        self.audio_temporal_samples = 10
-        self.audio_frequency = 80
-        self.audio_time = 128
-
-        self.video_frame_size = 128
-        self.video_frame_rate = 30
-        self.video_num_frames = 32
-        self.video_temporal_samples = 10
-        self.video_spatial_samples = 3
+        self.cfg = get_cfg()
 
         # NOTE: Encoders should return (batch_size, seq_len, hidden_dims)
         
@@ -50,31 +40,12 @@ class UpstreamExpert(nn.Module):
             ckpt, map_location='cpu'
         )
 
-        cfg = get_video_cfg()
-        self.video_encoder = ResNet(cfg)
-        cu.load_finetune_checkpoint(
-            self.video_encoder,
-            checkpoint['state_dict'],
-            cfg.NUM_GPUS > 1,
-            cfg.MODEL.USE_TRANSFORMER,
-        )
-
-        cfg = get_audio_cfg()
-        self.audio_encoder = AudioResNet(cfg)
-        cu.load_finetune_checkpoint(
-            self.audio_encoder,
-            checkpoint['state_dict'],
-            cfg.NUM_GPUS > 1,
-            cfg.MODEL.USE_TRANSFORMER,
-        )
-
-        cfg = get_multi_cfg()
-        self.multi_encoder = AVBert(cfg)
+        self.multi_encoder = AVBert(self.cfg)
         cu.load_finetune_checkpoint(
             self.multi_encoder,
             checkpoint['state_dict'],
-            cfg.NUM_GPUS > 1,
-            cfg.MODEL.USE_TRANSFORMER,
+            self.cfg.NUM_GPUS > 1,
+            self.cfg.MODEL.USE_TRANSFORMER,
         )
 
     def preprocess_video(self, video, video_frame_rate):
@@ -82,71 +53,80 @@ class UpstreamExpert(nn.Module):
         Replace this function to preprocess videos into your input format
         video: (video_length, video_channels, height, width), where video_channels is usually 3 for RGB or 1 for greyscale
         """
-        visual_clips = []
 
-        _num_frames = (
-            self.video_num_frames *
-            2 *
-            video_frame_rate /
-            self.video_frame_rate
-        )
-
-        delta = max(video.size(0) - _num_frames, 0)
-
-        for spatial_sample_index in range(self.video_spatial_samples):
-            for temporal_sample_index in range(self.video_temporal_samples):
-                start_idx = delta * temporal_sample_index / (self.video_temporal_samples - 1)
-                end_idx = start_idx + _num_frames - 1
-                visual_clip = get_visual_clip(
-                    video,
-                    start_idx,
-                    end_idx,
-                    self.video_num_frames,
-                    self.video_frame_size,
-                    spatial_sample_index,
-                )
-                visual_clips.append(visual_clip)
-
-        visual_clips = torch.stack(visual_clips)
-
-        return visual_clips
+        return video
 
     def preprocess_audio(self, audio, audio_sample_rate):
         """
         Replace this function to preprocess audio waveforms into your input format
         audio: (audio_channels, audio_length), where audio_channels is usually 1 or 2
         """
-        audio_clips = []
+
+        return audio
+    
+    def preprocess(self, video, audio, video_frame_rate, audio_sample_rate):
+
+        visual_seqs = []
+
+        num_frames = (
+            self.cfg.DATA.NUM_FRAMES *
+            self.cfg.DATA.SAMPLING_RATE *
+            video_frame_rate /
+            self.cfg.DATA.TARGET_FPS
+        )
+
+        waveform_size = int(
+            self.cfg.DATA.TARGET_AUDIO_RATE *
+            self.cfg.DATA.NUM_FRAMES *
+            self.cfg.DATA.SAMPLING_RATE /
+            self.cfg.DATA.TARGET_FPS
+        )
+
+        visual_delta = max(video.size(0) - num_frames, 0)
+        for spatial_sample_index in range(self.cfg.TEST.NUM_SPATIAL_CROPS):
+            visual_start_idx = [
+                visual_delta * temporal_sample_index / (self.cfg.TEST.NUM_ENSEMBLE_VIEWS - 1)
+                for temporal_sample_index in range(self.cfg.TEST.NUM_ENSEMBLE_VIEWS)
+            ]
+            visual_end_idx = [s + num_frames - 1 for s in visual_start_idx]
+            visual_seq = get_visual_seq(
+                video,
+                visual_start_idx,
+                visual_end_idx,
+                self.cfg.DATA.NUM_FRAMES,
+                self.cfg.DATA.TEST_CROP_SIZE,
+                spatial_sample_index,
+            )
+            visual_seqs.append(visual_seq)
 
         if len(audio.shape) == 1:
-            audio = audio.unsqueeze(0)
-        if audio_sample_rate != self.audio_sample_rate:
-            audio = torchaudio.functional.resample(
-                audio, audio_sample_rate, self.audio_sample_rate
-            )
-
-        total_length = audio.size(1)
-        clip_length = (
-            self.audio_sample_rate * self.audio_duration
+            waveform = audio.unsqueeze(0)
+        
+        waveform = resample(
+            waveform,
+            audio_sample_rate,
+            self.cfg.DATA.TARGET_AUDIO_RATE,
+            use_mono=True,
         )
-        delta = max(total_length - clip_length, 0)
-        for temporal_sample_index in range(self.audio_temporal_samples):
-            start_idx = int(
-                delta * temporal_sample_index / (self.audio_temporal_samples - 1)
-            )
-            audio_clip = get_audio(
-                audio,
-                start_idx,
-                clip_length,
-                self.audio_sample_rate,
-                self.audio_frequency,
-                self.audio_time
-            )
-            audio_clips.append(audio_clip)
 
-        audio_clips = torch.stack(audio_clips)
+        audio_delta = max(waveform.size(-1) - waveform_size, 0)
+        audio_start_idx = [
+            int(audio_delta * (idx / visual_delta))
+            for idx in visual_start_idx
+        ]
+        audio_end_idx = [s + waveform_size for s in audio_start_idx]
 
-        return audio_clips
+        audio_seq = get_audio_seq(
+            waveform,
+            audio_start_idx,
+            audio_end_idx,
+            self.cfg.DATA.TARGET_AUDIO_RATE,
+            self.cfg.DATA.AUDIO_FREQUENCY,
+            self.cfg.DATA.AUDIO_TIME,
+        )
+
+        return visual_seqs, audio_seq
+
 
     def forward(
         self, source: List[Tuple[Tensor, Tensor]]
@@ -163,32 +143,9 @@ class UpstreamExpert(nn.Module):
         audios = pad_sequence(audio, batch_first=True)
         videos = torch.stack(video)
 
-        # Run through audio and video encoders
-        audios = audios.transpose(0, 1).contiguous()
-        videos = videos.transpose(0, 1).contiguous()
-        audio_feats = []
-        video_feats = []
-        for i in range(audios.shape[0]):
-            audio_feats.append(self.audio_encoder.get_feature_map(audios[i]))
-        for i in range(videos.shape[0]):
-            video_feats.append(self.video_encoder.get_feature_map([videos[i]])[0])
-
-        audio_feats = torch.cat(audio_feats, 3)
-        video_feats = torch.cat(video_feats, 2)
-        audio_feats = audio_feats.permute(0, 3, 1, 2)
-        video_feats = video_feats.permute(0, 2, 1, 3, 4)
-        audio_feats = audio_feats.reshape(audio_feats.shape[0], audio_feats.shape[1], audio_feats.shape[2] * audio_feats.shape[3])
-        video_feats = video_feats.reshape(video_feats.shape[0], video_feats.shape[1], video_feats.shape[2] * video_feats.shape[3] * video_feats.shape[4])
-
-        # conv_outputs, single_outputs, multi_output = self.multi_encoder(
-        #     visual_seq=videos, audio_seq=audios
-        # )
-        # fusion_feats = (conv_outputs[0], conv_outputs[1], multi_output)
-        # fusion_feats = (
-        #     self.multi_encoder.visual_conv.head(fusion_feats[0]),
-        #     self.multi_encoder.audio_conv.head(fusion_feats[1]),
-        #     fusion_feats[2],
-        # )
+        conv_outputs, single_outputs, multi_output = self.multi_encoder(
+            visual_seq=videos[0], audio_seq=audios
+        )
 
         # Return intermediate layer representations for potential layer-wise experiments
         # Dict should contain three items, with keys as listed below:
@@ -197,7 +154,7 @@ class UpstreamExpert(nn.Module):
         # fusion_feats: features that consider both modalities
         # Each item should be a list of features that are of the same shape
         return {
-            "video_feats": [video_feats],
-            "audio_feats": [audio_feats],
-            "fusion_feats": [],
+            "video_feats": [single_outputs[0]],
+            "audio_feats": [single_outputs[1]],
+            "fusion_feats": [multi_output],
         }
