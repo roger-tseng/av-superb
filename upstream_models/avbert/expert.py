@@ -147,9 +147,21 @@ class UpstreamExpert(nn.Module):
 
         videos = videos.transpose(0, 1).contiguous()
 
-        conv_outputs, single_outputs, multi_output = self.multi_encoder(
+        _ , single_outputs_0, multi_output_0 = self.multi_encoder(
             visual_seq=[videos[0]], audio_seq=audios
         )
+
+        _ , single_outputs_1, multi_output_1 = self.multi_encoder(
+            visual_seq=[videos[1]], audio_seq=audios
+        )
+
+        _ , single_outputs_2, multi_output_2 = self.multi_encoder(
+            visual_seq=[videos[2]], audio_seq=audios
+        )
+
+        video_feats = torch.cat((single_outputs_0[0], single_outputs_1[0], single_outputs_2[0]), dim = 1)
+        audio_feats = single_outputs_0[1]
+        fusion_feats = torch.cat((multi_output_0[0], multi_output_1[0], multi_output_2[0]), dim = 1)
 
         # Return intermediate layer representations for potential layer-wise experiments
         # Dict should contain three items, with keys as listed below:
@@ -158,7 +170,7 @@ class UpstreamExpert(nn.Module):
         # fusion_feats: features that consider both modalities
         # Each item should be a list of features that are of the same shape
         return {
-            "video_feats": [single_outputs[0]],
-            "audio_feats": [single_outputs[1]],
-            "fusion_feats": [multi_output],
+            "video_feats": [video_feats],
+            "audio_feats": [audio_feats],
+            "fusion_feats": [fusion_feats],
         }
