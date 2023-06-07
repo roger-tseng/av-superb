@@ -37,6 +37,7 @@ class DownstreamExpert(nn.Module):
 
     def __init__(
         self,
+        preprocess,
         preprocess_audio,
         preprocess_video,
         upstream_dim,
@@ -96,18 +97,18 @@ class DownstreamExpert(nn.Module):
         self.modelrc = downstream_expert["modelrc"]  # config for model
 
         self.train_dataset = UCF101Dataset(
-            "train", preprocess_audio, preprocess_video, upstream = kwargs["upstream"], **self.datarc
+            "train", preprocess, preprocess_audio, preprocess_video, upstream = kwargs["upstream"], **self.datarc
         )
         self.dev_dataset = UCF101Dataset(
-            "dev", preprocess_audio, preprocess_video, upstream = kwargs["upstream"], **self.datarc
+            "dev", preprocess, preprocess_audio, preprocess_video, upstream = kwargs["upstream"], **self.datarc
         )
         self.test_dataset = UCF101Dataset(
-            "test", preprocess_audio, preprocess_video, upstream = kwargs["upstream"], **self.datarc
+            "test", preprocess, preprocess_audio, preprocess_video, upstream = kwargs["upstream"], **self.datarc
         )
 
-        # self.connector = nn.Linear(upstream_dim, self.modelrc["input_dim"])
+        self.connector = nn.Linear(upstream_dim, self.modelrc["input_dim"])
         self.model = Model(
-            output_class_num=self.train_dataset.class_num, input_dim=upstream_dim, **self.modelrc
+            output_class_num=self.train_dataset.class_num, **self.modelrc
         )
         self.objective = nn.CrossEntropyLoss()
         self.register_buffer("best_score", torch.zeros(1))
@@ -196,7 +197,7 @@ class DownstreamExpert(nn.Module):
                 a single scalar in torch.FloatTensor
         """
         features = pad_sequence(features, batch_first=True)
-        # features = self.connector(features)
+        features = self.connector(features)
         predicted = self.model(features)
 
         utterance_labels = your_other_contents1
