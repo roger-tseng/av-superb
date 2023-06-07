@@ -161,7 +161,7 @@ class UpstreamExpert(nn.Module):
 
         video_feats = torch.cat((single_outputs_0[0], single_outputs_1[0], single_outputs_2[0]), dim = 1)
         audio_feats = single_outputs_0[1]
-        fusion_feats = torch.cat((multi_output_0[0], multi_output_1[0], multi_output_2[0]), dim = 1)
+        fusion_feats = torch.cat((multi_output_0, multi_output_1, multi_output_2), dim = 1)
 
         # Return intermediate layer representations for potential layer-wise experiments
         # Dict should contain three items, with keys as listed below:
