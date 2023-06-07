@@ -113,7 +113,7 @@ class UpstreamExpert(nn.Module):
 
         audio_delta = max(waveform.size(-1) - waveform_size, 0)
         audio_start_idx = [
-            int(audio_delta * (idx / visual_delta))
+            int(audio_delta * (idx / visual_delta)) if visual_delta != 0 else 0
             for idx in visual_start_idx
         ]
         audio_end_idx = [s + waveform_size for s in audio_start_idx]
