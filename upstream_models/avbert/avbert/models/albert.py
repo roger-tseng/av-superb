@@ -309,6 +309,7 @@ class AlbertTransformer(nn.Module):
 
             layer_group_output = self.albert_layer_groups[group_idx](hidden_states, attention_mask, head_mask[group_idx*layers_per_group:(group_idx+1)*layers_per_group], modality_idx)
             hidden_states = layer_group_output[0]
+            # NOTE: should prbly return 1st element instead of 0th, but behavious is identical for one layer
 
             if self.output_attentions:
                 all_attentions = all_attentions + layer_group_output[-1]

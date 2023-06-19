@@ -31,6 +31,7 @@ class UpstreamExpert(nn.Module):
         super().__init__()
 
         self.cfg = get_cfg()
+        self.feature_combine = kwargs['feature_combine']
 
         # NOTE: Encoders should return (batch_size, seq_len, hidden_dims)
         
@@ -126,7 +127,7 @@ class UpstreamExpert(nn.Module):
             self.cfg.DATA.AUDIO_FREQUENCY,
             self.cfg.DATA.AUDIO_TIME,
         )
-
+        # visual: 10 1-sec clips, 3 views per clip, 32 frames per view, 3 x 128 x 128 frame
         return visual_seqs, audio_seq
 
 
@@ -147,21 +148,29 @@ class UpstreamExpert(nn.Module):
 
         videos = videos.transpose(0, 1).contiguous()
 
-        _ , single_outputs_0, multi_output_0 = self.multi_encoder(
+        _ , single_hiddens_0, multi_hidden_0 = self.multi_encoder(
             visual_seq=[videos[0]], audio_seq=audios
         )
 
-        _ , single_outputs_1, multi_output_1 = self.multi_encoder(
+        _ , single_hiddens_1, multi_hidden_1 = self.multi_encoder(
             visual_seq=[videos[1]], audio_seq=audios
         )
 
-        _ , single_outputs_2, multi_output_2 = self.multi_encoder(
+        _ , single_hiddens_2, multi_hidden_2 = self.multi_encoder(
             visual_seq=[videos[2]], audio_seq=audios
         )
 
-        video_feats = torch.cat((single_outputs_0[0], single_outputs_1[0], single_outputs_2[0]), dim = 1)
-        audio_feats = single_outputs_0[1]
-        fusion_feats = torch.cat((multi_output_0, multi_output_1, multi_output_2), dim = 1)
+        # Concat (768 x 3) or sum (768) along feature hidden dim axis 
+        audio_feats = single_hiddens_0[1]
+        if self.feature_combine == 'sum':
+            video_feats = tuple(layer_0 + layer_1 + layer_2 for layer_0, layer_1, layer_2 in zip(single_hiddens_0[0], single_hiddens_1[0], single_hiddens_2[0]))
+            fusion_feats = tuple(layer_0 + layer_1 + layer_2 for layer_0, layer_1, layer_2 in zip(multi_hidden_0, multi_hidden_1, multi_hidden_2))
+        elif self.feature_combine == 'concat':
+            video_feats = tuple(torch.cat((layer_0, layer_1, layer_2), dim = 2) for layer_0, layer_1, layer_2 in zip(single_hiddens_0[0], single_hiddens_1[0], single_hiddens_2[0]))
+            fusion_feats = tuple(torch.cat((layer_0, layer_1, layer_2), dim = 2) for layer_0, layer_1, layer_2 in zip(multi_hidden_0, multi_hidden_1, multi_hidden_2))
+        else:
+            raise NotImplementedError
+
 
         # Return intermediate layer representations for potential layer-wise experiments
         # Dict should contain three items, with keys as listed below:
@@ -170,7 +179,7 @@ class UpstreamExpert(nn.Module):
         # fusion_feats: features that consider both modalities
         # Each item should be a list of features that are of the same shape
         return {
-            "video_feats": [video_feats],
-            "audio_feats": [audio_feats],
-            "fusion_feats": [fusion_feats],
+            "video_feats": video_feats,
+            "audio_feats": audio_feats,
+            "fusion_feats": fusion_feats,
         }
