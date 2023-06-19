@@ -26,21 +26,23 @@ def avbert_url(ckpt, refresh=False, *args, **kwargs):
 def avbert_sum(refresh=False, *args, **kwargs):
     """
     Sum features of three video crops
+        refresh (bool): whether to download ckpt/config again if existed
     """
+    kwargs["ckpt"] = google_large_file_link("1T55DuJq0OYSdXVnDlOrgPSTwffVKsiFY")
     kwargs["feature_combine"] = 'sum'
     return avbert_url(refresh=refresh, *args, **kwargs)
 
 def avbert_concat(refresh=False, *args, **kwargs):
     """
     Concat features of three video crops along hidden dim axis
+        refresh (bool): whether to download ckpt/config again if existed
     """
+    kwargs["ckpt"] = google_large_file_link("1T55DuJq0OYSdXVnDlOrgPSTwffVKsiFY")
     kwargs["feature_combine"] = 'concat'
     return avbert_url(refresh=refresh, *args, **kwargs)
 
 def avbert(refresh=False, *args, **kwargs):
     """
-    The default model, sums features of three video crops by default
-        refresh (bool): whether to download ckpt/config again if existed
+    Sums features of three video crops by default
     """
-    kwargs["ckpt"] = google_large_file_link("1T55DuJq0OYSdXVnDlOrgPSTwffVKsiFY")
     return avbert_sum(refresh=refresh, *args, **kwargs)
