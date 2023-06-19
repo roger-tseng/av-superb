@@ -23,10 +23,24 @@ def avbert_url(ckpt, refresh=False, *args, **kwargs):
     """
     return avbert_local(_urls_to_filepaths(ckpt, refresh=refresh, agent="gdown"), *args, **kwargs)
 
+def avbert_sum(refresh=False, *args, **kwargs):
+    """
+    Sum features of three video crops
+    """
+    kwargs["feature_combine"] = 'sum'
+    return avbert_url(refresh=refresh, *args, **kwargs)
+
+def avbert_concat(refresh=False, *args, **kwargs):
+    """
+    Concat features of three video crops along hidden dim axis
+    """
+    kwargs["feature_combine"] = 'concat'
+    return avbert_url(refresh=refresh, *args, **kwargs)
+
 def avbert(refresh=False, *args, **kwargs):
     """
-    The default model
+    The default model, sums features of three video crops by default
         refresh (bool): whether to download ckpt/config again if existed
     """
     kwargs["ckpt"] = google_large_file_link("1T55DuJq0OYSdXVnDlOrgPSTwffVKsiFY")
-    return avbert_url(refresh=refresh, *args, **kwargs)
+    return avbert_sum(refresh=refresh, *args, **kwargs)

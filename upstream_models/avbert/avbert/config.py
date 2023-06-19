@@ -317,7 +317,7 @@ _C.TRANSFORMER.DOWN_SCALE_FACTOR = 1
 _C.TRANSFORMER.TYPE_VOCAB_SIZE = 2
 
 # Whether to output hidden states of all layers or not.
-_C.TRANSFORMER.OUTPUT_HIDDEN_STATES = False
+_C.TRANSFORMER.OUTPUT_HIDDEN_STATES = True
 
 # Whether to use mean pooling for positional encoding.
 _C.TRANSFORMER.USE_MEAN_POOLING = False

@@ -224,6 +224,7 @@ class AVBert(nn.Module):
         )
 
         single_outputs = []
+        single_hiddens = []
         for idx in range(num_modalities):
             s_embeddings = getattr(
                 self,
@@ -234,11 +235,18 @@ class AVBert(nn.Module):
                 f"single_{idx2modality[idx]}_transformer"
             )
             _idx = self.modality2idx[idx2modality[idx]]
+            if self.cfg.TRANSFORMER.OUTPUT_HIDDEN_STATES:
+                single_hidden = s_transformer(
+                    s_embeddings(single_inputs[idx]),
+                    attention_mask=att_mask,
+                    modality_idx=_idx
+                )[1] # hidden_states
+                single_hiddens.append(single_hidden)
             single_output = s_transformer(
                 s_embeddings(single_inputs[idx]),
                 attention_mask=att_mask,
                 modality_idx=_idx
-            )[0]
+            )[0] # last layer
             single_outputs.append(single_output)
 
 
@@ -284,15 +292,25 @@ class AVBert(nn.Module):
                 [att_mask, att_mask],
                 dim=1,
             )
-
-            multi_output = self.multi_transformer(
-                self.multi_embeddings(
-                    multi_input,
-                    token_type_ids=token_type_ids,
-                    position_ids=position_ids
-                ),
-                attention_mask=multi_attention_mask,
-                modality_idx=self.num_modalities,
-            )[0]
-
-        return conv_outputs, single_outputs, multi_output
+            if self.cfg.TRANSFORMER.OUTPUT_HIDDEN_STATES:
+                multi_hidden = self.multi_transformer(
+                    self.multi_embeddings(
+                        multi_input,
+                        token_type_ids=token_type_ids,
+                        position_ids=position_ids
+                    ),
+                    attention_mask=multi_attention_mask,
+                    modality_idx=self.num_modalities,
+                )[1] # hidden_states
+                return conv_outputs, single_hiddens, multi_hidden
+            else:
+                multi_output = self.multi_transformer(
+                    self.multi_embeddings(
+                        multi_input,
+                        token_type_ids=token_type_ids,
+                        position_ids=position_ids
+                    ),
+                    attention_mask=multi_attention_mask,
+                    modality_idx=self.num_modalities,
+                )[0] # last layer
+                return conv_outputs, single_outputs, multi_output
