@@ -53,7 +53,7 @@ class Runner:
         self.upstream = self._get_upstream()
         self.featurizer = self._get_featurizer()
         self.downstream = self._get_downstream(
-            self.upstream.model.preprocess ,self.upstream.model.preprocess_audio, self.upstream.model.preprocess_video
+            self.upstream.model.preprocess if hasattr(self.upstream.model, "preprocess") else None ,self.upstream.model.preprocess_audio, self.upstream.model.preprocess_video
         )
         self.all_entries = [self.upstream, self.featurizer, self.downstream]
 
