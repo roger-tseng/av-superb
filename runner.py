@@ -227,27 +227,19 @@ class Runner:
 
                     assert len(wavs) == len(frames)
 
-                    feature_path = f"/work/b07901163/features/{self.downstream.name}/{self.upstream.name}/{batch_id}.pt"
-
-                    if os.path.exists(feature_path):
-                        features = torch.load(feature_path)
+                    source = [
+                        (
+                            torch.FloatTensor(wav).to(self.args.device),
+                            torch.FloatTensor(frame).to(self.args.device),
+                        )
+                        for wav, frame in zip(wavs, frames)
+                    ]
+                    if self.upstream.trainable:
+                        features = self.upstream.model(source)
                     else:
-                        source = [
-                            (
-                                torch.FloatTensor(wav).to(self.args.device),
-                                torch.FloatTensor(frame).to(self.args.device),
-                            )
-                            for wav, frame in zip(wavs, frames)
-                        ]
-                        if self.upstream.trainable:
+                        with torch.no_grad():
                             features = self.upstream.model(source)
-                        else:
-                            with torch.no_grad():
-                                features = self.upstream.model(source)
-                        features = self.featurizer.model(source, features)
-                        features = features.mean(dim = 1)
-
-                        torch.save([features], feature_path)
+                    features = self.featurizer.model(source, features)
 
                     loss = self.downstream.model(
                         train_split,

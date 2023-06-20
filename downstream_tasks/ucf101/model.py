@@ -16,6 +16,8 @@ class Model(nn.Module):
 
     def forward(self, features):
 
+        features = features.mean(dim = 1)
+
         predicted = self.linear(features)
 
         return predicted
