@@ -112,10 +112,9 @@ class DownstreamExpert(nn.Module):
             **self.datarc,
         )
 
-        # self.connector = nn.Linear(upstream_dim, self.modelrc["input_dim"])
+        self.connector = nn.Linear(upstream_dim, self.modelrc["input_dim"])
 
         self.model = Model(
-            input_dim=upstream_dim,
             output_class_num=self.train_dataset.class_num,
             **self.modelrc,
         )
@@ -138,15 +137,15 @@ class DownstreamExpert(nn.Module):
             return self._get_eval_dataloader(self.test_dataset)
 
     def _get_train_dataloader(self, dataset, epoch: int):
-        csvname = "audioset_train_weight.csv"
-        csvpath = "/".join([self.datarc["csv_root"], csvname])
-        train_samples_weight = np.loadtxt(csvpath, delimiter=",")
-        print("train_weight[0]=", train_samples_weight[0])
-        print("train_weight[1]=", train_samples_weight[1])
-        sampler = WeightedRandomSampler(
-            train_samples_weight, len(train_samples_weight), replacement=True
-        )
-        # sampler = get_ddp_sampler(dataset, epoch)
+        # csvname = "audioset_train_weight.csv"
+        # csvpath = "/".join([self.datarc["csv_root"], csvname])
+        # train_samples_weight = np.loadtxt(csvpath, delimiter=",")
+        # print("train_weight[0]=", train_samples_weight[0])
+        # print("train_weight[1]=", train_samples_weight[1])
+        # sampler = WeightedRandomSampler(
+        #    train_samples_weight, len(train_samples_weight), replacement=True
+        # )
+        sampler = get_ddp_sampler(dataset, epoch)
         return DataLoader(
             dataset,
             batch_size=self.datarc["train_batch_size"],
@@ -204,7 +203,7 @@ class DownstreamExpert(nn.Module):
                 a single scalar in torch.FloatTensor
         """
         features = pad_sequence(features, batch_first=True)
-        # features = self.connector(features)
+        features = self.connector(features)
         predicted = self.model(features)
 
         utterance_labels = your_other_contents1
@@ -220,6 +219,11 @@ class DownstreamExpert(nn.Module):
         # print(labels)
         # labels = labels.squeeze(1)
         predicted = predicted.float()
+        find = 0
+        for i in range(527):
+            if math.isnan(predicted[0][i]) and find == 0:
+                print(f"error find NaN")
+                find = 1
         labels = labels.float()
         # print(predicted.dtype)
         # print(labels.dtype)

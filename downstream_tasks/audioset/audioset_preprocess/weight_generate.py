@@ -31,9 +31,13 @@ if __name__ == "__main__":
 
     for i, sample in enumerate(datas):
         sample_labels = sample[3:]
+        max_label_weight = 0
         for label in sample_labels:
+            if label_weight[int(label)] > max_label_weight:
+                max_label_weight = label_weight[int(label)]
             # summing up the weight of all appeared classes in the sample, note audioset is multiple-label classification
-            sample_weight[i] += label_weight[int(label)]
+            # sample_weight[i] += label_weight[int(label)]
+        sample_weight[i] = max_label_weight
     dest_folder = args.dest
     if dest_folder[-1] != "/":
         dest_folder += "/"

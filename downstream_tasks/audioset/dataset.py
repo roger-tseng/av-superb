@@ -92,22 +92,32 @@ class AudiosetDataset(Dataset):
         return flac, labels
         """
         # video part
+        # print(idx)
+        # print(self.data[idx][0])
         filename = "_".join(
             [
                 self.data[idx][0] + ".mp4",
             ]
         )
         filepath = "/".join([self.audioset_root, filename])
-
-        frames, wav, meta = torchvision.io.read_video(
-            filepath, pts_unit="sec", output_format="TCHW"
-        )
-        frames = frames.float()
-        # {'video_fps': 30.0, 'audio_fps': 44100}
-        wav = wav.mean(dim=0).squeeze(0)
-
-        # print(type(frames)) ; print(frames.size()) ; print(frames)
         feature_path = f"/work/u7196393/features/{self.upstream_name}/{filepath.rsplit('/')[-1].rsplit('.')[0]}.pt"
+        if not os.path.exists(feature_path):
+            filename = "_".join(
+                [
+                    self.data[idx][0] + ".mp4",
+                ]
+            )
+            filepath = "/".join([self.audioset_root, filename])
+
+            frames, wav, meta = torchvision.io.read_video(
+                filepath, pts_unit="sec", output_format="TCHW"
+            )
+            frames = frames.float()
+            # {'video_fps': 30.0, 'audio_fps': 44100}
+            wav = wav.mean(dim=0).squeeze(0)
+
+            # print(type(frames)) ; print(frames.size()) ; print(frames)
+        # feature_path = f"/work/u7196393/features/{self.upstream_name}/{filepath.rsplit('/')[-1].rsplit('.')[0]}.pt"
         if os.path.exists(feature_path):
             processed_wav, processed_frames = torch.load(feature_path)
         else:
@@ -120,7 +130,8 @@ class AudiosetDataset(Dataset):
                 processed_frames = self.preprocess_video(frames, VIDEO_FRAME_RATE)
             else:
                 processed_frames = frames
-            torch.save([processed_wav, processed_frames], feature_path)
+            # uncomment next line to save feature
+            # torch.save([processed_wav, processed_frames], feature_path)
 
         # label
         origin_labels = [int(i) for i in self.data[idx][3:]]

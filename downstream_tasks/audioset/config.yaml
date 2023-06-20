@@ -1,7 +1,7 @@
 runner:
   total_steps: 20000
   gradient_clipping: 1
-  gradient_accumulate_steps: 10
+  gradient_accumulate_steps: 50
 
   log_step: 20
   eval_step: 1000
@@ -13,7 +13,7 @@ runner:
 
 optimizer:
   name: AdamW
-  lr: 1.0e-3
+  lr: 1.0e-2
 
 
 # comment the whole scheduler config block
@@ -28,12 +28,12 @@ downstream_expert:
     train_root: "/work/u7196393/testAudioset/data/balanced_train/video_mp4_288p"
     test_root: "/work/u7196393/testAudioset/data/eval/video_mp4_288p"
     num_workers: 4
-    train_batch_size: 10
-    eval_batch_size: 10
+    train_batch_size: 2
+    eval_batch_size: 2
     #threshold: 0.5
 
   modelrc:
-    #input_dim: 512
+    input_dim: 256
     hidden_dim : 512
     hidden_layers : 5
 
