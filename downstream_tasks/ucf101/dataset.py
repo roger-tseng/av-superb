@@ -90,7 +90,7 @@ class UCF101Dataset(Dataset):
                 else:
                     processed_frames = frames
             # Uncomment the next line
-            torch.save([processed_wav, processed_frames], feature_path)
+            # torch.save([processed_wav, processed_frames], feature_path)
 
         label = int(video_name.split(".")[0].split("_")[-1]) - 1
 

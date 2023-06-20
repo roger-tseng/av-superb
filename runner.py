@@ -226,19 +226,28 @@ class Runner:
                     global_step = pbar.n + 1
 
                     assert len(wavs) == len(frames)
-                    source = [
-                        (
-                            torch.FloatTensor(wav).to(self.args.device),
-                            torch.FloatTensor(frame).to(self.args.device),
-                        )
-                        for wav, frame in zip(wavs, frames)
-                    ]
-                    if self.upstream.trainable:
-                        features = self.upstream.model(source)
+
+                    feature_path = f"/work/b07901163/features/{self.downstream.name}/{self.upstream.name}/{batch_id}.pt"
+
+                    if os.path.exists(feature_path):
+                        features = torch.load(feature_path)
                     else:
-                        with torch.no_grad():
+                        source = [
+                            (
+                                torch.FloatTensor(wav).to(self.args.device),
+                                torch.FloatTensor(frame).to(self.args.device),
+                            )
+                            for wav, frame in zip(wavs, frames)
+                        ]
+                        if self.upstream.trainable:
                             features = self.upstream.model(source)
-                    features = self.featurizer.model(source, features)
+                        else:
+                            with torch.no_grad():
+                                features = self.upstream.model(source)
+                        features = self.featurizer.model(source, features)
+                        features = features.mean(dim = 1)
+
+                        torch.save([features], feature_path)
 
                     loss = self.downstream.model(
                         train_split,
