@@ -166,7 +166,23 @@ class Featurizer(nn.Module):
         ]
 
         with torch.no_grad():
-            if hasattr(upstream, "preprocess_audio") and hasattr(
+            if hasattr(upstream, "preprocess"):
+
+                paired = [
+                    (
+                        upstream.preprocess(video, audio, VIDEO_SAMPLE_RATE, AUDIO_SAMPLE_RATE)
+                    )
+                    for audio, video in paired_wavs
+                ]
+                paired_input = [
+                    (
+                        audio.to(upstream_device),
+                        video.to(upstream_device),
+                    )
+                    for video, audio in paired
+                ]
+                paired_features = upstream(paired_input)
+            elif hasattr(upstream, "preprocess_audio") and hasattr(
                 upstream, "preprocess_video"
             ):
                 paired_input = [

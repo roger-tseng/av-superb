@@ -37,6 +37,7 @@ class DownstreamExpert(nn.Module):
 
     def __init__(
         self,
+        preprocess,
         preprocess_audio,
         preprocess_video,
         upstream_dim,
@@ -96,13 +97,13 @@ class DownstreamExpert(nn.Module):
         self.modelrc = downstream_expert["modelrc"]  # config for model
 
         self.train_dataset = KineticsSoundsDataset(
-            preprocess_audio, preprocess_video, "train", upstream=kwargs['upstream'], **self.datarc
+            "train", preprocess, preprocess_audio, preprocess_video, upstream=kwargs['upstream'], **self.datarc
         )
         self.dev_dataset = KineticsSoundsDataset(
-            preprocess_audio, preprocess_video, "validation", upstream=kwargs['upstream'], **self.datarc
+            "validation", preprocess, preprocess_audio, preprocess_video, upstream=kwargs['upstream'], **self.datarc
         )
         self.test_dataset = KineticsSoundsDataset(
-            preprocess_audio, preprocess_video, "test", upstream=kwargs['upstream'], **self.datarc
+            "test", preprocess, preprocess_audio, preprocess_video, upstream=kwargs['upstream'], **self.datarc
         )
 
         self.connector = nn.Linear(upstream_dim, self.modelrc["input_dim"])
