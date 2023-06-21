@@ -101,9 +101,9 @@ class DownstreamExpert(nn.Module):
         self.dev_dataset = KineticsSoundsDataset(
             preprocess_audio, preprocess_video, "validation", upstream=kwargs['upstream'], **self.datarc
         )
-        # self.test_dataset = RandomDataset(
-        #     preprocess_audio, preprocess_video, "test", **self.datarc
-        # )
+        self.test_dataset = KineticsSoundsDataset(
+            preprocess_audio, preprocess_video, "test", upstream=kwargs['upstream'], **self.datarc
+        )
 
         self.connector = nn.Linear(upstream_dim, self.modelrc["input_dim"])
         self.model = Model(
@@ -197,7 +197,7 @@ class DownstreamExpert(nn.Module):
         """
         features = pad_sequence(features, batch_first=True)
         # upstream_dim for avhubert = 768
-        # features = self.connector(features) 
+        features = self.connector(features) 
         predicted = self.model(features)
 
         utterance_labels = your_other_contents1

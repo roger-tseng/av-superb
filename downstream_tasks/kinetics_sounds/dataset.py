@@ -93,12 +93,14 @@ class KineticsSoundsDataset(Dataset):
 
             # no audio && no video
             if wav.shape[0] == 0 and frames.shape[0] == 0:
-                self.logs_file.write("{0}, '{1}', {2}\n".format(path, frames.shape, video_fps))
+                self.logs_file.write("{0}, '{1}', {2}, no data\n".format(path, frames.shape, video_fps))
                 self.logs_file.flush()
                 print("no data", path)
 
             # no audio
             if wav.shape[0] == 0:
+                self.logs_file.write("{0}, '{1}', {2}, no audio\n".format(path, frames.shape, video_fps))
+                self.logs_file.flush()
                 print("no audio", audio_sr)
                 audio_samples = random.randint(
                     MIN_SEC * AUDIO_SAMPLE_RATE, MAX_SEC * AUDIO_SAMPLE_RATE
@@ -108,6 +110,8 @@ class KineticsSoundsDataset(Dataset):
 
             # no video
             if frames.shape[0] == 0:
+                self.logs_file.write("{0}, '{1}', {2}, no video\n".format(path, frames.shape, video_fps))
+                self.logs_file.flush()
                 print("no video", video_fps)
                 video_samples = random.randint(
                     MIN_SEC * VIDEO_FRAME_RATE, MAX_SEC * VIDEO_FRAME_RATE
