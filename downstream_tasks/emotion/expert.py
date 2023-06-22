@@ -14,8 +14,16 @@ from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader, DistributedSampler, random_split
 
 from .dataset import IEMOCAPDataset, collate_fn
-from .model import Model
+from ..model import *
+from .model import *
 
+def get_ddp_sampler(dataset: IEMOCAPDataset, epoch: int):
+    if is_initialized():
+        sampler = DistributedSampler(dataset)
+        sampler.set_epoch(epoch)
+    else:
+        sampler = None
+    return sampler
 
 class DownstreamExpert(nn.Module):
     """
@@ -23,7 +31,8 @@ class DownstreamExpert(nn.Module):
     eg. downstream forward, metric computation, contents to log
     """
 
-    def __init__(self, upstream_dim, downstream_expert, expdir, **kwargs):
+    def __init__(self, preprocess, preprocess_audio,
+        preprocess_video, upstream_dim, downstream_expert, expdir, **kwargs,):
         """
         Args:
             upstream_dim: int
@@ -48,7 +57,7 @@ class DownstreamExpert(nn.Module):
         self.datarc = downstream_expert["datarc"]  # config for dataset
         self.modelrc = downstream_expert["modelrc"]  # config for model
         
-        DATA_ROOT = self.datarc['IEMOCAP']
+        DATA_ROOT = self.datarc["iemocap_root"]
         meta_data = self.datarc["meta_data"]
         
         self.fold = self.datarc.get('test_fold') or kwargs.get("downstream_variant")
@@ -57,21 +66,21 @@ class DownstreamExpert(nn.Module):
         
         train_path = os.path.join(meta_data, self.fold.replace('fold', 'Session'), 'train_meta_data.json')
         test_path = os.path.join(meta_data, self.fold.replace('fold', 'Session'), 'test_meta_data.json')
-        dataset = IEMOCAPDataset(DATA_ROOT, train_path, self.datarc['pre_load'])
+        dataset = IEMOCAPDataset(DATA_ROOT, train_path, preprocess, preprocess_audio, preprocess_video, upstream=kwargs['upstream'])
         trainlen = int((1 - self.datarc['valid_ratio']) * len(dataset))
         lengths = [trainlen, len(dataset) - trainlen]
         
         torch.manual_seed(0)
         self.train_dataset, self.dev_dataset = random_split(dataset, lengths)
-        self.test_dataset = IEMOCAPDataset(DATA_ROOT, test_path, self.datarc['pre_load'])
+        self.test_dataset = IEMOCAPDataset(DATA_ROOT, test_path, preprocess, preprocess_audio, preprocess_video, upstream=kwargs['upstream'])
 
         Model = eval(self.modelrc['select'])
         model_conf = self.modelrc.get(self.modelrc['select'], {})
         self.connector = nn.Linear(upstream_dim, self.modelrc["input_dim"])
         self.model = Model(
             input_dim = self.modelrc['input_dim'],
-            output_class_num=self.train_dataset.class_num, 
-            **self.modelrc
+            output_dim = 4,
+            **model_conf,
         )
         self.objective = nn.CrossEntropyLoss()
         self.expdir = expdir
@@ -109,7 +118,7 @@ class DownstreamExpert(nn.Module):
             shuffle=(sampler is None),
             sampler=sampler,
             num_workers=self.datarc["num_workers"],
-            collate_fn=dataset.collate_fn,
+            collate_fn=collate_fn,
         )
 
     def _get_eval_dataloader(self, dataset):
@@ -118,7 +127,7 @@ class DownstreamExpert(nn.Module):
             batch_size=self.datarc["eval_batch_size"],
             shuffle=False,
             num_workers=self.datarc["num_workers"],
-            collate_fn=dataset.collate_fn,
+            collate_fn=collate_fn,
         )
 
     # Interface
@@ -154,13 +163,21 @@ class DownstreamExpert(nn.Module):
         """
         
         device = features[0].device
-        # features_len = torch.IntTensor([len(feat) for feat in features]).to(device=device)
+        features_len = torch.IntTensor([len(feat) for feat in features]).to(device=device)
         features = pad_sequence(features, batch_first=True)
         features = self.connector(features)
         predicted = self.model(features)
 
         # utterance_labels = your_other_contents1
-        labels = torch.LongTensor(labels).to(features.device)
+        labels = torch.LongTensor(labels).to(features.device)        
+#         predicted_list = []
+#         for pre in predicted:
+#             pre = torch.tensor(pre)
+#             predicted_list.append(pre)
+            
+#         predicted
+        # import pdb; pdb.set_trace()
+        predicted = predicted[0]
         loss = self.objective(predicted, labels)
 
         predicted_classid = predicted.max(dim=-1).indices
@@ -203,8 +220,15 @@ class DownstreamExpert(nn.Module):
                 You can return nothing or an empty list when no need to save the checkpoint
         """
         save_names = []
-        for key, values in records.items():
+        for key in ["acc", "loss"]:
+            values = records[key]
             average = torch.FloatTensor(values).mean().item()
+                
+        # for key, values in records.items():
+        #     try:
+        #         average = torch.FloatTensor(values).mean().item()
+        #     except:
+        #         import pdb; pdb.set_trace()
             logger.add_scalar(
                 f'emotion-{self.fold}/{split}-{key}',
                 average,
@@ -216,7 +240,7 @@ class DownstreamExpert(nn.Module):
                     f.write(f'{split} at step {global_step}: {average}\n')
                     if split == "dev" and average > self.best_score:
                         self.best_score = torch.ones(1) * average
-                        f.write(f'New best on {mode} at step {global_step}: {average}\n')
+                        f.write(f'New best on {split} at step {global_step}: {average}\n')
                         save_names.append(f"{split}-best.ckpt")
                         
         if split in ["dev", "test"]:
