@@ -1,28 +1,20 @@
 import random
 import sys
 from typing import Callable, Dict, List, Tuple, Union
-
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
-
-# <<<<<<< HEAD
 from util.helper import show
-# =======
-# >>>>>>> origin/interface+avhubert+replai
 
 TOLERABLE_SEQLEN_DIFF = 5
 AUDIO_SAMPLE_RATE = 16000
 VIDEO_SAMPLE_RATE = 16
 HEIGHT = 112
 WIDTH = 112
-# <<<<<<< HEAD
-# =======
 MIN_SEC = 2
 MAX_SEC = 4
-# >>>>>>> origin/interface+avhubert+replai
 
 
 class Hook:
@@ -160,13 +152,6 @@ class Featurizer(nn.Module):
         self.name = "Featurizer"
 
         upstream.eval()
-# <<<<<<< HEAD
-#         audio_samples = random.randint(2 * AUDIO_SAMPLE_RATE, 4 * AUDIO_SAMPLE_RATE)
-#         paired_wavs = [
-#             (
-#                 torch.randn(audio_samples),
-#                 torch.randn(VIDEO_SAMPLE_RATE // 2, 3, HEIGHT, WIDTH),
-# =======
         length = random.randint(MIN_SEC, MAX_SEC)
         audio_samples = length * AUDIO_SAMPLE_RATE
         video_samples = length * VIDEO_SAMPLE_RATE
@@ -174,7 +159,6 @@ class Featurizer(nn.Module):
             (
                 torch.randn(audio_samples),
                 torch.randn(video_samples, 3, HEIGHT, WIDTH),
-# >>>>>>> origin/interface+avhubert+replai
             )
             for i in range(2)
         ]

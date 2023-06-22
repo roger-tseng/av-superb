@@ -20,23 +20,23 @@ from tqdm import tqdm
 
 import hub
 from interfaces import Featurizer
-<<<<<<< HEAD
+# <<<<<<< HEAD
 from util.helper import defaultdict, get_model_state, is_leader_process, show
 from util.optimizers import get_optimizer
 from util.schedulers import get_scheduler
-=======
-from utils.helper import defaultdict, get_model_state, is_leader_process, show
-from utils.optimizers import get_optimizer
-from utils.schedulers import get_scheduler
->>>>>>> origin/interface+avhubert+replai
+# =======
+from util.helper import defaultdict, get_model_state, is_leader_process, show
+from util.optimizers import get_optimizer
+from util.schedulers import get_scheduler
+# >>>>>>> origin/interface+avhubert+replai
 
 SAMPLE_RATE = 16000
 
 
-<<<<<<< HEAD
+# <<<<<<< HEAD
 
-=======
->>>>>>> origin/interface+avhubert+replai
+# =======
+# >>>>>>> origin/interface+avhubert+replai
 class ModelEntry:
     def __init__(self, model, name, trainable, interfaces):
         self.model = model
@@ -138,10 +138,10 @@ class Runner:
             f"downstream_tasks.{self.args.downstream}.expert"
         )
         Downstream = getattr(expert, "DownstreamExpert")
-<<<<<<< HEAD
-        # import pdb; pdb.set_trace()
-=======
->>>>>>> origin/interface+avhubert+replai
+# <<<<<<< HEAD
+#         # import pdb; pdb.set_trace()
+# =======
+# >>>>>>> origin/interface+avhubert+replai
 
         model = Downstream(
             preprocess_audio=preprocess_audio,
@@ -219,7 +219,7 @@ class Runner:
                 dataloader = self.downstream.model.get_dataloader(
                     train_split, epoch=epoch
                 )
-<<<<<<< HEAD
+# <<<<<<< HEAD
                 train_features, train_labels, a, b = next(iter(dataloader))
                 # print(f"Feature batch shape: {train_features.size()}")
                 # print(f"Labels batch shape: {train_labels.size()}")
@@ -228,9 +228,9 @@ class Runner:
                 # plt.imshow(img, cmap="gray")
                 # plt.show()
                 
-                print(f"Label: {label}")
-=======
->>>>>>> origin/interface+avhubert+replai
+                # print(f"Label: {label}")
+# =======
+# >>>>>>> origin/interface+avhubert+replai
             except TypeError as e:
                 if "unexpected keyword argument 'epoch'" in str(e):
                     dataloader = self.downstream.model.get_dataloader(train_split)
@@ -238,7 +238,7 @@ class Runner:
                         dataloader.sampler, DistributedSampler
                     ):
                         dataloader.sampler.set_epoch(epoch)
-<<<<<<< HEAD
+# <<<<<<< HEAD
                         train_features, train_labels, a, b = next(iter(dataloader))
                         # print(f"Feature batch shape: {train_features.size()}")
                         # print(f"Labels batch shape: {train_labels.size()}")
@@ -247,8 +247,8 @@ class Runner:
                         # plt.imshow(img, cmap="gray")
                         # plt.show()
 
-=======
->>>>>>> origin/interface+avhubert+replai
+# =======
+# >>>>>>> origin/interface+avhubert+replai
                 else:
                     raise
 
@@ -260,15 +260,15 @@ class Runner:
                     if pbar.n >= pbar.total:
                         break
                     global_step = pbar.n + 1
-<<<<<<< HEAD
+# <<<<<<< HEAD
                     # import pdb; pdb.set_trace()
                     # frames = tuple(float(frames) for frames in frames.strip("[[[]]]").split(","))
                     # frames = float('.'.join(str(elem) for elem in frames))
                     frames = tuple(map(lambda x: x.float(), frames))
                     # frames = float(frames) for frame in (frames.strip("[]").split(","))
                     # frames = float('.'.join(str(elem) for elem in frames))
-=======
->>>>>>> origin/interface+avhubert+replai
+# =======
+# >>>>>>> origin/interface+avhubert+replai
 
                     assert len(wavs) == len(frames)
                     source = [

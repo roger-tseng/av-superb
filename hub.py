@@ -1,10 +1,10 @@
 from upstream_models.example.hubconf import *
-<<<<<<< HEAD
-=======
+# <<<<<<< HEAD
+# =======
 from upstream_models.replai.hubconf import *
 from upstream_models.vhubert.hubconf import *
 
->>>>>>> origin/interface+avhubert+replai
+# >>>>>>> origin/interface+avhubert+replai
 
 def options(only_registered_ckpt: bool = False):
     all_options = []
