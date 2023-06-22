@@ -13,19 +13,21 @@ runner:
 
 optimizer:
   name: AdamW
-  lr: 2.0e-4
+  lr: 1.0e-4
 
 # comment the whole scheduler config block
 # to disable learning rate scheduling
-scheduler:
-  name: linear_schedule_with_warmup
-  num_warmup_steps: 1400
+# scheduler:
+#   name: linear_schedule_with_warmup
+#   num_warmup_steps: 1400
 
 downstream_expert:
   datarc:
-    num_workers: 12
-    train_batch_size: 2
-    eval_batch_size: 2
+    num_workers: 1
+    train_batch_size: 32
+    eval_batch_size: 32
+    lrs_version: 2 # choices are 2 (BBC) or 3 (TED)
 
   modelrc:
     input_dim: 256
+    upsample_rate: 1

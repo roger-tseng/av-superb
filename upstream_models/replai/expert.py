@@ -164,9 +164,14 @@ class UpstreamExpert(nn.Module):
         """
         bsz = len(source)
         audio, video = zip(*source)
-
+        
         # Collate audio and video into batch
-        audio = [a.squeeze() for a in audio]
+        audio = [a.squeeze() for a in audio] 
+
+        # Need to ensure at least one sample is at least 128 long
+        if audio[0].shape[0] < 128:
+            needed = 128 - audio[0].shape[0]
+            audio[0] = torch.nn.functional.pad(audio[0], (0,0,0,needed), 'constant', 0.0)    
         wavs = pad_sequence(audio, batch_first=True).unsqueeze(dim=1)
         # TODO: might need to pad video too
         video = [v.permute(1, 0, 2, 3) for v in video]
@@ -182,10 +187,26 @@ class UpstreamExpert(nn.Module):
         video_feats = self.backbone["video"](videos, return_embs=True)
         audio_feats = self.backbone["audio"](wavs, return_embs=True)
 
+        """
+        print('video_feats keys', video_feats.keys())
+        print('\tvideo_feats conv1', video_feats['conv1'].shape)
+        print('\tvideo_feats conv2x', video_feats['conv2x'].shape)
+        print('\tvideo_feats conv3x', video_feats['conv3x'].shape)
+        print('\tvideo_feats conv4x', video_feats['conv4x'].shape)
+        print('\tvideo_feats conv5x', video_feats['conv5x'].shape)
+        print('\tvideo_feats pool', video_feats['pool'].shape)
+        print('audio_feats keys', audio_feats.keys())
+        print('\taudio_feats conv2x', audio_feats['conv2x'].shape)
+        print('\taudio_feats conv3x', audio_feats['conv3x'].shape)
+        print('\taudio_feats conv4x', audio_feats['conv4x'].shape)
+        print('\taudio_feats conv5x', audio_feats['conv5x'].shape)
+        print('\taudio_feats pool', audio_feats['pool'].shape)
+        """
+
         # use the output of pool layers only
         video_feats = video_feats["pool"]
         audio_feats = audio_feats["pool"]
-
+        
         # convert video_feats to shape (bsz,seq_length//8,hid_dim)
         # in RepLAI paper, the video input size is fixed to 8 frames. Hence, we regard 8 frames as a chunck
         video_feats = video_feats.reshape(bsz, 512, -1)
@@ -195,9 +216,12 @@ class UpstreamExpert(nn.Module):
         # in RepLAI paper, the audio input size is fixed to 128 frames. Hence, we regard 128 frames as a chunck
         audio_feats = audio_feats.reshape(bsz, 512, -1)
         audio_feats = audio_feats.permute(0, 2, 1)
-
+        
         # Return intermediate layer representations for potential layer-wise experiments
         # perhpas we should unify the return data format (such as the suggestion from David, video_feats, audio_feats and fusion_feats)
+
+        # Bug where audio is sometimes empty
+        # Doesn't happen w/ video, so comparing
         return {
             "video_feats": [video_feats],
             "audio_feats": [audio_feats],

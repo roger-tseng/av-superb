@@ -9,7 +9,7 @@ import os
 import re
 import typing as tp
 from collections import Counter
-from multiprocessing import Pool
+# from multiprocessing import Pool
 
 import torch
 
@@ -462,6 +462,7 @@ class Dictionary:
                 counter.update([eos_word])
         return counter
 
+    """
     @staticmethod
     def add_file_to_dictionary(filename, dict, tokenize, num_workers):
         def merge_result(counter):
@@ -497,3 +498,4 @@ class Dictionary:
                     local_file, tokenize, dict.eos_word, offsets[0], offsets[1]
                 )
             )
+    """

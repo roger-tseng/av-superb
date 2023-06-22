@@ -12,15 +12,7 @@ from torch.utils.data.dataset import Dataset
 
 from .fairseq_dictionary import Dictionary
 
-PATH_ROOT = "/saltpool0/data/layneberry/lrs3/lrs3_v0.4/"
-DATASET_SIZE = 0
-for split in [
-    "trainval",
-    "test",
-]:  # removed pretrain from this list, as I don't end up using it
-    video_list = open(PATH_ROOT + split + ".txt").readlines()
-    DATASET_SIZE += len(video_list)
-# This doesn't end up getting used, bc train and test sets are different sizes
+PATH_ROOT = "/saltpool0/data/layneberry/lrs" # Inside Dataset init, appends either '2/' or '3/'
 
 # Other parameters
 AUDIO_SAMPLE_RATE = 16000
@@ -32,7 +24,7 @@ WIDTH = 224
 
 
 class RandomDataset(Dataset):
-    def __init__(self, preprocess_audio=None, preprocess_video=None, **kwargs):
+    def __init__(self, preprocess_audio=None, preprocess_video=None, split=None, lrs_version=None, **kwargs):
         """
         Your dataset should take two preprocessing transform functions,
         preprocess_audio and preprocess_video as input.
@@ -52,26 +44,31 @@ class RandomDataset(Dataset):
         # Create Dictionary object
         self.dictionary = Dictionary.load("downstream_tasks/av_asr/char.dict")
         self.class_num = len(self.dictionary)
+        
         self.AUDIO_SAMPLE_RATE = AUDIO_SAMPLE_RATE
         self.VIDEO_FRAME_RATE = VIDEO_FRAME_RATE
+
         self.preprocess_audio = preprocess_audio
         self.preprocess_video = preprocess_video
+
+        self.lrs_version = lrs_version
+        self.full_path_root = PATH_ROOT + str(lrs_version) + '/'
 
         if split == "train":
             self.dataset = json.load(
                 open(
-                    "/saltpool0/data/layneberry/lrs3/train_sampled_from_trainval_metadata_clean.json"
+                    self.full_path_root+"train_set_metadata_clean.json"
                 )
             )
         elif split == "val":
             self.dataset = json.load(
                 open(
-                    "/saltpool0/data/layneberry/lrs3/val_sampled_from_trainval_metadata_clean.json"
+                    self.full_path_root+"val_set_metadata_clean.json"
                 )
             )
         else:
             self.dataset = json.load(
-                open("/saltpool0/data/layneberry/lrs3/test_set_metadata_clean.json")
+                open(self.full_path_root+"test_set_metadata_clean.json")
             )
 
     def get_rates(self, idx):
@@ -86,7 +83,7 @@ class RandomDataset(Dataset):
 
     def __getitem__(self, idx):
         frames, wav, meta = torchvision.io.read_video(
-            "/saltpool0/data/layneberry/lrs3/" + self.dataset[idx]["path"],
+            self.full_path_root + self.dataset[idx]["path"],
             pts_unit="sec",
             output_format="TCHW",
         )

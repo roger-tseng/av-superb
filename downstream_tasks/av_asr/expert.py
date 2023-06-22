@@ -263,6 +263,12 @@ class DownstreamExpert(nn.Module):
         loss = self.objective(
             log_probs.transpose(0, 1), labels, log_probs_len, labels_len
         )
+        if loss == 0.0:
+            print('Got loss of 0.0!')
+            print('labels was len', len(labels))
+            print('log_probs was shape', log_probs.shape)
+            print('passed log_probs_len', log_probs_len)
+            print('and labels_len', labels_len)
         records["loss"].append(loss.item())
 
         target_tokens_batch = []
