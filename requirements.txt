@@ -19,4 +19,10 @@ opencv-python-headless  # headless works better for twcc
 # replai
 munch
 pytorchvideo
+<<<<<<< HEAD
 >>>>>>> origin/interface+avhubert+replai
+=======
+# avbert
+simplejson
+scipy
+>>>>>>> eb85f721a72e1d461c42a6fed2d566b4d610888b
