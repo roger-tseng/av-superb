@@ -1,5 +1,5 @@
 runner:
-  total_steps: 30000
+  total_steps: 50000
   gradient_clipping: 1
   gradient_accumulate_steps: 8
 
@@ -14,7 +14,7 @@ runner:
 optimizer:
   name: TorchOptim
   torch_optim_name: Adam
-  lr: 1.0e-4
+  lr: 1.0e-3
 
 # comment the whole scheduler config block
 # to disable learning rate scheduling
@@ -24,31 +24,35 @@ optimizer:
 
 downstream_expert:
   datarc:
-    root: /data/member1/user_tahsieh/IEMOCAP
-    meta_data: ./downstream/emotion/meta_data
+    iemocap_root: /data/member1/user_tahsieh/IEMOCAP
+    meta_data: ./downstream_tasks/emotion/meta_data
     test_fold: fold1
     pre_load: True
     train_batch_size: 4
     eval_batch_size: 4
     num_workers: 6
     valid_ratio: 0.2
-
+    
   modelrc:
-    projector_dim: 256
-    select: UtteranceLevel
+    select: Model
+    input_dim: 256
+    hidden_dim: 80
+    hidden_layers: 1
+    dropout: 0.5
+    output_class_num : 4
+    
+#   modelrc:
+#     input_dim: 256
+#     select: UtteranceLevel
 
-    UtteranceLevel:
-      pooling: MeanPooling
+#     UtteranceLevel:
+#       pooling: MeanPooling
 
 #     DeepModel:
+#       input_dim: 256
 #       model_type: CNNSelfAttention
 #       hidden_dim: 80
 #       kernel_size: 5
 #       padding: 2
 #       pooling: 5
-#       dropout: 0.4
-      
-    Model:
-      padding: 2
-      pooling: 5
-      dropout: 0.4
+#       dropout: 0.75

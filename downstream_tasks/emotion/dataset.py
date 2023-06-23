@@ -11,13 +11,7 @@ import cv2
 import torch
 
 
-AUDIO_SAMPLE_RATE = 16000 #44100
-VIDEO_FRAME_RATE = 25 #30
-MIN_SEC = 5
-MAX_SEC = 20
-DATASET_SIZE = 200
-HEIGHT = 224
-WIDTH = 224
+AUDIO_SAMPLE_RATE = 44100
 
 miss = '/data/member1/user_tahsieh/IEMOCAP/miss.txt' 
 miss_list = []
@@ -50,28 +44,22 @@ class IEMOCAPDataset(Dataset):
         self.class_num = len(self.class_dict)
         self.meta_data = self.dataset['meta_data']
         
-        self.audio_sample_rates = [AUDIO_SAMPLE_RATE] * len(self)
-        self.video_frame_rates = [VIDEO_FRAME_RATE] * len(self)
         self.preprocess = preprocess
         self.preprocess_audio = preprocess_audio
         self.preprocess_video = preprocess_video
         self.upstream_name = kwargs['upstream']
 
-    def get_rates(self, idx):
-        """
-        Return the audio sample rate and video frame rate of the idx-th video.
-        (Datasets may contain data with different sample rates)
-        """
-        return self.audio_sample_rates[idx], self.video_frame_rates[idx]
+        _, origin_sr = torchaudio.load(path_join(self.iemocap_root, self.meta_data[0]['path']))
+        self.resampler = Resample(origin_sr, AUDIO_SAMPLE_RATE)
 
     def __getitem__(self, idx):
-        audio_sr, video_fps = self.get_rates(idx)
-        wav, _ = torchaudio.load(path_join(self.iemocap_root, self.meta_data[idx]['path']))
-        wav = wav.mean(dim=0).squeeze(0)
+        wav, audio_sr = torchaudio.load(path_join(self.iemocap_root, self.meta_data[idx]['path']))
+        wav = self.resampler(wav).squeeze(0)
 
         avi_path = path_join(self.iemocap_root, os.path.splitext(self.meta_data[idx]['path'])[0].replace('wav', 'avi_sentence')+'.mp4')
         vid = imageio.get_reader(avi_path, 'ffmpeg')
         capture = cv2.VideoCapture(avi_path)
+        video_fps = capture.get(cv2.CAP_PROP_FPS)
         frame_count=capture.get(cv2.CAP_PROP_FRAME_COUNT)
         images = []
 

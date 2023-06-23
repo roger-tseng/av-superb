@@ -74,13 +74,11 @@ class DownstreamExpert(nn.Module):
         self.train_dataset, self.dev_dataset = random_split(dataset, lengths)
         self.test_dataset = IEMOCAPDataset(DATA_ROOT, test_path, preprocess, preprocess_audio, preprocess_video, upstream=kwargs['upstream'])
 
-        Model = eval(self.modelrc['select'])
-        model_conf = self.modelrc.get(self.modelrc['select'], {})
+        # Model = eval(self.modelrc['select'])
+        # model_conf = self.modelrc.get(self.modelrc['select'], {})
         self.connector = nn.Linear(upstream_dim, self.modelrc["input_dim"])
         self.model = Model(
-            input_dim = self.modelrc['input_dim'],
-            output_dim = 4,
-            **model_conf,
+            **self.modelrc
         )
         self.objective = nn.CrossEntropyLoss()
         self.expdir = expdir
@@ -170,14 +168,7 @@ class DownstreamExpert(nn.Module):
 
         # utterance_labels = your_other_contents1
         labels = torch.LongTensor(labels).to(features.device)        
-#         predicted_list = []
-#         for pre in predicted:
-#             pre = torch.tensor(pre)
-#             predicted_list.append(pre)
-            
-#         predicted
-        # import pdb; pdb.set_trace()
-        predicted = predicted[0]
+        # predicted = predicted[0]
         loss = self.objective(predicted, labels)
 
         predicted_classid = predicted.max(dim=-1).indices
@@ -223,12 +214,6 @@ class DownstreamExpert(nn.Module):
         for key in ["acc", "loss"]:
             values = records[key]
             average = torch.FloatTensor(values).mean().item()
-                
-        # for key, values in records.items():
-        #     try:
-        #         average = torch.FloatTensor(values).mean().item()
-        #     except:
-        #         import pdb; pdb.set_trace()
             logger.add_scalar(
                 f'emotion-{self.fold}/{split}-{key}',
                 average,
