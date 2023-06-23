@@ -20,10 +20,11 @@ class Model(nn.Module):
             batch_first=True,
             dropout=0.2,
         )
-        self.fc1 = nn.Linear(hidden_dim, int(hidden_dim / 2))
+        self.fc1 = nn.Linear(hidden_dim, int(hidden_dim/2))
+        self.fc2 = nn.Linear(int(hidden_dim/2), int(hidden_dim/2))
+        self.fc3 = nn.Linear(int(hidden_dim/2), output_class_num)
         self.relu = nn.ReLU()
-        self.fc2 = nn.Linear(int(hidden_dim / 2), int(hidden_dim / 2))
-        self.fc3 = nn.Linear(int(hidden_dim / 2), output_class_num)
+
 
     def forward(self, x):
         x = x.float()

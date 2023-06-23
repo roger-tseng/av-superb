@@ -18,7 +18,6 @@ EXAMPLE_WAV_MAX_SEC = 20
 EXAMPLE_DATASET_SIZE = 200
 """
 
-# {'video_fps': 30.0, 'audio_fps': 44100}
 SAMPLE_RATE = 16000
 VIDEO_FRAME_RATE = 25
 SEC = 10
@@ -30,15 +29,19 @@ class VggsoundDataset(Dataset):
     def __init__(
         self,
         mode,
-        vggsound_root,
-        class_num,
+        preprocess=None,
         preprocess_audio=None,
         preprocess_video=None,
         **kwargs
     ):
-        self.vggsound_root = vggsound_root
-        self.mode = mode
-        self.class_num = class_num
+        self.vggsound_root = kwargs['vggsound_root']
+        self.class_num = kwargs['class_num']
+        self.upstream_name = kwargs['upstream']
+
+        self.feature_root = kwargs['feature_root']
+        if self.feature_root[-1] != '/':
+            self.feature_root += '/'
+        self.save_features = kwargs['save_features']
 
         if mode == "train":
             self.path = kwargs["train_location"]
@@ -46,17 +49,15 @@ class VggsoundDataset(Dataset):
             self.path = kwargs["val_location"]
         elif mode == "test":
             self.path = kwargs["test_location"]
+
+        with open(self.path) as csvfile: self.data = list(csv.reader(csvfile, delimiter=","))
+
+
+        self.preprocess, self.preprocess_audio, self.preprocess_video = preprocess, preprocess_audio, preprocess_video
+
         print("dataset meta path", self.path)
-
-        with open(self.path) as csvfile:
-            self.data = list(csv.reader(csvfile, delimiter=","))
-
-        self.preprocess_audio = preprocess_audio
-        self.preprocess_video = preprocess_video
-
         print("dataset length:", len(self.data))
-        if len(self.data) > 0:
-            print("data example:", self.data[0])
+        if len(self.data) > 0: print("data example:", self.data[0])
 
     def get_rates(self, idx):
         return SAMPLE_RATE, VIDEO_FRAME_RATE
@@ -65,27 +66,36 @@ class VggsoundDataset(Dataset):
     def __getitem__(self, idx):
 
         start_time = str(int(self.data[idx][1]))
-        filename = "_".join(
-            [self.data[idx][0], (6 - len(start_time)) * "0" + start_time + ".mp4"]
-        )
+        filename = "_".join([self.data[idx][0], (6 - len(start_time)) * "0" + start_time + ".mp4"])
         filepath = "/".join([self.vggsound_root, filename])
 
-        frames, wav, meta = torchvision.io.read_video(
-            filepath, pts_unit="sec", output_format="TCHW"
-        )
+        feature_path = self.feature_root + f"{self.upstream_name}/{filepath.rsplit('/')[-1].rsplit('.')[0]}.pt"
 
-        frames = frames.float()
-        wav = wav.mean(dim=0).squeeze(0)
-
-        if self.preprocess_audio is not None:
-            processed_wav = self.preprocess_audio(wav, meta["audio_fps"])
+        if os.path.exists(feature_path):
+            processed_wav, processed_frames = torch.load(feature_path)
+            # print("load existing features")
         else:
-            processed_wav = wav
+            frames, wav, meta = torchvision.io.read_video(filepath, pts_unit="sec", output_format="TCHW")
 
-        if self.preprocess_video is not None:
-            processed_frames = self.preprocess_video(frames, meta["video_fps"])
-        else:
-            processed_frames = frames
+            frames = frames.float()
+            wav = wav.mean(dim=0).squeeze(0)
+
+            audio_fps, video_fps = meta["audio_fps"], meta["video_fps"]
+
+            if self.preprocess is not None:
+                processed_frames, processed_wav = self.preprocess(frames, wav, video_fps, audio_fps)
+            else:
+                if self.preprocess_audio is not None:
+                    processed_wav = self.preprocess_audio(wav, audio_fps)
+                else:
+                    processed_wav = wav
+                if self.preprocess_video is not None:
+                    processed_frames = self.preprocess_video(frames, video_fps)
+                else:
+                    processed_frames = frames
+
+            if self.save_features:
+                torch.save([processed_wav, processed_frames], feature_path)
 
         # label
         label = int(self.data[idx][2])

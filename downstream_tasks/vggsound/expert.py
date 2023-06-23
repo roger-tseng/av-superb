@@ -29,6 +29,7 @@ class DownstreamExpert(nn.Module):
 
     def __init__(
         self,
+        preprocess,
         preprocess_audio,
         preprocess_video,
         upstream_dim,
@@ -69,37 +70,39 @@ class DownstreamExpert(nn.Module):
         self.datarc = downstream_expert["datarc"]
         self.modelrc = downstream_expert["modelrc"]
 
-        class_num = self.modelrc["output_num_class"]
+        class_num = self.datarc["class_num"]
 
         self.train_dataset = VggsoundDataset(
             mode="train",
-            class_num=class_num,
+            preprocess=preprocess,
             preprocess_audio=preprocess_audio,
             preprocess_video=preprocess_video,
+            upstream=kwargs['upstream'],
             **self.datarc,
         )
 
         self.dev_dataset = VggsoundDataset(
             mode="validation",
-            class_num=class_num,
+            preprocess=preprocess,
             preprocess_audio=preprocess_audio,
             preprocess_video=preprocess_video,
+            upstream=kwargs['upstream'],
             **self.datarc,
         )
 
         self.test_dataset = VggsoundDataset(
             mode="test",
-            class_num=class_num,
+            preprocess=preprocess,
             preprocess_audio=preprocess_audio,
             preprocess_video=preprocess_video,
+            upstream=kwargs['upstream'],
             **self.datarc,
         )
 
         self.connector = nn.Linear(upstream_dim, self.modelrc["input_dim"])
+        self.model = Model(**self.modelrc)
 
-        self.model = Model(
-            output_class_num=self.train_dataset.class_num, **self.modelrc
-        )
+        # without connector # self.model = Model(output_class_num=class_num,upstream_dim=upstream_dim,**self.modelrc)
 
         self.objective = nn.CrossEntropyLoss()
         self.register_buffer("best_score", torch.zeros(1))
@@ -172,15 +175,9 @@ class DownstreamExpert(nn.Module):
                 a single scalar in torch.FloatTensor
         """
 
-        # print("Records got in vggsound.expert.py:",records)
-    
-        #try:
         features = pad_sequence(features, batch_first=True)
-        #except:
-        #    print(len(features))
-        #    for f in features:
-        #        print(f.shape)
-        #    print(features)
+        
+        # for only mean pooling + linear, we don't need connector
         features = self.connector(features)
         
         predicted = self.model(features)
