@@ -37,6 +37,7 @@ class DownstreamExpert(nn.Module):
 
     def __init__(
         self,
+        preprocess,
         preprocess_audio,
         preprocess_video,
         upstream_dim,
@@ -89,6 +90,7 @@ class DownstreamExpert(nn.Module):
         self.train_dataset = AudiosetDataset(
             csvname="audioset_train.csv",
             audioset_root=self.datarc["train_root"],
+            preprocess = preprocess,
             preprocess_audio=preprocess_audio,
             preprocess_video=preprocess_video,
             upstream=kwargs["upstream"],
@@ -98,6 +100,7 @@ class DownstreamExpert(nn.Module):
         self.dev_dataset = AudiosetDataset(
             csvname="audioset_dev.csv",
             audioset_root=self.datarc["train_root"],
+            preprocess = preprocess,
             preprocess_audio=preprocess_audio,
             preprocess_video=preprocess_video,
             upstream=kwargs["upstream"],
@@ -106,6 +109,7 @@ class DownstreamExpert(nn.Module):
         self.test_dataset = AudiosetDataset(
             csvname="audioset_test.csv",
             audioset_root=self.datarc["test_root"],
+            preprocess = preprocess,
             preprocess_audio=preprocess_audio,
             preprocess_video=preprocess_video,
             upstream=kwargs["upstream"],

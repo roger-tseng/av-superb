@@ -34,6 +34,7 @@ class AudiosetDataset(Dataset):
         self,
         csvname,
         audioset_root,
+        preprocess=None,
         preprocess_audio=None,
         preprocess_video=None,
         **kwargs,
@@ -44,7 +45,7 @@ class AudiosetDataset(Dataset):
         csvpath = "/".join([self.csv_root, csvname])
         with open(csvpath) as csvfile:
             self.data = list(csv.reader(csvfile))
-
+        self.preprocess = preprocess
         self.preprocess_audio = preprocess_audio
         self.preprocess_video = preprocess_video
         self.upstream_name = kwargs["upstream"]
@@ -94,6 +95,7 @@ class AudiosetDataset(Dataset):
         # video part
         # print(idx)
         # print(self.data[idx][0])
+        audio_sr, video_fps = self.get_rates(idx)
         filename = "_".join(
             [
                 self.data[idx][0] + ".mp4",
@@ -121,15 +123,17 @@ class AudiosetDataset(Dataset):
         if os.path.exists(feature_path):
             processed_wav, processed_frames = torch.load(feature_path)
         else:
-            if self.preprocess_audio is not None:
-                processed_wav = self.preprocess_audio(wav, SAMPLE_RATE)
+            if self.preprocess is not None:
+                processed_frames, processed_wav = self.preprocess(frames, wav, video_fps, audio_sr)
             else:
-                processed_wav = wav
-
-            if self.preprocess_video is not None:
-                processed_frames = self.preprocess_video(frames, VIDEO_FRAME_RATE)
-            else:
-                processed_frames = frames
+                if self.preprocess_audio is not None:
+                    processed_wav = self.preprocess_audio(wav, SAMPLE_RATE)
+                else:
+                    processed_wav = wav
+                if self.preprocess_video is not None:
+                    processed_frames = self.preprocess_video(frames, VIDEO_FRAME_RATE)
+                else:
+                    processed_frames = frames
             # uncomment next line to save feature
             # torch.save([processed_wav, processed_frames], feature_path)
 

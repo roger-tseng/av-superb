@@ -13,7 +13,7 @@ runner:
 
 optimizer:
   name: AdamW
-  lr: 1.0e-2
+  lr: 1.0e-3
 
 
 # comment the whole scheduler config block
