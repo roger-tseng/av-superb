@@ -58,8 +58,8 @@ class RandomDataset(Dataset):
         # You may use the following function to read video data:
         # frames, wav = torchvision.io.read_video(path, pts_unit="sec", output_format="TCHW")
         wav = torch.randn(audio_samples)
-        frames = torch.randn(
-            video_samples, 3, random.randint(50, HEIGHT), random.randint(50, WIDTH)
+        frames = torch.ones(
+            video_samples, 3, random.randint(50, HEIGHT), random.randint(50, WIDTH), dtype=torch.uint8
         )
 
         # Run preprocessing only if features are not precomputed

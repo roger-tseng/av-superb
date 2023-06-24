@@ -160,7 +160,7 @@ class Featurizer(nn.Module):
         paired_wavs = [
             (
                 torch.randn(audio_samples),
-                torch.randn(video_samples, 3, HEIGHT, WIDTH),
+                torch.ones(video_samples, 3, HEIGHT, WIDTH, dtype=torch.uint8),
             )
             for i in range(2)
         ]
