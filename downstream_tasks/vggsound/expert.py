@@ -78,6 +78,8 @@ class DownstreamExpert(nn.Module):
             preprocess_audio=preprocess_audio,
             preprocess_video=preprocess_video,
             upstream=kwargs['upstream'],
+            pooled_features_path=kwargs['pooled_features_path'],
+            upstream_feature_selection=kwargs['upstream_feature_selection'],
             **self.datarc,
         )
 
@@ -87,6 +89,8 @@ class DownstreamExpert(nn.Module):
             preprocess_audio=preprocess_audio,
             preprocess_video=preprocess_video,
             upstream=kwargs['upstream'],
+            pooled_features_path=kwargs['pooled_features_path'],
+            upstream_feature_selection=kwargs['upstream_feature_selection'],
             **self.datarc,
         )
 
@@ -96,6 +100,8 @@ class DownstreamExpert(nn.Module):
             preprocess_audio=preprocess_audio,
             preprocess_video=preprocess_video,
             upstream=kwargs['upstream'],
+            pooled_features_path=kwargs['pooled_features_path'],
+            upstream_feature_selection=kwargs['upstream_feature_selection'],
             **self.datarc,
         )
 
@@ -137,7 +143,7 @@ class DownstreamExpert(nn.Module):
         )
 
     # Interface
-    def forward(self, split, features, your_other_contents1, records, **kwargs):
+    def forward(self, split, features, labels, basenames, records, **kwargs):
         """
         Args:
             split: string
@@ -176,13 +182,10 @@ class DownstreamExpert(nn.Module):
         """
 
         features = pad_sequence(features, batch_first=True)
-        
-        # for only mean pooling + linear, we don't need connector
         features = self.connector(features)
-        
         predicted = self.model(features)
 
-        utterance_labels = your_other_contents1
+        utterance_labels = labels
         labels = torch.LongTensor(utterance_labels).to(features.device)
         loss = self.objective(predicted, labels)
 
