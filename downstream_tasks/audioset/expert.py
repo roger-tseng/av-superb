@@ -94,6 +94,8 @@ class DownstreamExpert(nn.Module):
             preprocess_audio=preprocess_audio,
             preprocess_video=preprocess_video,
             upstream=kwargs["upstream"],
+            pooled_features_path=kwargs['pooled_features_path'],
+            upstream_feature_selection=kwargs['upstream_feature_selection'],
             **self.datarc,
         )
 
@@ -104,6 +106,8 @@ class DownstreamExpert(nn.Module):
             preprocess_audio=preprocess_audio,
             preprocess_video=preprocess_video,
             upstream=kwargs["upstream"],
+            pooled_features_path=kwargs['pooled_features_path'],
+            upstream_feature_selection=kwargs['upstream_feature_selection'],
             **self.datarc,
         )
         self.test_dataset = AudiosetDataset(
@@ -113,6 +117,8 @@ class DownstreamExpert(nn.Module):
             preprocess_audio=preprocess_audio,
             preprocess_video=preprocess_video,
             upstream=kwargs["upstream"],
+            pooled_features_path=kwargs['pooled_features_path'],
+            upstream_feature_selection=kwargs['upstream_feature_selection'],
             **self.datarc,
         )
 
@@ -169,7 +175,7 @@ class DownstreamExpert(nn.Module):
         )
 
     # Interface
-    def forward(self, split, features, your_other_contents1, records, **kwargs):
+    def forward(self, split, features, labels, basenames, records, **kwargs):
         """
         Args:
             split: string
@@ -210,7 +216,7 @@ class DownstreamExpert(nn.Module):
         features = self.connector(features)
         predicted = self.model(features)
 
-        utterance_labels = your_other_contents1
+        utterance_labels = labels
 
         # test
         # print(utterance_labels)

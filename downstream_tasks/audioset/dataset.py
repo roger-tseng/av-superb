@@ -21,13 +21,13 @@ EXAMPLE_WAV_MAX_SEC = 20
 EXAMPLE_DATASET_SIZE = 200
 """
 
-
+"""
 SAMPLE_RATE = 44100
 VIDEO_FRAME_RATE = 30
 SEC = 10
 HEIGHT = 224
 WIDTH = 224
-
+"""
 
 class AudiosetDataset(Dataset):
     def __init__(
@@ -49,6 +49,8 @@ class AudiosetDataset(Dataset):
         self.preprocess_audio = preprocess_audio
         self.preprocess_video = preprocess_video
         self.upstream_name = kwargs["upstream"]
+        self.upstream_feature_selection = kwargs['upstream_feature_selection']
+        self.pooled_features_path = kwargs['pooled_features_path']
         # print("dataset length:", len(self.data))
         # print("data example:", self.data[0])
 
@@ -95,14 +97,28 @@ class AudiosetDataset(Dataset):
         # video part
         # print(idx)
         # print(self.data[idx][0])
-        audio_sr, video_fps = self.get_rates(idx)
         filename = "_".join(
             [
                 self.data[idx][0] + ".mp4",
             ]
         )
         filepath = "/".join([self.audioset_root, filename])
-        feature_path = f"/work/u7196393/features/{self.upstream_name}/{filepath.rsplit('/')[-1].rsplit('.')[0]}.pt"
+        basename = filepath.rsplit('/')[-1].rsplit('.')[0]
+        origin_labels = [int(i) for i in self.data[idx][3:]]
+        labels = []
+        for i in range(self.class_num):
+            if i not in origin_labels:
+                labels.append(0)
+            else:
+                labels.append(1)
+
+        if self.pooled_features_path:
+            pooled_feature_path = f"{self.pooled_features_path}/{self.upstream_name}_{self.upstream_feature_selection}/{basename}_pooled.pt"
+            if os.path.exists(pooled_feature_path):
+                pooled_feature = torch.load(pooled_feature_path)
+                return pooled_feature, pooled_feature, labels, True
+
+        feature_path = f"/work/u7196393/features/{self.upstream_name}/{basename}.pt"
         if not os.path.exists(feature_path):
             filename = "_".join(
                 [
@@ -114,10 +130,11 @@ class AudiosetDataset(Dataset):
             frames, wav, meta = torchvision.io.read_video(
                 filepath, pts_unit="sec", output_format="TCHW"
             )
-            frames = frames.float()
+            #frames = frames.float()
             # {'video_fps': 30.0, 'audio_fps': 44100}
             wav = wav.mean(dim=0).squeeze(0)
-
+            audio_sr, video_fps = meta['audio_fps'] , meta['video_fps']
+            #print(audio_sr, video_fps)
             # print(type(frames)) ; print(frames.size()) ; print(frames)
         # feature_path = f"/work/u7196393/features/{self.upstream_name}/{filepath.rsplit('/')[-1].rsplit('.')[0]}.pt"
         if os.path.exists(feature_path):
@@ -127,36 +144,37 @@ class AudiosetDataset(Dataset):
                 processed_frames, processed_wav = self.preprocess(frames, wav, video_fps, audio_sr)
             else:
                 if self.preprocess_audio is not None:
-                    processed_wav = self.preprocess_audio(wav, SAMPLE_RATE)
+                    processed_wav = self.preprocess_audio(wav, audio_sr)
                 else:
                     processed_wav = wav
                 if self.preprocess_video is not None:
-                    processed_frames = self.preprocess_video(frames, VIDEO_FRAME_RATE)
+                    processed_frames = self.preprocess_video(frames, video_fps)
                 else:
                     processed_frames = frames
             # uncomment next line to save feature
-            # torch.save([processed_wav, processed_frames], feature_path)
+            #torch.save([processed_wav, processed_frames], feature_path)
 
         # label
-        origin_labels = [int(i) for i in self.data[idx][3:]]
+        #origin_labels = [int(i) for i in self.data[idx][3:]]
         # print(origin_labels)
-        labels = []
-        for i in range(self.class_num):
-            if i not in origin_labels:
-                labels.append(0)
-            else:
-                labels.append(1)
+        #labels = []
+        #for i in range(self.class_num):
+        #    if i not in origin_labels:
+        #        labels.append(0)
+        #    else:
+        #        labels.append(1)
         # label = int(self.data[idx][3])
         # print(labels)
-        return processed_wav, processed_frames, labels
+        return processed_wav, processed_frames, labels, basename
 
     def __len__(self):
         return len(self.data)
 
     def collate_fn(self, samples):
-        wavs, videos, labels = [], [], []
-        for wav, frames, label in samples:
-            wavs.append(wav)
-            videos.append(frames)
-            labels.append(label)
-        return wavs, videos, labels
+        wavs, videos, *others = zip(*samples)
+        #wavs, videos, labels = [], [], []
+        #for wav, frames, label in samples:
+        #    wavs.append(wav)
+        #    videos.append(frames)
+        #    labels.append(label)
+        return wavs, videos, *others

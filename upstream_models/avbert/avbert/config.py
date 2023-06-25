@@ -352,10 +352,10 @@ _C.DATA = CfgNode()
 # The spatial crop size of the input clip.
 _C.DATA.CROP_SIZE = 112
 
-# The number of frames of the input clip.
+# The number of frames to sample from the input clip.
 _C.DATA.NUM_FRAMES = 32
 
-# The video sampling rate of the input clip.
+# The frame sampling rate of the input clip. (interval between two sampled frames)
 _C.DATA.SAMPLING_RATE = 2
 
 # Input videos may have different fps, convert it to the target video fps before

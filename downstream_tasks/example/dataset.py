@@ -42,7 +42,10 @@ class RandomDataset(Dataset):
         self.preprocess = preprocess
         self.preprocess_audio = preprocess_audio
         self.preprocess_video = preprocess_video
-        self.upstream_name = kwargs["upstream"]
+
+        self.upstream_name = kwargs['upstream']
+        self.upstream_feature_selection = kwargs['upstream_feature_selection']
+        self.pooled_features_path = kwargs['pooled_features_path']
 
     def get_rates(self, idx):
         """
@@ -59,13 +62,24 @@ class RandomDataset(Dataset):
         # You may use the following function to read video data:
         # frames, wav = torchvision.io.read_video(path, pts_unit="sec", output_format="TCHW")
         wav = torch.randn(audio_samples)
-        frames = torch.randn(
-            video_samples, 3, random.randint(50, HEIGHT), random.randint(50, WIDTH)
+        frames = torch.ones(
+            video_samples, 3, random.randint(50, HEIGHT), random.randint(50, WIDTH), dtype=torch.uint8
         )
 
         # Run preprocessing only if features are not precomputed
         fname = "path to your video"
-        feature_path = f"/work/b07901163/features/{self.upstream_name}/{fname.rsplit('/')[-1].rsplit('.')[0]}.pt"
+        basename = fname.rsplit('/')[-1].rsplit('.')[0]
+        label = random.randint(0, self.class_num - 1)
+
+        # Directly load pooled features if exist, 
+        # skipping video loading and preprocessing
+        if self.pooled_features_path:
+            pooled_feature_path = f"{self.pooled_features_path}/{self.upstream_name}_{self.upstream_feature_selection}/{basename}_pooled.pt"
+            if os.path.exists(pooled_feature_path):
+                pooled_feature = torch.load(pooled_feature_path)
+                return pooled_feature, pooled_feature, label, True
+
+        feature_path = f"/work/b07901163/features/{self.upstream_name}/{basename}.pt"
         if os.path.exists(feature_path):
             processed_wav, processed_frames = torch.load(feature_path)
         else:
@@ -83,16 +97,17 @@ class RandomDataset(Dataset):
             # Uncomment the next line
             # torch.save([processed_wav, processed_frames], feature_path)
 
-        label = random.randint(0, self.class_num - 1)
-        return processed_wav, processed_frames, label
+        return processed_wav, processed_frames, label, basename
 
     def __len__(self):
         return DATASET_SIZE
 
     def collate_fn(self, samples):
-        wavs, videos, labels = [], [], []
-        for wav, frames, label in samples:
-            wavs.append(wav)
-            videos.append(frames)
-            labels.append(label)
-        return wavs, videos, labels
+        wavs, videos, *others = zip(*samples)
+        # Concise way of doing:
+        # wavs, videos, labels = [], [], []
+        # for wav, frames, label in samples:
+        #     wavs.append(wav)
+        #     videos.append(frames)
+        #     labels.append(label)
+        return wavs, videos, *others
