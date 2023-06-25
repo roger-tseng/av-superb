@@ -40,7 +40,7 @@ class UpstreamExpert(nn.Module):
         self.audio_encoder = lambda x: x.reshape(x.size(0), 1, -1).mean(
             dim=-1, keepdim=True
         )
-        self.video_encoder = lambda x: x.reshape(x.size(0), 1, -1).mean(
+        self.video_encoder = lambda x: x.float().reshape(x.size(0), 1, -1).mean(
             dim=-1, keepdim=True
         )
 
@@ -76,7 +76,7 @@ class UpstreamExpert(nn.Module):
         # Other preprocessing steps (i.e. cropping, flipping, etc.)
         # e.g. take first three frames to ensure all videos have same size
         video = video[:3]
-        return video
+        return video.float()
 
     def preprocess_audio(self, audio, audio_sample_rate):
         """
