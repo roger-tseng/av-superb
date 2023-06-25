@@ -12,10 +12,11 @@ import torchaudio.transforms as aT
 import torchvision
 from torch import Tensor
 from torch.nn.utils.rnn import pad_sequence
-from .preprocess_function import get_audio_seq, get_visual_seq, resample
-from .avbert.utils import checkpoint as cu
+
 from .avbert.config import get_cfg
 from .avbert.models.avbert import AVBert
+from .avbert.utils import checkpoint as cu
+from .preprocess_function import get_audio_seq, get_visual_seq, resample
 
 
 class UpstreamExpert(nn.Module):
@@ -31,18 +32,16 @@ class UpstreamExpert(nn.Module):
         super().__init__()
 
         self.cfg = get_cfg()
-        self.feature_concat_axis = kwargs['feature_concat_axis']
+        self.feature_concat_axis = kwargs["feature_concat_axis"]
 
         # NOTE: Encoders should return (batch_size, seq_len, hidden_dims)
-        
-        checkpoint = torch.load(
-            ckpt, map_location='cpu'
-        )
+
+        checkpoint = torch.load(ckpt, map_location="cpu")
 
         self.multi_encoder = AVBert(self.cfg)
         cu.load_finetune_checkpoint(
             self.multi_encoder,
-            checkpoint['state_dict'],
+            checkpoint["state_dict"],
             self.cfg.NUM_GPUS > 1,
             self.cfg.MODEL.USE_TRANSFORMER,
         )
@@ -62,31 +61,32 @@ class UpstreamExpert(nn.Module):
         """
 
         return audio
-    
+
     def preprocess(self, video, audio, video_frame_rate, audio_sample_rate):
-        
-        video = video.permute(0, 2, 3 ,1)
+        video = video.permute(0, 2, 3, 1)
 
         visual_seqs = []
 
         num_frames = (
-            self.cfg.DATA.NUM_FRAMES *
-            self.cfg.DATA.SAMPLING_RATE *
-            video_frame_rate /
-            self.cfg.DATA.TARGET_FPS
+            self.cfg.DATA.NUM_FRAMES
+            * self.cfg.DATA.SAMPLING_RATE
+            * video_frame_rate
+            / self.cfg.DATA.TARGET_FPS
         )
 
         waveform_size = int(
-            self.cfg.DATA.TARGET_AUDIO_RATE *
-            self.cfg.DATA.NUM_FRAMES *
-            self.cfg.DATA.SAMPLING_RATE /
-            self.cfg.DATA.TARGET_FPS
+            self.cfg.DATA.TARGET_AUDIO_RATE
+            * self.cfg.DATA.NUM_FRAMES
+            * self.cfg.DATA.SAMPLING_RATE
+            / self.cfg.DATA.TARGET_FPS
         )
 
         visual_delta = max(video.size(0) - num_frames, 0)
         for spatial_sample_index in range(self.cfg.TEST.NUM_SPATIAL_CROPS):
             visual_start_idx = [
-                visual_delta * temporal_sample_index / (self.cfg.TEST.NUM_ENSEMBLE_VIEWS - 1)
+                visual_delta
+                * temporal_sample_index
+                / (self.cfg.TEST.NUM_ENSEMBLE_VIEWS - 1)
                 for temporal_sample_index in range(self.cfg.TEST.NUM_ENSEMBLE_VIEWS)
             ]
             visual_end_idx = [s + num_frames - 1 for s in visual_start_idx]
@@ -104,7 +104,7 @@ class UpstreamExpert(nn.Module):
 
         if len(audio.shape) == 1:
             waveform = audio.unsqueeze(0)
-        
+
         waveform = resample(
             waveform,
             audio_sample_rate,
@@ -130,7 +130,6 @@ class UpstreamExpert(nn.Module):
         # visual: 10 1-sec clips, 3 views per clip, 32 frames per view, 3 x 128 x 128 frame
         return visual_seqs, audio_seq
 
-
     def forward(
         self, source: List[Tuple[Tensor, Tensor]]
     ) -> Dict[str, Union[Tensor, List[Tensor]]]:
@@ -148,35 +147,48 @@ class UpstreamExpert(nn.Module):
 
         videos = videos.transpose(0, 1).contiguous()
 
-        _ , single_hiddens_0, multi_hidden_0 = self.multi_encoder(
+        _, single_hiddens_0, multi_hidden_0 = self.multi_encoder(
             visual_seq=[videos[0]], audio_seq=audios
         )
 
-        _ , single_hiddens_1, multi_hidden_1 = self.multi_encoder(
+        _, single_hiddens_1, multi_hidden_1 = self.multi_encoder(
             visual_seq=[videos[1]], audio_seq=audios
         )
 
-        _ , single_hiddens_2, multi_hidden_2 = self.multi_encoder(
+        _, single_hiddens_2, multi_hidden_2 = self.multi_encoder(
             visual_seq=[videos[2]], audio_seq=audios
         )
 
         # Concat features of three views along time axis (B x 3L x 768) or along hidden dim axis (B x L x 3*768)
         audio_feats = single_hiddens_0[1]
-        if self.feature_concat_axis == 'time':
+        if self.feature_concat_axis == "time":
             video_feats = []
-            for layer_0, layer_1, layer_2 in zip(single_hiddens_0[0], single_hiddens_1[0], single_hiddens_2[0]):
-                stacked = torch.stack((layer_0, layer_1, layer_2), dim = 2)
+            for layer_0, layer_1, layer_2 in zip(
+                single_hiddens_0[0], single_hiddens_1[0], single_hiddens_2[0]
+            ):
+                stacked = torch.stack((layer_0, layer_1, layer_2), dim=2)
                 video_feats.append(torch.flatten(stacked, start_dim=1, end_dim=2))
             fusion_feats = []
-            for layer_0, layer_1, layer_2 in zip(multi_hidden_0, multi_hidden_1, multi_hidden_2):
-                stacked = torch.stack((layer_0, layer_1, layer_2), dim = 2)
+            for layer_0, layer_1, layer_2 in zip(
+                multi_hidden_0, multi_hidden_1, multi_hidden_2
+            ):
+                stacked = torch.stack((layer_0, layer_1, layer_2), dim=2)
                 fusion_feats.append(torch.flatten(stacked, start_dim=1, end_dim=2))
-        elif self.feature_concat_axis == 'hidden':
-            video_feats = tuple(torch.cat((layer_0, layer_1, layer_2), dim = 2) for layer_0, layer_1, layer_2 in zip(single_hiddens_0[0], single_hiddens_1[0], single_hiddens_2[0]))
-            fusion_feats = tuple(torch.cat((layer_0, layer_1, layer_2), dim = 2) for layer_0, layer_1, layer_2 in zip(multi_hidden_0, multi_hidden_1, multi_hidden_2))
+        elif self.feature_concat_axis == "hidden":
+            video_feats = tuple(
+                torch.cat((layer_0, layer_1, layer_2), dim=2)
+                for layer_0, layer_1, layer_2 in zip(
+                    single_hiddens_0[0], single_hiddens_1[0], single_hiddens_2[0]
+                )
+            )
+            fusion_feats = tuple(
+                torch.cat((layer_0, layer_1, layer_2), dim=2)
+                for layer_0, layer_1, layer_2 in zip(
+                    multi_hidden_0, multi_hidden_1, multi_hidden_2
+                )
+            )
         else:
             raise NotImplementedError
-
 
         # Return intermediate layer representations for potential layer-wise experiments
         # Dict should contain three items, with keys as listed below:

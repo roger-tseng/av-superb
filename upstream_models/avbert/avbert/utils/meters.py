@@ -1,8 +1,9 @@
 """Meters."""
 import datetime
-import numpy as np
 import os
 from collections import defaultdict, deque
+
+import numpy as np
 import torch
 from fvcore.common.timer import Timer
 
@@ -452,9 +453,7 @@ class ClassifyTestMeter(object):
                 )
             else:
                 raise NotImplementedError(
-                    "Ensemble Method {} is not supported".format(
-                        self.ensemble_method
-                    )
+                    "Ensemble Method {} is not supported".format(self.ensemble_method)
                 )
             self.clip_count[point_id] += 1
             self.view_count[point_id, clip_id] = 1
@@ -510,19 +509,14 @@ class ClassifyTestMeter(object):
 
         stats = {"split": "test_final"}
         if cur_epoch is not None and num_epochs is not None:
-            stats['epoch'] = "{}/{}".format(cur_epoch + 1, num_epochs)
+            stats["epoch"] = "{}/{}".format(cur_epoch + 1, num_epochs)
         num_topks_correct = metrics.topks_correct(
             self.point_preds, self.point_labels, ks
         )
-        topks = [
-            (x / self.point_preds.size(0)) * 100.0
-            for x in num_topks_correct
-        ]
+        topks = [(x / self.point_preds.size(0)) * 100.0 for x in num_topks_correct]
         assert len({len(ks), len(topks)}) == 1
         for k, topk in zip(ks, topks):
-            stats["top{}_acc".format(k)] = "{:.{prec}f}".format(
-                topk, prec=2
-            )
+            stats["top{}_acc".format(k)] = "{:.{prec}f}".format(topk, prec=2)
         logging.log_json_stats(stats)
         if writer is not None and cur_epoch is not None and num_epochs is not None:
             for k, topk in zip(ks, topks):

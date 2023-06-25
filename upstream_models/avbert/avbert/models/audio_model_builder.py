@@ -1,14 +1,20 @@
 """Audio models."""
 
+import math
+
 import torch
 import torch.nn as nn
-import math
 
 from . import audio_head_helper, audio_resnet_helper, audio_stem_helper
 from .build import MODEL_REGISTRY
 
 # Number of blocks for different stages given the model depth.
-_MODEL_STAGE_DEPTH = {18: (2, 2, 2, 2), 34: (3, 4, 6, 3), 50: (3, 4, 6, 3), 101: (3, 4, 23, 3)}
+_MODEL_STAGE_DEPTH = {
+    18: (2, 2, 2, 2),
+    34: (3, 4, 6, 3),
+    50: (3, 4, 6, 3),
+    101: (3, 4, 23, 3),
+}
 
 
 @MODEL_REGISTRY.register()
@@ -43,10 +49,10 @@ class AudioResNet(nn.Module):
         returns:
             dim_in (int): the input dimension.
         """
-        if trans_func == 'basic_transform':
+        if trans_func == "basic_transform":
             factor = 1 if idx == 0 else 2 ** (idx - 1)
-        elif trans_func == 'bottleneck_transform':
-            factor = 1 if idx == 0 else 2 * (2 ** idx)
+        elif trans_func == "bottleneck_transform":
+            factor = 1 if idx == 0 else 2 * (2**idx)
         else:
             raise NotImplementedError(
                 "Does not support {} transfomration".format(trans_func)
@@ -71,10 +77,10 @@ class AudioResNet(nn.Module):
         returns:
             dim_out (int): the output dimension.
         """
-        if trans_func == 'basic_transform':
-            factor = 2 ** idx
-        elif trans_func == 'bottleneck_transform':
-            factor = 4 * (2 ** idx)
+        if trans_func == "basic_transform":
+            factor = 2**idx
+        elif trans_func == "bottleneck_transform":
+            factor = 4 * (2**idx)
         else:
             raise NotImplementedError(
                 "Does not support {} transfomration".format(trans_func)
@@ -111,20 +117,12 @@ class AudioResNet(nn.Module):
         )
 
         dim_in_l = [
-            self._compute_dim_in(
-                i,
-                cfg.AUDIO_RESNET.TRANS_FUNC,
-                width_per_group
-            )
+            self._compute_dim_in(i, cfg.AUDIO_RESNET.TRANS_FUNC, width_per_group)
             for i in range(4)
         ]
 
         dim_out_l = [
-            self._compute_dim_out(
-                i,
-                cfg.AUDIO_RESNET.TRANS_FUNC,
-                width_per_group
-            )
+            self._compute_dim_out(i, cfg.AUDIO_RESNET.TRANS_FUNC, width_per_group)
             for i in range(4)
         ]
 

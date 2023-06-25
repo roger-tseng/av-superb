@@ -5,17 +5,16 @@ import math
 
 # import cv2
 import random
-
-import numpy as np
-import torch
-import torchvision.transforms.functional as F
-import PIL
-from PIL import Image, ImageEnhance, ImageOps
-from torchvision import transforms
 import re
 
+import numpy as np
+import PIL
+import torch
+import torchvision.transforms.functional as F
+from PIL import Image, ImageEnhance, ImageOps
+from torchvision import transforms
 
-#from .rand_augment import rand_augment_transform RandomErasing
+# from .rand_augment import rand_augment_transform RandomErasing
 
 
 _pil_interpolation_to_str = {
@@ -862,7 +861,6 @@ def transforms_imagenet_train(
         return transforms.Compose(primary_tfl + secondary_tfl + final_tfl)
 
 
-
 _PIL_VER = tuple([int(x) for x in PIL.__version__.split(".")[:2]])
 
 _FILL = (128, 128, 128)
@@ -1341,8 +1339,6 @@ def rand_augment_transform(config_str, hparams):
     )
     choice_weights = None if weight_idx is None else _select_rand_weights(weight_idx)
     return RandAugment(ra_ops, num_layers, choice_weights=choice_weights)
-
-
 
 
 def _get_pixels(per_pixel, rand_color, patch_size, dtype=torch.float32, device="cuda"):

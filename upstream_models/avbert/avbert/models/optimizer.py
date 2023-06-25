@@ -1,6 +1,7 @@
 """Optimizer."""
 
 import math
+
 import torch
 
 import utils.lr_policy as lr_policy
@@ -25,21 +26,21 @@ def construct_optimizer(model, cfg):
     rest_params = []
     if cfg.MODEL.USE_TRANSFORMER:
         for name, p in model.named_parameters():
-            if 'bn' in name and 'head' not in name:
+            if "bn" in name and "head" not in name:
                 finetune_bn_params.append(p)
-            elif 'bn' in name:
+            elif "bn" in name:
                 bn_params.append(p)
-            elif 'avbert' in name and 'head' not in name:
+            elif "avbert" in name and "head" not in name:
                 finetune_rest_params.append(p)
             else:
                 rest_params.append(p)
     else:
         for name, p in model.named_parameters():
-            if 'bn' in name and 'head' not in name:
+            if "bn" in name and "head" not in name:
                 finetune_bn_params.append(p)
-            elif 'bn' in name:
+            elif "bn" in name:
                 bn_params.append(p)
-            elif 'conv' in name and 'head' not in name:
+            elif "conv" in name and "head" not in name:
                 finetune_rest_params.append(p)
             else:
                 rest_params.append(p)
@@ -83,10 +84,16 @@ def construct_optimizer(model, cfg):
             }
         )
     # Check all parameters will be passed into optimizer.
-    assert len(list(model.parameters())) == len(rest_params) + len(bn_params) + len(finetune_rest_params) + len(
+    assert len(list(model.parameters())) == len(rest_params) + len(bn_params) + len(
+        finetune_rest_params
+    ) + len(
         finetune_bn_params
     ), "parameter size does not match: {} + {} + {} + {} != {}".format(
-        len(rest_params), len(bn_params), len(finetune_rest_params), len(finetune_bn_params), len(list(model.parameters()))
+        len(rest_params),
+        len(bn_params),
+        len(finetune_rest_params),
+        len(finetune_bn_params),
+        len(list(model.parameters())),
     )
 
     if cfg.SOLVER.OPTIMIZING_METHOD == "sgd":

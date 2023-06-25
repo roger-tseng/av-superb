@@ -29,6 +29,7 @@ HEIGHT = 224
 WIDTH = 224
 """
 
+
 class AudiosetDataset(Dataset):
     def __init__(
         self,
@@ -49,8 +50,8 @@ class AudiosetDataset(Dataset):
         self.preprocess_audio = preprocess_audio
         self.preprocess_video = preprocess_video
         self.upstream_name = kwargs["upstream"]
-        self.upstream_feature_selection = kwargs['upstream_feature_selection']
-        self.pooled_features_path = kwargs['pooled_features_path']
+        self.upstream_feature_selection = kwargs["upstream_feature_selection"]
+        self.pooled_features_path = kwargs["pooled_features_path"]
         # print("dataset length:", len(self.data))
         # print("data example:", self.data[0])
 
@@ -103,7 +104,7 @@ class AudiosetDataset(Dataset):
             ]
         )
         filepath = "/".join([self.audioset_root, filename])
-        basename = filepath.rsplit('/')[-1].rsplit('.')[0]
+        basename = filepath.rsplit("/")[-1].rsplit(".")[0]
         origin_labels = [int(i) for i in self.data[idx][3:]]
         labels = []
         for i in range(self.class_num):
@@ -130,18 +131,20 @@ class AudiosetDataset(Dataset):
             frames, wav, meta = torchvision.io.read_video(
                 filepath, pts_unit="sec", output_format="TCHW"
             )
-            #frames = frames.float()
+            # frames = frames.float()
             # {'video_fps': 30.0, 'audio_fps': 44100}
             wav = wav.mean(dim=0).squeeze(0)
-            audio_sr, video_fps = meta['audio_fps'] , meta['video_fps']
-            #print(audio_sr, video_fps)
+            audio_sr, video_fps = meta["audio_fps"], meta["video_fps"]
+            # print(audio_sr, video_fps)
             # print(type(frames)) ; print(frames.size()) ; print(frames)
         # feature_path = f"/work/u7196393/features/{self.upstream_name}/{filepath.rsplit('/')[-1].rsplit('.')[0]}.pt"
         if os.path.exists(feature_path):
             processed_wav, processed_frames = torch.load(feature_path)
         else:
             if self.preprocess is not None:
-                processed_frames, processed_wav = self.preprocess(frames, wav, video_fps, audio_sr)
+                processed_frames, processed_wav = self.preprocess(
+                    frames, wav, video_fps, audio_sr
+                )
             else:
                 if self.preprocess_audio is not None:
                     processed_wav = self.preprocess_audio(wav, audio_sr)
@@ -152,13 +155,13 @@ class AudiosetDataset(Dataset):
                 else:
                     processed_frames = frames
             # uncomment next line to save feature
-            #torch.save([processed_wav, processed_frames], feature_path)
+            # torch.save([processed_wav, processed_frames], feature_path)
 
         # label
-        #origin_labels = [int(i) for i in self.data[idx][3:]]
+        # origin_labels = [int(i) for i in self.data[idx][3:]]
         # print(origin_labels)
-        #labels = []
-        #for i in range(self.class_num):
+        # labels = []
+        # for i in range(self.class_num):
         #    if i not in origin_labels:
         #        labels.append(0)
         #    else:
@@ -172,8 +175,8 @@ class AudiosetDataset(Dataset):
 
     def collate_fn(self, samples):
         wavs, videos, *others = zip(*samples)
-        #wavs, videos, labels = [], [], []
-        #for wav, frames, label in samples:
+        # wavs, videos, labels = [], [], []
+        # for wav, frames, label in samples:
         #    wavs.append(wav)
         #    videos.append(frames)
         #    labels.append(label)

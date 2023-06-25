@@ -21,6 +21,7 @@ class BasicTransform(nn.Module):
     """
     Basic transformation: Tx3x3, 1x3x3, where T is the size of temporal kernel.
     """
+
     def __init__(
         self,
         dim_in,
@@ -70,9 +71,7 @@ class BasicTransform(nn.Module):
             padding=[int(self.temp_kernel_size // 2), 1, 1],
             bias=False,
         )
-        self.a_bn = nn.BatchNorm3d(
-            dim_out, eps=self._eps, momentum=self._bn_mmt
-        )
+        self.a_bn = nn.BatchNorm3d(dim_out, eps=self._eps, momentum=self._bn_mmt)
         self.a_relu = nn.ReLU(inplace=self._inplace_relu)
         # 1x3x3, BN.
         self.b = nn.Conv3d(
@@ -83,9 +82,7 @@ class BasicTransform(nn.Module):
             padding=[0, 1, 1],
             bias=False,
         )
-        self.b_bn = nn.BatchNorm3d(
-            dim_out, eps=self._eps, momentum=self._bn_mmt
-        )
+        self.b_bn = nn.BatchNorm3d(dim_out, eps=self._eps, momentum=self._bn_mmt)
         self.b_bn.transform_final_bn = True
 
     def forward(self, x):
@@ -143,13 +140,9 @@ class BottleneckTransform(nn.Module):
         self._eps = eps
         self._bn_mmt = bn_mmt
         self._stride_1x1 = stride_1x1
-        self._construct(
-            dim_in, dim_out, stride, dim_inner, num_groups, dilation
-        )
+        self._construct(dim_in, dim_out, stride, dim_inner, num_groups, dilation)
 
-    def _construct(
-        self, dim_in, dim_out, stride, dim_inner, num_groups, dilation
-    ):
+    def _construct(self, dim_in, dim_out, stride, dim_inner, num_groups, dilation):
         (str1x1, str3x3) = (stride, 1) if self._stride_1x1 else (1, stride)
 
         # Tx1x1, BN, ReLU.
@@ -161,9 +154,7 @@ class BottleneckTransform(nn.Module):
             padding=[int(self.temp_kernel_size // 2), 0, 0],
             bias=False,
         )
-        self.a_bn = nn.BatchNorm3d(
-            dim_inner, eps=self._eps, momentum=self._bn_mmt
-        )
+        self.a_bn = nn.BatchNorm3d(dim_inner, eps=self._eps, momentum=self._bn_mmt)
         self.a_relu = nn.ReLU(inplace=self._inplace_relu)
 
         # 1x3x3, BN, ReLU.
@@ -177,9 +168,7 @@ class BottleneckTransform(nn.Module):
             bias=False,
             dilation=[1, dilation, dilation],
         )
-        self.b_bn = nn.BatchNorm3d(
-            dim_inner, eps=self._eps, momentum=self._bn_mmt
-        )
+        self.b_bn = nn.BatchNorm3d(dim_inner, eps=self._eps, momentum=self._bn_mmt)
         self.b_relu = nn.ReLU(inplace=self._inplace_relu)
 
         # 1x1x1, BN.
@@ -191,9 +180,7 @@ class BottleneckTransform(nn.Module):
             padding=[0, 0, 0],
             bias=False,
         )
-        self.c_bn = nn.BatchNorm3d(
-            dim_out, eps=self._eps, momentum=self._bn_mmt
-        )
+        self.c_bn = nn.BatchNorm3d(dim_out, eps=self._eps, momentum=self._bn_mmt)
         self.c_bn.transform_final_bn = True
 
     def forward(self, x):
@@ -331,6 +318,7 @@ class ResStage(nn.Module):
     """
     Stage of 3D ResNet.
     """
+
     def __init__(
         self,
         dim_in,

@@ -147,7 +147,9 @@ class ResNetBasicStem(nn.Module):
             bias=False,
         )
         self.bn = nn.BatchNorm3d(
-            dim_out, eps=self.eps, momentum=self.bn_mmt,
+            dim_out,
+            eps=self.eps,
+            momentum=self.bn_mmt,
         )
         self.relu = nn.ReLU(self.inplace_relu)
         self.pool_layer = nn.MaxPool3d(

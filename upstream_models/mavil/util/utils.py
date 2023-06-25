@@ -4,11 +4,11 @@ import os
 import random
 import time
 from collections import defaultdict
+
 import numpy as np
 import torch
 
 from . import transform
-
 
 
 def get_sequence(center_idx, half_len, sample_rate, num_frames):
@@ -284,6 +284,3 @@ def revert_tensor_normalize(tensor, mean, std):
     tensor = tensor * std
     tensor = tensor + mean
     return tensor
-
-
-

@@ -41,16 +41,16 @@ def load_finetune_checkpoint(model, state_dict, data_parallel=False, use_trans=F
                 partial_dict[key] = state_dict[key]
     else:
         for key in state_dict.keys():
-            if 'visual_conv' in key and 'head' not in key:
+            if "visual_conv" in key and "head" not in key:
                 partial_dict[key[7:]] = state_dict[key]
-            if 'audio_conv' in key and 'head' not in key:
+            if "audio_conv" in key and "head" not in key:
                 partial_dict[key[7:]] = state_dict[key]
 
     update_dict = {k: v for k, v in partial_dict.items() if k in model_dict}
     ms.load_state_dict(update_dict, strict=False)
 
 
-def save_checkpoint(state, is_best=False, filename='checkpoint.pyth'):
+def save_checkpoint(state, is_best=False, filename="checkpoint.pyth"):
     """
     Save the model weights to the checkpoint.
     Args:
@@ -60,4 +60,4 @@ def save_checkpoint(state, is_best=False, filename='checkpoint.pyth'):
     """
     torch.save(state, filename)
     if is_best:
-        shutil.copyfile(filename, 'model_best.pyth')
+        shutil.copyfile(filename, "model_best.pyth")

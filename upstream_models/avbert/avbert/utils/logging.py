@@ -4,6 +4,7 @@ import builtins
 import decimal
 import logging
 import sys
+
 import simplejson
 
 from . import distributed as du
@@ -31,12 +32,16 @@ def setup_logging(log_path=None):
     if du.is_master_proc():
         # Enable logging for the master process.
         # logging.root.handlers = []
-        handlers = [logging.FileHandler(log_path),
-                    logging.StreamHandler()] if log_path is not None else \
-            [logging.StreamHandler()]
+        handlers = (
+            [logging.FileHandler(log_path), logging.StreamHandler()]
+            if log_path is not None
+            else [logging.StreamHandler()]
+        )
         logging.basicConfig(
-            level=logging.INFO, datefmt='%m/%d/%Y %H:%M:%S',
-            format=_FORMAT, handlers=handlers
+            level=logging.INFO,
+            datefmt="%m/%d/%Y %H:%M:%S",
+            format=_FORMAT,
+            handlers=handlers,
         )
     else:
         # Suppress logging for non-master processes.

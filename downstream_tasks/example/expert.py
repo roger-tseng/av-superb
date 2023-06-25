@@ -97,31 +97,31 @@ class DownstreamExpert(nn.Module):
         self.modelrc = downstream_expert["modelrc"]  # config for model
 
         self.train_dataset = RandomDataset(
-            preprocess, 
-            preprocess_audio, 
+            preprocess,
+            preprocess_audio,
             preprocess_video,
-            upstream=kwargs['upstream'],
-            pooled_features_path=kwargs['pooled_features_path'],
-            upstream_feature_selection=kwargs['upstream_feature_selection'],
-            **self.datarc
+            upstream=kwargs["upstream"],
+            pooled_features_path=kwargs["pooled_features_path"],
+            upstream_feature_selection=kwargs["upstream_feature_selection"],
+            **self.datarc,
         )
         self.dev_dataset = RandomDataset(
-            preprocess, 
-            preprocess_audio, 
+            preprocess,
+            preprocess_audio,
             preprocess_video,
-            upstream=kwargs['upstream'],
-            pooled_features_path=kwargs['pooled_features_path'],
-            upstream_feature_selection=kwargs['upstream_feature_selection'],
-            **self.datarc
+            upstream=kwargs["upstream"],
+            pooled_features_path=kwargs["pooled_features_path"],
+            upstream_feature_selection=kwargs["upstream_feature_selection"],
+            **self.datarc,
         )
         self.test_dataset = RandomDataset(
-            preprocess, 
-            preprocess_audio, 
+            preprocess,
+            preprocess_audio,
             preprocess_video,
-            upstream=kwargs['upstream'],
-            pooled_features_path=kwargs['pooled_features_path'],
-            upstream_feature_selection=kwargs['upstream_feature_selection'],
-            **self.datarc
+            upstream=kwargs["upstream"],
+            pooled_features_path=kwargs["pooled_features_path"],
+            upstream_feature_selection=kwargs["upstream_feature_selection"],
+            **self.datarc,
         )
 
         self.connector = nn.Linear(upstream_dim, self.modelrc["input_dim"])

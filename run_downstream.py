@@ -166,12 +166,15 @@ def get_downstream_args():
     parser.add_argument("--verbose", action="store_true", help="Print model infomation")
     parser.add_argument("--disable_cudnn", action="store_true", help="Disable CUDNN")
     # Path to where to save the features
-    parser.add_argument('--pooled_features_path', type=str)
+    parser.add_argument("--pooled_features_path", type=str)
     args = parser.parse_args()
     backup_files = []
 
     if args.pooled_features_path:
-        os.makedirs(f"{args.pooled_features_path}/{args.upstream}_{args.upstream_feature_selection}", exist_ok=True)
+        os.makedirs(
+            f"{args.pooled_features_path}/{args.upstream}_{args.upstream_feature_selection}",
+            exist_ok=True,
+        )
 
     if args.expdir is None:
         args.expdir = f"result/downstream/{args.expname}"

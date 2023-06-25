@@ -71,9 +71,7 @@ class BasicTransform(nn.Module):
                 padding=[1, 0],
                 bias=False,
             )
-            self.a1_bn = nn.BatchNorm2d(
-                dim_out, eps=self._eps, momentum=self._bn_mmt
-            )
+            self.a1_bn = nn.BatchNorm2d(dim_out, eps=self._eps, momentum=self._bn_mmt)
             self.a1_relu = nn.ReLU(inplace=self._inplace_relu)
 
             # 1x3, BN, ReLU.
@@ -85,9 +83,7 @@ class BasicTransform(nn.Module):
                 padding=[0, 1],
                 bias=False,
             )
-            self.a2_bn = nn.BatchNorm2d(
-                dim_out, eps=self._eps, momentum=self._bn_mmt
-            )
+            self.a2_bn = nn.BatchNorm2d(dim_out, eps=self._eps, momentum=self._bn_mmt)
             self.a2_relu = nn.ReLU(inplace=self._inplace_relu)
         else:
             # 3x3, BN, ReLU.
@@ -99,9 +95,7 @@ class BasicTransform(nn.Module):
                 padding=[1, 1],
                 bias=False,
             )
-            self.a_bn = nn.BatchNorm2d(
-                dim_out, eps=self._eps, momentum=self._bn_mmt
-            )
+            self.a_bn = nn.BatchNorm2d(dim_out, eps=self._eps, momentum=self._bn_mmt)
             self.a_relu = nn.ReLU(inplace=self._inplace_relu)
 
         # 3x3, BN.
@@ -113,9 +107,7 @@ class BasicTransform(nn.Module):
             padding=[1, 1],
             bias=False,
         )
-        self.b_bn = nn.BatchNorm2d(
-            dim_out, eps=self._eps, momentum=self._bn_mmt
-        )
+        self.b_bn = nn.BatchNorm2d(dim_out, eps=self._eps, momentum=self._bn_mmt)
         self.b_bn.transform_final_bn = True
 
     def forward(self, x):
@@ -179,13 +171,9 @@ class BottleneckTransform(nn.Module):
         self._bn_mmt = bn_mmt
         self._stride_1x1 = stride_1x1
         self.separable = separable
-        self._construct(
-            dim_in, dim_out, stride, dim_inner, num_groups, dilation
-        )
+        self._construct(dim_in, dim_out, stride, dim_inner, num_groups, dilation)
 
-    def _construct(
-        self, dim_in, dim_out, stride, dim_inner, num_groups, dilation
-    ):
+    def _construct(self, dim_in, dim_out, stride, dim_inner, num_groups, dilation):
         (str1x1, str3x3) = (stride, 1) if self._stride_1x1 else (1, stride)
 
         # 1x1, BN, ReLU.
@@ -197,9 +185,7 @@ class BottleneckTransform(nn.Module):
             padding=[0, 0],
             bias=False,
         )
-        self.a_bn = nn.BatchNorm2d(
-            dim_inner, eps=self._eps, momentum=self._bn_mmt
-        )
+        self.a_bn = nn.BatchNorm2d(dim_inner, eps=self._eps, momentum=self._bn_mmt)
         self.a_relu = nn.ReLU(inplace=self._inplace_relu)
 
         if self.separable:
@@ -214,9 +200,7 @@ class BottleneckTransform(nn.Module):
                 bias=False,
                 dilation=[dilation, 1],
             )
-            self.b1_bn = nn.BatchNorm2d(
-                dim_inner, eps=self._eps, momentum=self._bn_mmt
-            )
+            self.b1_bn = nn.BatchNorm2d(dim_inner, eps=self._eps, momentum=self._bn_mmt)
             self.b1_relu = nn.ReLU(inplace=self._inplace_relu)
 
             # 1x3, BN, ReLU.
@@ -230,9 +214,7 @@ class BottleneckTransform(nn.Module):
                 bias=False,
                 dilation=[1, dilation],
             )
-            self.b2_bn = nn.BatchNorm2d(
-                dim_inner, eps=self._eps, momentum=self._bn_mmt
-            )
+            self.b2_bn = nn.BatchNorm2d(dim_inner, eps=self._eps, momentum=self._bn_mmt)
             self.b2_relu = nn.ReLU(inplace=self._inplace_relu)
         else:
             # 3x3, BN, ReLU.
@@ -246,9 +228,7 @@ class BottleneckTransform(nn.Module):
                 bias=False,
                 dilation=[dilation, dilation],
             )
-            self.b_bn = nn.BatchNorm2d(
-                dim_inner, eps=self._eps, momentum=self._bn_mmt
-            )
+            self.b_bn = nn.BatchNorm2d(dim_inner, eps=self._eps, momentum=self._bn_mmt)
             self.b_relu = nn.ReLU(inplace=self._inplace_relu)
 
         # 1x1, BN.
@@ -260,9 +240,7 @@ class BottleneckTransform(nn.Module):
             padding=[0, 0],
             bias=False,
         )
-        self.c_bn = nn.BatchNorm2d(
-            dim_out, eps=self._eps, momentum=self._bn_mmt
-        )
+        self.c_bn = nn.BatchNorm2d(dim_out, eps=self._eps, momentum=self._bn_mmt)
         self.c_bn.transform_final_bn = True
 
     def forward(self, x):
@@ -349,7 +327,7 @@ class ResBlock(nn.Module):
             stride_1x1,
             inplace_relu,
             dilation,
-            separable
+            separable,
         )
 
     def _construct(
@@ -363,7 +341,7 @@ class ResBlock(nn.Module):
         stride_1x1,
         inplace_relu,
         dilation,
-        separable
+        separable,
     ):
         # Use skip connection with projection if dim or resolution changes.
         if (dim_in != dim_out) or (stride != 1):

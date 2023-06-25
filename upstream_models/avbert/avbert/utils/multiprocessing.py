@@ -1,12 +1,11 @@
 """Multiprocessing helpers."""
 
 import os
+
 import torch
 
 
-def run(
-    local_rank, num_proc, func, init_method, shard_id, num_shards, backend, cfg
-):
+def run(local_rank, num_proc, func, init_method, shard_id, num_shards, backend, cfg):
     """
     Runs a function from a child process.
     Args:

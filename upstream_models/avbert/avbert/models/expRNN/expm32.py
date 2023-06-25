@@ -8,14 +8,14 @@ Adaptation of expm and expm_frechet in numpy for torch
 #          Jake Vanderplas, August 2012 (Sparse Updates)
 #
 
-from __future__ import division, print_function, absolute_import
+from __future__ import absolute_import, division, print_function
 
 import math
 
 import numpy as np
-
-import torch
 import scipy.special
+import torch
+
 
 def _onenorm_matrix_power_nnm(A, p):
     """
@@ -36,10 +36,10 @@ def _onenorm_matrix_power_nnm(A, p):
     """
     # check input
     if int(p) != p or p < 0:
-        raise ValueError('expected non-negative integer p')
+        raise ValueError("expected non-negative integer p")
     p = int(p)
     if len(A.shape) != 2 or A.shape[0] != A.shape[1]:
-        raise ValueError('expected A to be like a square matrix')
+        raise ValueError("expected A to be like a square matrix")
 
     # Explicitly make a column vector so that this works when A is a
     # numpy matrix (in addition to ndarray and sparse matrix).
@@ -57,6 +57,7 @@ def _onenorm(A):
 def _ident_like(A):
     return torch.eye(A.shape[0], A.shape[1], dtype=A.dtype, device=A.device)
 
+
 class _ExpmPadeHelper(object):
     """
     Help lazily evaluate a matrix exponential.
@@ -66,6 +67,7 @@ class _ExpmPadeHelper(object):
     other properties of the matrix.
 
     """
+
     def __init__(self, A):
         """
         Initialize the object.
@@ -124,25 +126,25 @@ class _ExpmPadeHelper(object):
     @property
     def d4_tight(self):
         if self._d4_exact is None:
-            self._d4_exact = _onenorm(self.A4)**(1/4.)
+            self._d4_exact = _onenorm(self.A4) ** (1 / 4.0)
         return self._d4_exact
 
     @property
     def d6_tight(self):
         if self._d6_exact is None:
-            self._d6_exact = _onenorm(self.A6)**(1/6.)
+            self._d6_exact = _onenorm(self.A6) ** (1 / 6.0)
         return self._d6_exact
 
     @property
     def d8_tight(self):
         if self._d8_exact is None:
-            self._d8_exact = _onenorm(self.A8)**(1/8.)
+            self._d8_exact = _onenorm(self.A8) ** (1 / 8.0)
         return self._d8_exact
 
     @property
     def d10_tight(self):
         if self._d10_exact is None:
-            self._d10_exact = _onenorm(self.A10)**(1/10.)
+            self._d10_exact = _onenorm(self.A10) ** (1 / 10.0)
         return self._d10_exact
 
     @property
@@ -162,27 +164,27 @@ class _ExpmPadeHelper(object):
         return self.d10_tight
 
     def pade3(self):
-        b = (120., 60., 12., 1.)
-        U = self.A.mm(b[3]*self.A2 + b[1]*self.ident)
-        V = b[2]*self.A2 + b[0]*self.ident
+        b = (120.0, 60.0, 12.0, 1.0)
+        U = self.A.mm(b[3] * self.A2 + b[1] * self.ident)
+        V = b[2] * self.A2 + b[0] * self.ident
         return U, V
 
     def pade5(self):
-        b = (30240., 15120., 3360., 420., 30., 1.)
-        U = self.A.mm(b[5]*self.A4 + b[3]*self.A2 + b[1]*self.ident)
-        V = b[4]*self.A4 + b[2]*self.A2 + b[0]*self.ident
+        b = (30240.0, 15120.0, 3360.0, 420.0, 30.0, 1.0)
+        U = self.A.mm(b[5] * self.A4 + b[3] * self.A2 + b[1] * self.ident)
+        V = b[4] * self.A4 + b[2] * self.A2 + b[0] * self.ident
         return U, V
 
     def pade7_scaled(self, s):
-        b = (17297280., 8648640., 1995840., 277200., 25200., 1512., 56., 1.)
+        b = (17297280.0, 8648640.0, 1995840.0, 277200.0, 25200.0, 1512.0, 56.0, 1.0)
 
         B = self.A * 2**-s
-        B2 = self.A2 * 2**(-2*s)
-        B4 = self.A4 * 2**(-4*s)
-        B6 = self.A6 * 2**(-6*s)
+        B2 = self.A2 * 2 ** (-2 * s)
+        B4 = self.A4 * 2 ** (-4 * s)
+        B6 = self.A6 * 2 ** (-6 * s)
 
-        U = B.mm(b[7]*B6 + b[5]*B4 + b[3]*B2 + b[1]*self.ident)
-        V = b[6]*B6 + b[4]*B4 + b[2]*B2 + b[0]*self.ident
+        U = B.mm(b[7] * B6 + b[5] * B4 + b[3] * B2 + b[1] * self.ident)
+        V = b[6] * B6 + b[4] * B4 + b[2] * B2 + b[0] * self.ident
         return U, V
 
 
@@ -223,7 +225,7 @@ def _expm(A):
 
     # Avoid indiscriminate asarray() to allow sparse or other strange arrays.
     if len(A.shape) != 2 or A.shape[0] != A.shape[1]:
-        raise ValueError('expected a square matrix')
+        raise ValueError("expected a square matrix")
 
     # Trivial case
     if A.shape == (1, 1):
@@ -241,12 +243,12 @@ def _expm(A):
 
     # Try Pade order 5.
     eta_2 = max(h.d4_tight, h.d6_loose)
-    theta5 = 1.8801526985337688e+000
+    theta5 = 1.8801526985337688e000
     if eta_2 < theta5 and _ell(h.A, 5) == 0:
         U, V = h.pade5()
         return _solve_P_Q(U, V)
 
-    theta_7 = 3.9257248464332842e+000
+    theta_7 = 3.9257248464332842e000
     eta_3 = max(h.d6_tight, h.d8_loose)
     s = max(int(np.ceil(np.log2(eta_3 / theta_7))), 0)
 
@@ -261,6 +263,7 @@ def _solve_P_Q(U, V):
     Q = -U + V
     # return torch.solve(P, Q)[0]
     return torch.linalg.solve(Q, P)
+
 
 def _ell(A, m):
     """
@@ -280,18 +283,18 @@ def _ell(A, m):
 
     """
     if len(A.shape) != 2 or A.shape[0] != A.shape[1]:
-        raise ValueError('expected A to be like a square matrix')
+        raise ValueError("expected A to be like a square matrix")
 
-    p = 2*m + 1
+    p = 2 * m + 1
 
     # The c_i are explained in (2.2) and (2.6) of the 2005 expm paper.
     # They are coefficients of terms of a generating function series expansion.
-    choose_2p_p = scipy.special.comb(2*p, p, exact=True)
-    abs_c_recip = float(choose_2p_p * math.factorial(2*p + 1))
+    choose_2p_p = scipy.special.comb(2 * p, p, exact=True)
+    abs_c_recip = float(choose_2p_p * math.factorial(2 * p + 1))
 
     # This is explained after Eq. (1.2) of the 2009 expm paper.
     # It is the "unit roundoff" of IEEE double precision arithmetic.
-    u = 2.**-24
+    u = 2.0**-24
 
     # Compute the one-norm of matrix power p of abs(A).
     A_abs_onenorm = _onenorm_matrix_power_nnm(abs(A), p)
@@ -301,12 +304,13 @@ def _ell(A, m):
         return 0
 
     alpha = A_abs_onenorm / (_onenorm(A) * abs_c_recip)
-    return max(int(np.ceil(np.log2(alpha/u) / (2 * m))), 0)
+    return max(int(np.ceil(np.log2(alpha / u) / (2 * m))), 0)
+
 
 def differential(f, A, E):
-    """ Computes the differential of f at A when acting on E:  (df)_A(E) """
+    """Computes the differential of f at A when acting on E:  (df)_A(E)"""
     n = A.size(0)
-    M = torch.zeros(2*n, 2*n, dtype=A.dtype, device=A.device, requires_grad=False)
+    M = torch.zeros(2 * n, 2 * n, dtype=A.dtype, device=A.device, requires_grad=False)
     M[:n, :n] = A
     M[n:, n:] = A
     M[:n, n:] = E

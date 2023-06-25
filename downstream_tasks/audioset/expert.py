@@ -90,35 +90,35 @@ class DownstreamExpert(nn.Module):
         self.train_dataset = AudiosetDataset(
             csvname="audioset_train.csv",
             audioset_root=self.datarc["train_root"],
-            preprocess = preprocess,
+            preprocess=preprocess,
             preprocess_audio=preprocess_audio,
             preprocess_video=preprocess_video,
             upstream=kwargs["upstream"],
-            pooled_features_path=kwargs['pooled_features_path'],
-            upstream_feature_selection=kwargs['upstream_feature_selection'],
+            pooled_features_path=kwargs["pooled_features_path"],
+            upstream_feature_selection=kwargs["upstream_feature_selection"],
             **self.datarc,
         )
 
         self.dev_dataset = AudiosetDataset(
             csvname="audioset_dev.csv",
             audioset_root=self.datarc["train_root"],
-            preprocess = preprocess,
+            preprocess=preprocess,
             preprocess_audio=preprocess_audio,
             preprocess_video=preprocess_video,
             upstream=kwargs["upstream"],
-            pooled_features_path=kwargs['pooled_features_path'],
-            upstream_feature_selection=kwargs['upstream_feature_selection'],
+            pooled_features_path=kwargs["pooled_features_path"],
+            upstream_feature_selection=kwargs["upstream_feature_selection"],
             **self.datarc,
         )
         self.test_dataset = AudiosetDataset(
             csvname="audioset_test.csv",
             audioset_root=self.datarc["test_root"],
-            preprocess = preprocess,
+            preprocess=preprocess,
             preprocess_audio=preprocess_audio,
             preprocess_video=preprocess_video,
             upstream=kwargs["upstream"],
-            pooled_features_path=kwargs['pooled_features_path'],
-            upstream_feature_selection=kwargs['upstream_feature_selection'],
+            pooled_features_path=kwargs["pooled_features_path"],
+            upstream_feature_selection=kwargs["upstream_feature_selection"],
             **self.datarc,
         )
 

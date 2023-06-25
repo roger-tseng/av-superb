@@ -1,19 +1,24 @@
 """PyTorch ALBERT model. """
 
 
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import copy
 import json
 import math
-import torch
-import torch.nn as nn
 from io import open
 
-from .bert import (ACT2FN, BaseConfig, prune_linear_layer,
-                         BertEmbeddings, BertSelfAttention, BaseModel)
+import torch
+import torch.nn as nn
 
+from .bert import (
+    ACT2FN,
+    BaseConfig,
+    BaseModel,
+    BertEmbeddings,
+    BertSelfAttention,
+    prune_linear_layer,
+)
 from .factor_linear import FactorLinear
 
 
@@ -23,20 +28,23 @@ class AlbertConfig(BaseConfig):
     The default settings match the configuration of model `albert_xxlarge`.
     """
 
-    def __init__(self,
-                 hidden_size=4096,
-                 num_hidden_layers=12,
-                 num_hidden_groups=1,
-                 num_attention_heads=64,
-                 intermediate_size=16384,
-                 inner_group_num=1,
-                 hidden_act="gelu_new",
-                 hidden_dropout_prob=0,
-                 attention_probs_dropout_prob=0,
-                 max_position_embeddings=512,
-                 type_vocab_size=2,
-                 initializer_range=0.02,
-                 layer_norm_eps=1e-12, **kwargs):
+    def __init__(
+        self,
+        hidden_size=4096,
+        num_hidden_layers=12,
+        num_hidden_groups=1,
+        num_attention_heads=64,
+        intermediate_size=16384,
+        inner_group_num=1,
+        hidden_act="gelu_new",
+        hidden_dropout_prob=0,
+        attention_probs_dropout_prob=0,
+        max_position_embeddings=512,
+        type_vocab_size=2,
+        initializer_range=0.02,
+        layer_norm_eps=1e-12,
+        **kwargs
+    ):
         """Constructs AlbertConfig.
 
         Args:
@@ -84,10 +92,13 @@ class AlbertEmbeddings(BertEmbeddings):
     """
     Construct the embeddings from word, position and token_type embeddings.
     """
+
     def __init__(self, config, use_type_embeddings=False):
         super(AlbertEmbeddings, self).__init__(config, use_type_embeddings)
 
-        self.LayerNorm = torch.nn.LayerNorm(config.hidden_size, eps=config.layer_norm_eps)
+        self.LayerNorm = torch.nn.LayerNorm(
+            config.hidden_size, eps=config.layer_norm_eps
+        )
 
 
 class AlbertAttention(BertSelfAttention):
@@ -120,7 +131,9 @@ class AlbertAttention(BertSelfAttention):
         if len(heads) == 0:
             return
         mask = torch.ones(self.num_attention_heads, self.attention_head_size)
-        heads = set(heads) - self.pruned_heads  # Convert to set and emove already pruned heads
+        heads = (
+            set(heads) - self.pruned_heads
+        )  # Convert to set and emove already pruned heads
         for head in heads:
             # Compute how many pruned heads are before the head and move the index accordingly
             head = head - sum(1 if h < head else 0 for h in self.pruned_heads)
@@ -187,14 +200,24 @@ class AlbertAttention(BertSelfAttention):
         else:
             w = (
                 self.dense.weight.t()
-                .view(self.num_attention_heads, self.attention_head_size, self.hidden_size)
+                .view(
+                    self.num_attention_heads, self.attention_head_size, self.hidden_size
+                )
                 .to(context_layer.dtype)
             )
             b = self.dense.bias.to(context_layer.dtype)
-            projected_context_layer = torch.einsum("bfnd,ndh->bfh", context_layer, w) + b
+            projected_context_layer = (
+                torch.einsum("bfnd,ndh->bfh", context_layer, w) + b
+            )
         projected_context_layer_dropout = self.dropout(projected_context_layer)
-        layernormed_context_layer = self.LayerNorm(input_ids + projected_context_layer_dropout)
-        return (layernormed_context_layer, attention_probs) if self.output_attentions else (layernormed_context_layer,)
+        layernormed_context_layer = self.LayerNorm(
+            input_ids + projected_context_layer_dropout
+        )
+        return (
+            (layernormed_context_layer, attention_probs)
+            if self.output_attentions
+            else (layernormed_context_layer,)
+        )
 
 
 class AlbertLayer(nn.Module):
@@ -202,7 +225,9 @@ class AlbertLayer(nn.Module):
         super(AlbertLayer, self).__init__()
 
         self.config = config
-        self.full_layer_layer_norm = nn.LayerNorm(config.hidden_size, eps=config.layer_norm_eps)
+        self.full_layer_layer_norm = nn.LayerNorm(
+            config.hidden_size, eps=config.layer_norm_eps
+        )
         self.attention = AlbertAttention(config)
         self.use_decomposition = config.use_decomposition
         # Low-rank decomposition
@@ -234,8 +259,12 @@ class AlbertLayer(nn.Module):
             self.ffn_output = nn.Linear(config.intermediate_size, config.hidden_size)
         self.activation = ACT2FN[config.hidden_act]
 
-    def forward(self, hidden_states, attention_mask=None, head_mask=None, modality_idx=0):
-        attention_output = self.attention(hidden_states, attention_mask, head_mask, modality_idx)
+    def forward(
+        self, hidden_states, attention_mask=None, head_mask=None, modality_idx=0
+    ):
+        attention_output = self.attention(
+            hidden_states, attention_mask, head_mask, modality_idx
+        )
         # Low-rank decomposition
         if self.use_decomposition:
             ffn_output = self.factor_ffn(attention_output[0], modality_idx)
@@ -249,7 +278,9 @@ class AlbertLayer(nn.Module):
             ffn_output = self.ffn_output(ffn_output)
         hidden_states = self.full_layer_layer_norm(ffn_output + attention_output[0])
 
-        return (hidden_states,) + attention_output[1:]  # add attentions if we output them
+        return (hidden_states,) + attention_output[
+            1:
+        ]  # add attentions if we output them
 
 
 class AlbertLayerGroup(nn.Module):
@@ -258,14 +289,20 @@ class AlbertLayerGroup(nn.Module):
 
         self.output_attentions = config.output_attentions
         self.output_hidden_states = config.output_hidden_states
-        self.albert_layers = nn.ModuleList([AlbertLayer(config) for _ in range(config.inner_group_num)])
+        self.albert_layers = nn.ModuleList(
+            [AlbertLayer(config) for _ in range(config.inner_group_num)]
+        )
 
-    def forward(self, hidden_states, attention_mask=None, head_mask=None, modality_idx=0):
+    def forward(
+        self, hidden_states, attention_mask=None, head_mask=None, modality_idx=0
+    ):
         layer_hidden_states = ()
         layer_attentions = ()
 
         for layer_index, albert_layer in enumerate(self.albert_layers):
-            layer_output = albert_layer(hidden_states, attention_mask, head_mask[layer_index], modality_idx)
+            layer_output = albert_layer(
+                hidden_states, attention_mask, head_mask[layer_index], modality_idx
+            )
             hidden_states = layer_output[0]
 
             if self.output_attentions:
@@ -289,9 +326,13 @@ class AlbertTransformer(nn.Module):
         self.config = config
         self.output_attentions = config.output_attentions
         self.output_hidden_states = config.output_hidden_states
-        self.albert_layer_groups = nn.ModuleList([AlbertLayerGroup(config) for _ in range(config.num_hidden_groups)])
+        self.albert_layer_groups = nn.ModuleList(
+            [AlbertLayerGroup(config) for _ in range(config.num_hidden_groups)]
+        )
 
-    def forward(self, hidden_states, attention_mask=None, head_mask=None, modality_idx=0):
+    def forward(
+        self, hidden_states, attention_mask=None, head_mask=None, modality_idx=0
+    ):
         all_attentions = ()
 
         if self.output_hidden_states:
@@ -299,15 +340,26 @@ class AlbertTransformer(nn.Module):
 
         for i in range(self.config.num_hidden_layers):
             # Number of layers in a hidden group
-            layers_per_group = int(self.config.num_hidden_layers / self.config.num_hidden_groups)
+            layers_per_group = int(
+                self.config.num_hidden_layers / self.config.num_hidden_groups
+            )
 
             # Index of the hidden group
-            group_idx = int(i / (self.config.num_hidden_layers / self.config.num_hidden_groups))
+            group_idx = int(
+                i / (self.config.num_hidden_layers / self.config.num_hidden_groups)
+            )
 
             # Index of the layer inside the group
             layer_idx = int(i - group_idx * layers_per_group)
 
-            layer_group_output = self.albert_layer_groups[group_idx](hidden_states, attention_mask, head_mask[group_idx*layers_per_group:(group_idx+1)*layers_per_group], modality_idx)
+            layer_group_output = self.albert_layer_groups[group_idx](
+                hidden_states,
+                attention_mask,
+                head_mask[
+                    group_idx * layers_per_group : (group_idx + 1) * layers_per_group
+                ],
+                modality_idx,
+            )
             hidden_states = layer_group_output[0]
             # NOTE: should prbly return 1st element instead of 0th, but behavious is identical for one layer
 
@@ -316,7 +368,6 @@ class AlbertTransformer(nn.Module):
 
             if self.output_hidden_states:
                 all_hidden_states = all_hidden_states + (hidden_states,)
-
 
         outputs = (hidden_states,)
         if self.output_hidden_states:
@@ -351,8 +402,7 @@ class Albert(BaseModel):
     base_model_prefix = "albert"
 
     def _init_weights(self, module):
-        """ Initialize the weights.
-        """
+        """Initialize the weights."""
         if isinstance(module, (nn.Linear, nn.Embedding)):
             # Slightly different from the TF version which uses truncated_normal for initialization
             # cf https://github.com/pytorch/pytorch/pull/5617
@@ -370,25 +420,28 @@ class Albert(BaseModel):
         self.encoder = AlbertTransformer(config)
 
     def _prune_heads(self, heads_to_prune):
-        """ Prunes heads of the model.
-            heads_to_prune: dict of {layer_num: list of heads to prune in this layer}
-            ALBERT has a different architecture in that its layers are shared across groups, which then has inner groups.
-            If an ALBERT model has 12 hidden layers and 2 hidden groups, with two inner groups, there
-            is a total of 4 different layers.
+        """Prunes heads of the model.
+        heads_to_prune: dict of {layer_num: list of heads to prune in this layer}
+        ALBERT has a different architecture in that its layers are shared across groups, which then has inner groups.
+        If an ALBERT model has 12 hidden layers and 2 hidden groups, with two inner groups, there
+        is a total of 4 different layers.
 
-            These layers are flattened: the indices [0,1] correspond to the two inner groups of the first hidden layer,
-            while [2,3] correspond to the two inner groups of the second hidden layer.
+        These layers are flattened: the indices [0,1] correspond to the two inner groups of the first hidden layer,
+        while [2,3] correspond to the two inner groups of the second hidden layer.
 
-            Any layer with in index other than [0,1,2,3] will result in an error.
-            See base class PreTrainedModel for more information about head pruning
+        Any layer with in index other than [0,1,2,3] will result in an error.
+        See base class PreTrainedModel for more information about head pruning
         """
         for layer, heads in heads_to_prune.items():
             group_idx = int(layer / self.config.inner_group_num)
             inner_group_idx = int(layer - group_idx * self.config.inner_group_num)
-            self.encoder.albert_layer_groups[group_idx].albert_layers[inner_group_idx].attention.prune_heads(heads)
+            self.encoder.albert_layer_groups[group_idx].albert_layers[
+                inner_group_idx
+            ].attention.prune_heads(heads)
 
-    def forward(self, embedding_output, attention_mask=None, head_mask=None, modality_idx=0):
-
+    def forward(
+        self, embedding_output, attention_mask=None, head_mask=None, modality_idx=0
+    ):
         input_shape = embedding_output.size()[:-1]
         device = embedding_output.device
 
@@ -396,24 +449,38 @@ class Albert(BaseModel):
             attention_mask = torch.ones(input_shape, device=device)
 
         extended_attention_mask = attention_mask.unsqueeze(1).unsqueeze(2)
-        extended_attention_mask = extended_attention_mask.to(dtype=next(self.parameters()).dtype) # fp16 compatibility
+        extended_attention_mask = extended_attention_mask.to(
+            dtype=next(self.parameters()).dtype
+        )  # fp16 compatibility
         extended_attention_mask = (1.0 - extended_attention_mask) * -10000.0
         if head_mask is not None:
             if head_mask.dim() == 1:
-                head_mask = head_mask.unsqueeze(0).unsqueeze(0).unsqueeze(-1).unsqueeze(-1)
-                head_mask = head_mask.expand(self.config.num_hidden_layers, -1, -1, -1, -1)
+                head_mask = (
+                    head_mask.unsqueeze(0).unsqueeze(0).unsqueeze(-1).unsqueeze(-1)
+                )
+                head_mask = head_mask.expand(
+                    self.config.num_hidden_layers, -1, -1, -1, -1
+                )
             elif head_mask.dim() == 2:
-                head_mask = head_mask.unsqueeze(1).unsqueeze(-1).unsqueeze(-1)  # We can specify head_mask for each layer
-            head_mask = head_mask.to(dtype=next(self.parameters()).dtype) # switch to fload if need + fp16 compatibility
+                head_mask = (
+                    head_mask.unsqueeze(1).unsqueeze(-1).unsqueeze(-1)
+                )  # We can specify head_mask for each layer
+            head_mask = head_mask.to(
+                dtype=next(self.parameters()).dtype
+            )  # switch to fload if need + fp16 compatibility
         else:
             head_mask = [None] * self.config.num_hidden_layers
 
-        encoder_outputs = self.encoder(embedding_output,
-                                       extended_attention_mask,
-                                       head_mask=head_mask,
-                                       modality_idx=modality_idx)
+        encoder_outputs = self.encoder(
+            embedding_output,
+            extended_attention_mask,
+            head_mask=head_mask,
+            modality_idx=modality_idx,
+        )
 
         sequence_output = encoder_outputs[0]
 
-        outputs = (sequence_output, ) + encoder_outputs[1:]  # add hidden_states and attentions if they are here
+        outputs = (sequence_output,) + encoder_outputs[
+            1:
+        ]  # add hidden_states and attentions if they are here
         return outputs

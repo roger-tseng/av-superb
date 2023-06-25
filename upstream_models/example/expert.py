@@ -40,8 +40,8 @@ class UpstreamExpert(nn.Module):
         self.audio_encoder = lambda x: x.reshape(x.size(0), 1, -1).mean(
             dim=-1, keepdim=True
         )
-        self.video_encoder = lambda x: x.float().reshape(x.size(0), 1, -1).mean(
-            dim=-1, keepdim=True
+        self.video_encoder = (
+            lambda x: x.float().reshape(x.size(0), 1, -1).mean(dim=-1, keepdim=True)
         )
 
     def preprocess_video(self, video, video_frame_rate):

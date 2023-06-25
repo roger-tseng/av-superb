@@ -1,7 +1,9 @@
+import math
+
+import numpy as np
 import torch
 import torchaudio
-import math
-import numpy as np
+
 
 def get_visual_seq(
     frames,
@@ -75,10 +77,11 @@ def get_visual_seq(
 
     return clip_seq
 
+
 def apply_visual_transform(
     frames,
     spatial_idx,
-    crop_size = 128,
+    crop_size=128,
 ):
     """
     Apply visual data transformations on the given video frames.
@@ -107,9 +110,8 @@ def apply_visual_transform(
     frames = color_normalization(frames, (0.45, 0.45, 0.45), (0.225, 0.225, 0.225))
     return frames
 
-def short_side_scale_jitter(
-    images, crop_size
-):
+
+def short_side_scale_jitter(images, crop_size):
     """
     Perform a spatial short scale jittering on the given images.
     Args:
@@ -125,9 +127,7 @@ def short_side_scale_jitter(
 
     height = images.shape[2]
     width = images.shape[3]
-    if (width <= height and width == size) or (
-        height <= width and height == size
-    ):
+    if (width <= height and width == size) or (height <= width and height == size):
         return images
     new_width = size
     new_height = size
@@ -142,6 +142,7 @@ def short_side_scale_jitter(
         mode="nearest",
         # align_corners=False,
     )
+
 
 def uniform_crop(images, size, spatial_idx):
     """
@@ -174,11 +175,10 @@ def uniform_crop(images, size, spatial_idx):
             x_offset = 0
         elif spatial_idx == 2:
             x_offset = width - size
-    cropped = images[
-        :, :, y_offset : y_offset + size, x_offset : x_offset + size
-    ]
+    cropped = images[:, :, y_offset : y_offset + size, x_offset : x_offset + size]
 
     return cropped
+
 
 def color_normalization(images, mean, stddev):
     """
@@ -194,15 +194,14 @@ def color_normalization(images, mean, stddev):
             `num frames` x `channel` x `height` x `width`.
     """
     assert len(mean) == images.shape[1], "channel mean not computed properly"
-    assert (
-        len(stddev) == images.shape[1]
-    ), "channel stddev not computed properly"
+    assert len(stddev) == images.shape[1], "channel stddev not computed properly"
 
     out_images = torch.zeros_like(images)
     for idx in range(len(mean)):
         out_images[:, idx] = (images[:, idx] - mean[idx]) / stddev[idx]
 
     return out_images
+
 
 def temporal_sampling(frames, start_idx, end_idx, num_samples):
     """
@@ -223,14 +222,8 @@ def temporal_sampling(frames, start_idx, end_idx, num_samples):
     frames = torch.index_select(frames, 0, index)
     return frames
 
-def get_audio_seq(
-    waveform,
-    start_idx,
-    end_idx,
-    audio_fps,
-    frequency,
-    time
-):
+
+def get_audio_seq(waveform, start_idx, end_idx, audio_fps, frequency, time):
     """
     Sample a sequence of clips from the input audio, and apply
     audio transformations.
@@ -250,16 +243,14 @@ def get_audio_seq(
         waveform_view = waveform[:, s:e]
         # Convert it to log-mel-scaled spectrogram.
         log_mel_spectrogram = get_log_mel_spectrogram(
-            waveform_view,
-            audio_fps,
-            frequency,
-            time
+            waveform_view, audio_fps, frequency, time
         )
         audio_seq.append(log_mel_spectrogram)
     # S x C x F x T
     audio_seq = torch.stack(audio_seq, dim=0)
 
     return audio_seq
+
 
 def resample(waveform, orig_freq, new_freq, use_mono=True):
     """
@@ -279,10 +270,12 @@ def resample(waveform, orig_freq, new_freq, use_mono=True):
 
     if orig_freq != new_freq:
         waveform = torchaudio.transforms.Resample(
-            orig_freq, new_freq,
+            orig_freq,
+            new_freq,
         )(waveform)
 
     return waveform
+
 
 def get_log_mel_spectrogram(
     waveform,
@@ -305,12 +298,13 @@ def get_log_mel_spectrogram(
     w = waveform.size(-1)
     n_fft = 2 * (math.floor(w / time) + 1)
     mel_spectrogram = torchaudio.transforms.MelSpectrogram(
-        audio_fps, n_fft=n_fft, n_mels=frequency,
+        audio_fps,
+        n_fft=n_fft,
+        n_mels=frequency,
     )(waveform)
     log_mel_spectrogram = torch.log(1e-6 + mel_spectrogram)
     _nchannels, _frequency, _time = log_mel_spectrogram.size()
-    assert _frequency == frequency, \
-        f"frequency {_frequency} must be {frequency}"
+    assert _frequency == frequency, f"frequency {_frequency} must be {frequency}"
     if _time != time:
         t = torch.zeros(
             _nchannels,

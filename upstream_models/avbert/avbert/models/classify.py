@@ -4,12 +4,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .head_helper import ResNetBasicHead as VisualHead
-from .audio_head_helper import ResNetBasicHead as AudioHead
-from .video_model_builder import _POOL1
 from ..utils.weight_init_helper import init_weights
-from .build import MODEL_REGISTRY
+from .audio_head_helper import ResNetBasicHead as AudioHead
 from .avbert import AVBert
+from .build import MODEL_REGISTRY
+from .head_helper import ResNetBasicHead as VisualHead
+from .video_model_builder import _POOL1
 
 
 def get_visual_dim_in(
@@ -29,9 +29,9 @@ def get_visual_dim_in(
         dim_in (int or list): the input dimension.
     """
     if trans_func == "basic_transform":
-        factor = 2 ** 3
+        factor = 2**3
     elif trans_func == "bottleneck_transform":
-        factor = 4 * (2 ** 3)
+        factor = 4 * (2**3)
     else:
         raise NotImplementedError(
             "Does not support {} transfomration".format(trans_func)
@@ -58,9 +58,9 @@ def get_audio_dim_in(
         dim_in (int): the input dimension.
     """
     if trans_func == "basic_transform":
-        factor = 2 ** 3
+        factor = 2**3
     elif trans_func == "bottleneck_transform":
-        factor = 4 * (2 ** 3)
+        factor = 4 * (2**3)
     else:
         raise NotImplementedError(
             "Does not support {} transfomration".format(trans_func)
@@ -125,6 +125,7 @@ class ConcatHead(nn.Module):
     This layer takes as input the concateneation of the outputs of audio and
     visual convolutional nets and performs a fully-connected projection.
     """
+
     def __init__(
         self,
         dim_in,
@@ -152,8 +153,7 @@ class ConcatHead(nn.Module):
             self.act = nn.Sigmoid()
         else:
             raise NotImplementedError(
-                "{} is not supported as an activation"
-                "function.".format(act_func)
+                "{} is not supported as an activation" "function.".format(act_func)
             )
 
     def forward(self, x):
@@ -171,6 +171,7 @@ class ConcatSeqHead(nn.Module):
     This layer takes as input the Transformer outputs from audio and visual
     sequences, and performs a fully-connected projection.
     """
+
     def __init__(
         self,
         dim_in,
@@ -206,8 +207,7 @@ class ConcatSeqHead(nn.Module):
             self.act = nn.Sigmoid()
         else:
             raise NotImplementedError(
-                "{} is not supported as an activation"
-                "function.".format(act_func)
+                "{} is not supported as an activation" "function.".format(act_func)
             )
 
     def forward(self, x, y):
@@ -228,6 +228,7 @@ class ClassifyHead(nn.Module):
     Classification head.
     For linear evaluation, only this classification head will be trained.
     """
+
     def __init__(
         self,
         cfg,
@@ -325,19 +326,20 @@ class ClassifyHead(nn.Module):
         batch_size = m_t.shape[0]
         seqlen = (m_t.shape[1] - 2) // 2
         mv = torch.cat(
-            (m_t[:, 0].unsqueeze(1).expand(-1, seqlen, -1), m_t[:, 1:1+seqlen]),
+            (m_t[:, 0].unsqueeze(1).expand(-1, seqlen, -1), m_t[:, 1 : 1 + seqlen]),
             dim=-1,
         )
         ma = torch.cat(
-            (m_t[:, 1+seqlen].unsqueeze(1).expand(-1, seqlen, -1), m_t[:, 2+seqlen:]),
+            (
+                m_t[:, 1 + seqlen].unsqueeze(1).expand(-1, seqlen, -1),
+                m_t[:, 2 + seqlen :],
+            ),
             dim=-1,
         )
         mv = mv.view(batch_size * seqlen, -1)
         ma = ma.view(batch_size * seqlen, -1)
         visual_logit, audio_logit = v_f, a_f
-        clip_logit = self.concat_head(
-            torch.cat((visual_logit, audio_logit), dim=-1)
-        )
+        clip_logit = self.concat_head(torch.cat((visual_logit, audio_logit), dim=-1))
         seq_logit = self.concat_seq_head(mv, ma)
         multimodal_logit = [clip_logit, seq_logit]
 
@@ -357,6 +359,7 @@ class VisualClassify(nn.Module):
     """
     Visual classifier
     """
+
     def __init__(self, cfg):
         """
         Args:
@@ -366,8 +369,9 @@ class VisualClassify(nn.Module):
         super(VisualClassify, self).__init__()
         self.cfg = cfg
         self.visual_conv = MODEL_REGISTRY.get(cfg.VIS.MODEL_NAME)(cfg)
-        assert cfg.MODEL.DOWNSTREAM_FUSION == "late", \
-            f"Visual Classifier needs late fusion"
+        assert (
+            cfg.MODEL.DOWNSTREAM_FUSION == "late"
+        ), f"Visual Classifier needs late fusion"
         init_weights(
             self,
             cfg.MODEL.FC_INIT_STD,
@@ -376,7 +380,7 @@ class VisualClassify(nn.Module):
 
     def forward(self, visual_clip, protocol):
         if protocol == "linear_eval":
-            return (self.visual_conv.get_feature_map(visual_clip), )
+            return (self.visual_conv.get_feature_map(visual_clip),)
         else:
             return [self.visual_conv(visual_clip)]
 
@@ -386,6 +390,7 @@ class AudioClassify(nn.Module):
     """
     Audio classifier
     """
+
     def __init__(self, cfg):
         """
         Args:
@@ -395,8 +400,9 @@ class AudioClassify(nn.Module):
         super(AudioClassify, self).__init__()
         self.cfg = cfg
         self.audio_conv = MODEL_REGISTRY.get(cfg.AUD.MODEL_NAME)(cfg)
-        assert cfg.MODEL.DOWNSTREAM_FUSION == "late", \
-            f"Audio Classifier needs late fusion"
+        assert (
+            cfg.MODEL.DOWNSTREAM_FUSION == "late"
+        ), f"Audio Classifier needs late fusion"
         init_weights(
             self,
             cfg.MODEL.FC_INIT_STD,
@@ -405,7 +411,7 @@ class AudioClassify(nn.Module):
 
     def forward(self, audio_clip, protocol):
         if protocol == "linear_eval":
-            return (self.audio_conv.get_feature_map(audio_clip), )
+            return (self.audio_conv.get_feature_map(audio_clip),)
         else:
             return [self.audio_conv(audio_clip)]
 
@@ -415,6 +421,7 @@ class MultimodalSequenceClassify(nn.Module):
     """
     Multimodal sequence classifier
     """
+
     def __init__(self, cfg):
         """
         Args:
@@ -468,19 +475,20 @@ class MultimodalSequenceClassify(nn.Module):
         batch_size = m_t.shape[0]
         seqlen = (m_t.shape[1] - 2) // 2
         mv = torch.cat(
-            (m_t[:, 0].unsqueeze(1).expand(-1, seqlen, -1), m_t[:, 1:1+seqlen]),
+            (m_t[:, 0].unsqueeze(1).expand(-1, seqlen, -1), m_t[:, 1 : 1 + seqlen]),
             dim=-1,
         )
         ma = torch.cat(
-            (m_t[:, 1+seqlen].unsqueeze(1).expand(-1, seqlen, -1), m_t[:, 2+seqlen:]),
+            (
+                m_t[:, 1 + seqlen].unsqueeze(1).expand(-1, seqlen, -1),
+                m_t[:, 2 + seqlen :],
+            ),
             dim=-1,
         )
         mv = mv.view(batch_size * seqlen, -1)
         ma = ma.view(batch_size * seqlen, -1)
         visual_logit, audio_logit = v_f, a_f
-        clip_logit = self.concat_head(
-            torch.cat((visual_logit, audio_logit), dim=-1)
-        )
+        clip_logit = self.concat_head(torch.cat((visual_logit, audio_logit), dim=-1))
         seq_logit = self.concat_seq_head(mv, ma)
         multimodal_logit = [clip_logit, seq_logit]
 

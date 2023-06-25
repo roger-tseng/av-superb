@@ -20,6 +20,4 @@ def is_eval_epoch(eval_period, cur_epoch, num_epochs):
     """
     Determine if the model should be evaluated at the current epoch.
     """
-    return (
-        cur_epoch + 1
-    ) % eval_period == 0 or cur_epoch + 1 == num_epochs
+    return (cur_epoch + 1) % eval_period == 0 or cur_epoch + 1 == num_epochs

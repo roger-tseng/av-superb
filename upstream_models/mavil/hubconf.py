@@ -1,5 +1,6 @@
 from .expert import UpstreamExpert as _UpstreamExpert
 
+
 def mavil(refresh=False, *args, **kwargs):
     """
     The default model

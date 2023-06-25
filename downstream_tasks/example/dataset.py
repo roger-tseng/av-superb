@@ -20,7 +20,9 @@ WIDTH = 224
 
 
 class RandomDataset(Dataset):
-    def __init__(self, preprocess=None , preprocess_audio=None, preprocess_video=None, **kwargs):
+    def __init__(
+        self, preprocess=None, preprocess_audio=None, preprocess_video=None, **kwargs
+    ):
         """
         Your dataset should take two preprocessing transform functions,
         preprocess_audio and preprocess_video as input.
@@ -43,9 +45,9 @@ class RandomDataset(Dataset):
         self.preprocess_audio = preprocess_audio
         self.preprocess_video = preprocess_video
 
-        self.upstream_name = kwargs['upstream']
-        self.upstream_feature_selection = kwargs['upstream_feature_selection']
-        self.pooled_features_path = kwargs['pooled_features_path']
+        self.upstream_name = kwargs["upstream"]
+        self.upstream_feature_selection = kwargs["upstream_feature_selection"]
+        self.pooled_features_path = kwargs["pooled_features_path"]
 
     def get_rates(self, idx):
         """
@@ -63,15 +65,19 @@ class RandomDataset(Dataset):
         # frames, wav = torchvision.io.read_video(path, pts_unit="sec", output_format="TCHW")
         wav = torch.randn(audio_samples)
         frames = torch.ones(
-            video_samples, 3, random.randint(50, HEIGHT), random.randint(50, WIDTH), dtype=torch.uint8
+            video_samples,
+            3,
+            random.randint(50, HEIGHT),
+            random.randint(50, WIDTH),
+            dtype=torch.uint8,
         )
 
         # Run preprocessing only if features are not precomputed
         fname = "path to your video"
-        basename = fname.rsplit('/')[-1].rsplit('.')[0]
+        basename = fname.rsplit("/")[-1].rsplit(".")[0]
         label = random.randint(0, self.class_num - 1)
 
-        # Directly load pooled features if exist, 
+        # Directly load pooled features if exist,
         # skipping video loading and preprocessing
         if self.pooled_features_path:
             pooled_feature_path = f"{self.pooled_features_path}/{self.upstream_name}_{self.upstream_feature_selection}/{basename}_pooled.pt"
@@ -84,8 +90,10 @@ class RandomDataset(Dataset):
             processed_wav, processed_frames = torch.load(feature_path)
         else:
             if self.preprocess is not None:
-                processed_frames, processed_wav = self.preprocess(frames, wav, video_fps, audio_sr)
-            else:    
+                processed_frames, processed_wav = self.preprocess(
+                    frames, wav, video_fps, audio_sr
+                )
+            else:
                 if self.preprocess_audio is not None:
                     processed_wav = self.preprocess_audio(wav, audio_sr)
                 else:

@@ -1,9 +1,9 @@
 import torch
-from torch import nn
 import torch.nn.functional as F
+from torch import nn
 
+from .expRNN.initialization import cayley_init_, henaff_init_
 from .expRNN.orthogonal import Orthogonal
-from .expRNN.initialization import henaff_init_, cayley_init_
 from .expRNN.trivializations import cayley_map, expm
 
 
@@ -22,7 +22,7 @@ class FactorLinear(nn.Module):
         for i in range(num_modality_groups):
             self.add_module(
                 "ms{}_linear".format(i),
-                nn.Linear(input_size, orthogonal_size, bias=False)
+                nn.Linear(input_size, orthogonal_size, bias=False),
             )
 
         if init == "cayley":
@@ -52,7 +52,7 @@ class FactorLinear(nn.Module):
                     _init,
                     _mode,
                     param,
-                )
+                ),
             )
 
         self.s_linear = nn.Linear(orthogonal_size, output_size)

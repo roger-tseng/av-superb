@@ -1,15 +1,18 @@
-import os
 import argparse
+import os
 from datetime import datetime
-import torch
 from pathlib import Path
+
+import torch
+
 """Configs."""
-from fvcore.common.config import CfgNode
 import warnings
 
+from fvcore.common.config import CfgNode
+
 project_dir = str(Path(__file__).resolve().parent.parent)
-dataset_root = os.path.join(project_dir, 'datasets')
-output_root = os.path.join(project_dir, 'runs')
+dataset_root = os.path.join(project_dir, "datasets")
+output_root = os.path.join(project_dir, "runs")
 
 
 # -----------------------------------------------------------------------------
@@ -521,6 +524,7 @@ _C.DATA_LOADER.NUM_WORKERS = 10
 
 # Load data to pinned host memory.
 _C.DATA_LOADER.PIN_MEMORY = True
+
 
 def get_cfg():
     """

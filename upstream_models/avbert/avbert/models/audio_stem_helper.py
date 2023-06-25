@@ -123,11 +123,9 @@ class ResNetBasicStem(nn.Module):
                 [self.kernel[0], 1],
                 stride=[self.stride[0], 1],
                 padding=[self.padding[0], 0],
-                bias=False
+                bias=False,
             )
-            self.bn1 = nn.BatchNorm2d(
-                dim_out, eps=self.eps, momentum=self.bn_mmt
-            )
+            self.bn1 = nn.BatchNorm2d(dim_out, eps=self.eps, momentum=self.bn_mmt)
             self.relu1 = nn.ReLU(self.inplace_relu)
             self.conv2 = nn.Conv2d(
                 dim_out,
@@ -135,11 +133,9 @@ class ResNetBasicStem(nn.Module):
                 [1, self.kernel[1]],
                 stride=[1, self.stride[1]],
                 padding=[0, self.padding[1]],
-                bias=False
+                bias=False,
             )
-            self.bn2 = nn.BatchNorm2d(
-                dim_out, eps=self.eps, momentum=self.bn_mmt
-            )
+            self.bn2 = nn.BatchNorm2d(dim_out, eps=self.eps, momentum=self.bn_mmt)
             self.relu2 = nn.ReLU(self.inplace_relu)
         else:
             self.conv = nn.Conv2d(
@@ -150,9 +146,7 @@ class ResNetBasicStem(nn.Module):
                 padding=self.padding,
                 bias=False,
             )
-            self.bn = nn.BatchNorm2d(
-                dim_out, eps=self.eps, momentum=self.bn_mmt
-            )
+            self.bn = nn.BatchNorm2d(dim_out, eps=self.eps, momentum=self.bn_mmt)
             self.relu = nn.ReLU(self.inplace_relu)
 
     def forward(self, x):

@@ -14,7 +14,9 @@ def get_parameters(model):
         return all(elem is not x for x in l)
 
     model.apply(get_parametrized_params)
-    unconstrained_params = (param for param in model.parameters() if not_in(param, parametrized_params))
+    unconstrained_params = (
+        param for param in model.parameters() if not_in(param, parametrized_params)
+    )
     return unconstrained_params, parametrized_params
 
 
@@ -37,11 +39,13 @@ class Parametrization(nn.Module):
                 mode[2]: int, M, the number of changes of basis after which we should project back onto the manifold the basis. This is particularly helpful for small values of K.
         """
         super(Parametrization, self).__init__()
-        assert mode == "static" or (isinstance(mode, tuple) and len(mode) == 3 and mode[0] == "dynamic")
+        assert mode == "static" or (
+            isinstance(mode, tuple) and len(mode) == 3 and mode[0] == "dynamic"
+        )
 
         self.A = nn.Parameter(A)
         self.register_buffer("_B", None)
-        self.register_buffer('base', base)
+        self.register_buffer("base", base)
         # This is necessary, as it will be generated again the first time that self.B is called
         # We still need to register the buffer though
 
@@ -61,8 +65,8 @@ class Parametrization(nn.Module):
         def hook(grad):
             nonlocal self
             self._B = None
-        self.A.register_hook(hook)
 
+        self.A.register_hook(hook)
 
     def rebase(self):
         with torch.no_grad():

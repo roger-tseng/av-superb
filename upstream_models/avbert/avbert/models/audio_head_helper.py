@@ -19,7 +19,7 @@ class ResNetBasicHead(nn.Module):
         pool_size,
         dropout_rate=0.0,
         act_func="softmax",
-        fusion='late',
+        fusion="late",
     ):
         """
         ResNetBasicHead takes the single audio pathway as input.
@@ -52,8 +52,7 @@ class ResNetBasicHead(nn.Module):
             self.act = nn.Sigmoid()
         else:
             raise NotImplementedError(
-                "{} is not supported as an activation"
-                "function.".format(act_func)
+                "{} is not supported as an activation" "function.".format(act_func)
             )
 
         self.fusion = fusion
@@ -69,7 +68,7 @@ class ResNetBasicHead(nn.Module):
 
         # Performs fully convlutional inference.
         if not self.training:
-            if self.fusion == 'late':
+            if self.fusion == "late":
                 x = self.act(x)
             x = x.mean([1, 2])
 
