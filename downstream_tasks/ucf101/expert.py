@@ -97,13 +97,34 @@ class DownstreamExpert(nn.Module):
         self.modelrc = downstream_expert["modelrc"]  # config for model
 
         self.train_dataset = UCF101Dataset(
-            "train", preprocess, preprocess_audio, preprocess_video, upstream = kwargs["upstream"], **self.datarc
+            "train",
+            preprocess,
+            preprocess_audio,
+            preprocess_video,
+            upstream = kwargs["upstream"],
+            pooled_features_path=kwargs['pooled_features_path'],
+            upstream_feature_selection=kwargs['upstream_feature_selection'],
+            **self.datarc
         )
         self.dev_dataset = UCF101Dataset(
-            "dev", preprocess, preprocess_audio, preprocess_video, upstream = kwargs["upstream"], **self.datarc
+            "dev",
+            preprocess,
+            preprocess_audio,
+            preprocess_video,
+            upstream = kwargs["upstream"],
+            pooled_features_path=kwargs['pooled_features_path'],
+            upstream_feature_selection=kwargs['upstream_feature_selection'],
+            **self.datarc
         )
         self.test_dataset = UCF101Dataset(
-            "test", preprocess, preprocess_audio, preprocess_video, upstream = kwargs["upstream"], **self.datarc
+            "test",
+            preprocess,
+            preprocess_audio,
+            preprocess_video,
+            upstream = kwargs["upstream"],
+            pooled_features_path=kwargs['pooled_features_path'],
+            upstream_feature_selection=kwargs['upstream_feature_selection'],
+            **self.datarc
         )
 
         self.connector = nn.Linear(upstream_dim, self.modelrc["input_dim"])
@@ -159,7 +180,7 @@ class DownstreamExpert(nn.Module):
         )
 
     # Interface
-    def forward(self, split, features, your_other_contents1, records, **kwargs):
+    def forward(self, split, features, labels, basenames, records, **kwargs):
         """
         Args:
             split: string
@@ -200,7 +221,7 @@ class DownstreamExpert(nn.Module):
         features = self.connector(features)
         predicted = self.model(features)
 
-        utterance_labels = your_other_contents1
+        utterance_labels = labels
         labels = torch.LongTensor(utterance_labels).to(features.device)
         loss = self.objective(predicted, labels)
 

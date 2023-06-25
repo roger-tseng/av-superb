@@ -51,6 +51,8 @@ class UCF101Dataset(Dataset):
         self.preprocess_audio = preprocess_audio
         self.preprocess_video = preprocess_video
         self.upstream_name = kwargs["upstream"]
+        self.upstream_feature_selection = kwargs['upstream_feature_selection']
+        self.pooled_features_path = kwargs['pooled_features_path']
 
     def get_rates(self, idx):
         """
@@ -66,8 +68,19 @@ class UCF101Dataset(Dataset):
         video_name = self.video_list[idx]
         video_path = os.path.join(self.base_path, "UCF-101-VIDEO", self.split, video_name)
 
+        basename = video_path.rsplit('/')[-1].rsplit('.')[0]
+        label = random.randint(0, self.class_num - 1)
+
+        # Directly load pooled features if exist, 
+        # skipping video loading and preprocessing
+        if self.pooled_features_path:
+            pooled_feature_path = f"{self.pooled_features_path}/{self.upstream_name}_{self.upstream_feature_selection}/{basename}_pooled.pt"
+            if os.path.exists(pooled_feature_path):
+                pooled_feature = torch.load(pooled_feature_path)
+                return pooled_feature, pooled_feature, label, True
+
         # Run preprocessing only if features are not precomputed
-        feature_path = f"{self.base_path}/features/{self.upstream_name}/{video_path.rsplit('/')[-1].rsplit('.')[0]}.pt"
+        feature_path = f"{self.base_path}/features/{self.upstream_name}/{basename}.pt"
         if os.path.exists(feature_path):
             processed_wav, processed_frames = torch.load(feature_path)
         else:
@@ -92,17 +105,17 @@ class UCF101Dataset(Dataset):
             # Uncomment the next line
             # torch.save([processed_wav, processed_frames], feature_path)
 
-        label = int(video_name.split(".")[0].split("_")[-1]) - 1
-
-        return processed_wav, processed_frames, label
+        return processed_wav, processed_frames, label, basename
 
     def __len__(self):
         return len(self.video_list)
 
     def collate_fn(self, samples):
-        wavs, videos, labels = [], [], []
-        for wav, frames, label in samples:
-            wavs.append(wav)
-            videos.append(frames)
-            labels.append(label)
-        return wavs, videos, labels
+        wavs, videos, *others = zip(*samples)
+        # Concise way of doing:
+        # wavs, videos, labels = [], [], []
+        # for wav, frames, label in samples:
+        #     wavs.append(wav)
+        #     videos.append(frames)
+        #     labels.append(label)
+        return wavs, videos, *others
