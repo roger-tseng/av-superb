@@ -452,6 +452,26 @@ class Runner:
                 ]
                 with torch.no_grad():
                     features = self.upstream.model(source)
+                if self.args.pooled_features_path:
+                    show(f"[Runner] - Save mean-pooled features of batch no. {batch_id}")
+                    assert isinstance(others[-1][0], str)
+                    with torch.no_grad():
+                        features = self.featurizer.model._select_feature(features)
+                        if isinstance(features, (list, tuple)):
+                            features = [layer.mean(dim=1, keepdim=True) for layer in features]
+                        else:
+                            features = features.mean(dim=1, keepdim=True)
+
+                    for i, names_k in enumerate(others[-1]):
+                        if isinstance(features, (list, tuple)):
+                            save_target = [f[i].detach().cpu() for f in features]
+                        else:
+                            save_target = features[i].detach().cpu()
+                        torch.save(save_target, f"{self.args.pooled_features_path}/{self.args.upstream}_{self.args.upstream_feature_selection}/{names_k}_pooled.pt")
+                    
+                    temp = dict()
+                    temp[self.args.upstream_feature_selection] = features
+                    features = temp
 
             with torch.no_grad():
                 features = self.featurizer.model(source, features)
