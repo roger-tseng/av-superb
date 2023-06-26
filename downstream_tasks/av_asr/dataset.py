@@ -82,6 +82,7 @@ class RandomDataset(Dataset):
         }
 
     def __getitem__(self, idx):
+        file_path = self.full_path_root + self.dataset[idx]['path']
         feature_path = '/saltpool0/scratch/layneberry/avhubert_output/' + self.dataset[idx]['path'][:-4].replace('/','_') + '.pth'
         if os.path.exists(feature_path):
             audio_features, video_features = torch.load(feature_path)
@@ -101,21 +102,23 @@ class RandomDataset(Dataset):
             if self.preprocess_video != None:
                 frames = self.preprocess_video(frames, self.VIDEO_FRAME_RATE)
             frames = frames.float()
+            length = len(frames)
 
         labels = self.dictionary.encode_line(
             " ".join(list(self.dataset[idx]["text"])),
             line_tokenizer=lambda x: x.split(),
         ).long()
-        return wav, frames, labels, feature_path
+        return wav, frames, labels, feature_path, length
 
     def __len__(self):
         return len(self.dataset)
 
     def collate_fn(self, samples):
-        wavs, videos, labels, paths = [], [], [], []
-        for wav, frames, label, pth in samples:
+        wavs, videos, labels, paths, lens = [], [], [], [], []
+        for wav, frames, label, pth, length in samples:
             wavs.append(wav)
             videos.append(frames)
             labels.append(label)
             paths.append(pth)
-        return wavs, videos, labels, paths
+            lens.append(length)
+        return wavs, videos, labels, paths, lens

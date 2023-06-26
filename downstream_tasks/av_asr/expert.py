@@ -254,11 +254,15 @@ class DownstreamExpert(nn.Module):
                 a single scalar in torch.FloatTensor
         """
 
-        log_probs, log_probs_len = self._get_log_probs(features)
+        labels, paths, lens = your_other_contents1
+        labels, labels_len = self._get_lens_and_pad(labels, device)
+
+        unpadded_features = []
+        for i in range(len(features)):
+            unpadded_features.append(features[i][:lens[i]])
+        log_probs, log_probs_len = self._get_log_probs(unpadded_features)
         device = features[0].device
 
-        labels, paths = your_other_contents1
-        labels, labels_len = self._get_lens_and_pad(labels, device)
 
         loss = self.objective(
             log_probs.transpose(0, 1), labels, log_probs_len, labels_len

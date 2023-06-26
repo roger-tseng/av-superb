@@ -220,7 +220,7 @@ class Runner:
             ):
                 # try/except block for forward/backward
                 try:
-                    labels, paths = others
+                    labels, paths, lens = others
                     
                     if pbar.n >= pbar.total:
                         break
@@ -403,7 +403,7 @@ class Runner:
             if batch_id > evaluate_steps:
                 break
 
-            labels, paths = others
+            labels, paths, lens = others
 
             assert len(wavs) == len(frames)
             source = [
