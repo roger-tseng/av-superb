@@ -78,7 +78,6 @@ class UpstreamExpert(UpstreamBase):
             self.add_hook("self.model.encoder", lambda input, output: output[0])
 
             def postprocess(xs):
-                print('Inside postprocess')
                 names, hiddens = zip(*xs)
                 names = [name + "_fusion" for name in names]
                 unpad_len = min([hidden.size(1) for hidden in hiddens])
@@ -192,14 +191,17 @@ class UpstreamExpert(UpstreamBase):
             # Need to stack them
             vf = torch.stack(video).to(device)
             af = torch.stack(audio).to(device)
+            ff = []
+            for i in range(len(vf)):
+                ff.append(torch.cat((video[i], audio[i])))
+            ff = torch.stack(ff).to(device)
+            return {'video_feats':vf, 'audio_feats':af, 'fusion_feats':ff}
         else:
-            print('Checkpoint 1')
             audio_length = torch.LongTensor([len(item) for item in audio])
             video_length = torch.LongTensor([len(item) for item in video])
             assert sum([a == v for a, v in zip(audio_length, video_length)]) == len(
                 audio_length
             ), f"each audio should have the same temporal length with the corresponding video, but they are not: audio_length: {audio_length}, video_length: {video_length}"
-            print('Checkpoint 2')
             max_len = 165
             for l in audio_length:
                 if l > max_len:
@@ -217,12 +219,10 @@ class UpstreamExpert(UpstreamBase):
                 "audio": padded_audio.transpose(1, 2),
                 "video": padded_video.unsqueeze(dim=1),
             }
-            print('Checkpoint 3')
             result = self.model(
                 source, padding_mask=padding_mask, mask=False, features_only=True
             )
-            print('Checkpoint 4')
-
+            
             # TODO: unpack and save separately!
             for i in range(len(paths)):
                 torch.save([result['features_video'].transpose(1,2)[i].cpu(), result['features_audio'].transpose(1,2)[i].cpu()], paths[i])
@@ -230,7 +230,6 @@ class UpstreamExpert(UpstreamBase):
             vf = result['features_video'].transpose(1,2)
             af = result['features_audio'].transpose(1,2)
 
-        print('Checkpoint 5')
         return {
             "video_feats": vf,
             "audio_feats": af,
