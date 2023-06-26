@@ -21,6 +21,7 @@ MAX_SEC = 4
 
 class Hook:
     def __init__(self, module_path, transform, unique_identifier=None):
+        print('Called Hook init')
         self.module_path = module_path
         self.transform = transform
         self.unique_identifier = unique_identifier or module_path
@@ -33,6 +34,7 @@ class Hook:
 
 class initHook(type):
     def __call__(cls, *args, **kwargs):
+        print('Called initHook')
         instance = super().__call__(*args, **kwargs)
         for hook in instance.hooks:
             if hook.handler is None:
@@ -59,11 +61,13 @@ class UpstreamBase(nn.Module, metaclass=initHook):
         self._hook_hiddens: List[Tuple(str, Tensor)] = []
 
     def remove_all_hooks(self):
+        print('Removing all hooks!')
         for hook in self.hooks:
             hook.handler.remove()
         self.hooks.clear()
 
     def remove_hook(self, unique_identifier: str):
+        print('Removing a hook!', unique_identifier)
         updated_hooks = []
         for hook in self.hooks:
             if hook.unique_identifier == unique_identifier:
@@ -73,6 +77,7 @@ class UpstreamBase(nn.Module, metaclass=initHook):
         self.hooks = updated_hooks
 
     def add_hook(self, *args, **kwargs):
+        print('Adding a hook')
         hook = Hook(*args, **kwargs)
         self._register_hook_handler(hook)
         self.hooks.append(hook)
@@ -104,12 +109,16 @@ class UpstreamBase(nn.Module, metaclass=initHook):
         )
 
     def __call__(self, wavs: List[Tensor], *args, **kwargs):
+        print('Before clear, hook hiddens are', self._hook_hiddens)
         self._hook_hiddens.clear()
+        print('After clear, hook hiddens are', self._hook_hiddens)
 
         result = super().__call__(wavs, *args, **kwargs) or {}
         assert isinstance(result, dict)
+        print('After call to super, hook hiddens are', self._hook_hiddens)
 
         if len(self._hook_hiddens) > 0:
+            print('Found a hook!')
             hook_hiddens = self._hook_hiddens.copy()
             self._hook_hiddens.clear()
 
@@ -136,6 +145,8 @@ class UpstreamBase(nn.Module, metaclass=initHook):
                 raise ValueError
 
             result["_hidden_states_info"], result[key] = names, hiddens
+        else:
+            print('Didn\'t find any hooks?')
 
         return result
 
@@ -181,7 +192,10 @@ class Featurizer(nn.Module):
                     )
                     for audio, video in paired_wavs
                 ]
-                paired_features = upstream(paired_input)
+                for _ in range(3):
+                    print('Before call to upstream')
+                    paired_features = upstream(paired_input)
+                    print('After call to upstream')
             else:
                 show(
                     f"[{self.name}] - Error: Your upstream model does not implement its preprocessing functions."
