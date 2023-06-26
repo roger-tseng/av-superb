@@ -2,7 +2,7 @@
 Custom class for loading audio-visual data 
 Modified from https://github.com/s3prl/s3prl/blob/main/s3prl/downstream/example/dataset.py
 """
-import json
+import json, os
 import random
 
 import torch
@@ -82,34 +82,40 @@ class RandomDataset(Dataset):
         }
 
     def __getitem__(self, idx):
-        frames, wav, meta = torchvision.io.read_video(
-            self.full_path_root + self.dataset[idx]["path"],
-            pts_unit="sec",
-            output_format="TCHW",
-        )
-        assert meta["audio_fps"] == self.AUDIO_SAMPLE_RATE
-        assert meta["video_fps"] == self.VIDEO_FRAME_RATE
+        feature_path = '/saltpool0/scratch/layneberry/avhubert_output/' + self.dataset[idx]['path'][:-4].replace('/','_') + '.pth'
+        if os.path.exists(feature_path):
+            audio_features, video_features = torch.load(feature_path)
+            wav, frames = audio_features, video_features # for returning easily
+        else:
+            frames, wav, meta = torchvision.io.read_video(
+                self.full_path_root + self.dataset[idx]["path"],
+                pts_unit="sec",
+                output_format="TCHW",
+            )
+            assert meta["audio_fps"] == self.AUDIO_SAMPLE_RATE
+            assert meta["video_fps"] == self.VIDEO_FRAME_RATE
 
-        wav = wav.squeeze(0)
-        if self.preprocess_audio != None:
-            wav = self.preprocess_audio(wav, self.AUDIO_SAMPLE_RATE)
-        if self.preprocess_video != None:
-            frames = self.preprocess_video(frames, self.VIDEO_FRAME_RATE)
-        frames = frames.float()
+            wav = wav.squeeze(0)
+            if self.preprocess_audio != None:
+                wav = self.preprocess_audio(wav, self.AUDIO_SAMPLE_RATE)
+            if self.preprocess_video != None:
+                frames = self.preprocess_video(frames, self.VIDEO_FRAME_RATE)
+            frames = frames.float()
 
         labels = self.dictionary.encode_line(
             " ".join(list(self.dataset[idx]["text"])),
             line_tokenizer=lambda x: x.split(),
         ).long()
-        return wav, frames, labels
+        return wav, frames, labels, feature_path
 
     def __len__(self):
         return len(self.dataset)
 
     def collate_fn(self, samples):
-        wavs, videos, labels = [], [], []
-        for wav, frames, label in samples:
+        wavs, videos, labels, paths = [], [], [], []
+        for wav, frames, label, pth in samples:
             wavs.append(wav)
             videos.append(frames)
             labels.append(label)
-        return wavs, videos, labels
+            paths.append(pth)
+        return wavs, videos, labels, paths

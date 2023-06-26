@@ -220,6 +220,8 @@ class Runner:
             ):
                 # try/except block for forward/backward
                 try:
+                    labels, paths = others
+                    
                     if pbar.n >= pbar.total:
                         break
                     global_step = pbar.n + 1
@@ -229,8 +231,9 @@ class Runner:
                         (
                             torch.FloatTensor(wav).to(self.args.device),
                             torch.FloatTensor(frame).to(self.args.device),
+                            pth,
                         )
-                        for wav, frame in zip(wavs, frames)
+                        for wav, frame, pth in zip(wavs, frames, paths)
                     ]
                     if self.upstream.trainable:
                         features = self.upstream.model(source)
@@ -242,7 +245,7 @@ class Runner:
                     loss = self.downstream.model(
                         train_split,
                         features,
-                        *others,
+                        others,
                         records=records,
                     )
                     batch_ids.append(batch_id)
@@ -400,13 +403,16 @@ class Runner:
             if batch_id > evaluate_steps:
                 break
 
+            labels, paths = others
+
             assert len(wavs) == len(frames)
             source = [
                 (
                     torch.FloatTensor(wav).to(self.args.device),
                     torch.FloatTensor(frame).to(self.args.device),
+                    pth,
                 )
-                for wav, frame in zip(wavs, frames)
+                for wav, frame, pth in zip(wavs, frames, paths)
             ]
             with torch.no_grad():
                 features = self.upstream.model(source)
@@ -414,7 +420,7 @@ class Runner:
                 self.downstream.model(
                     split,
                     features,
-                    *others,
+                    others,
                     records=records,
                     batch_id=batch_id,
                 )

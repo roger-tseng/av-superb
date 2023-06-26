@@ -177,6 +177,7 @@ class Featurizer(nn.Module):
                         upstream.preprocess_video(video, VIDEO_SAMPLE_RATE).to(
                             upstream_device
                         ),
+                        "empty_filepath",
                     )
                     for audio, video in paired_wavs
                 ]
@@ -242,6 +243,7 @@ class Featurizer(nn.Module):
 
     def _select_feature(self, features):
         feature = features.get(self.feature_selection)
+        print('getting feature', self.feature_selection)
 
         if isinstance(feature, dict):
             feature = list(feature.values())
@@ -307,6 +309,8 @@ class Featurizer(nn.Module):
         paired_wavs: List[Tuple[Tensor, Tensor]],
         paired_features: Dict[str, Union[Tensor, List[Tensor], Dict[str, Tensor]]],
     ):
+        print('got paired wavs:', type(paired_wavs), len(paired_wavs))
+        print('got paired_features:', type(paired_features), len(paired_features), paired_features.keys())
         feature = self._select_feature(paired_features)
         if isinstance(feature, (list, tuple)):
             feature = self._weighted_sum(feature)

@@ -108,7 +108,6 @@ class DownstreamExpert(nn.Module):
             preprocess_audio, preprocess_video, split="test", **self.datarc
         )
 
-        print('Building a Linear layer from', upstream_dim, 'to', self.modelrc['input_dim'])
         self.connector = nn.Linear(upstream_dim, self.modelrc["input_dim"])
         self.model = Model(
             output_class_num=self.train_dataset.class_num, **self.modelrc
@@ -258,7 +257,8 @@ class DownstreamExpert(nn.Module):
         log_probs, log_probs_len = self._get_log_probs(features)
         device = features[0].device
 
-        labels, labels_len = self._get_lens_and_pad(your_other_contents1, device)
+        labels, paths = your_other_contents1
+        labels, labels_len = self._get_lens_and_pad(labels, device)
 
         loss = self.objective(
             log_probs.transpose(0, 1), labels, log_probs_len, labels_len

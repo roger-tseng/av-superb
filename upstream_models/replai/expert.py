@@ -189,22 +189,6 @@ class UpstreamExpert(nn.Module):
         video_feats = self.backbone["video"](videos, return_embs=True)
         audio_feats = self.backbone["audio"](wavs, return_embs=True)
 
-        """
-        print('video_feats keys', video_feats.keys())
-        print('\tvideo_feats conv1', video_feats['conv1'].shape)
-        print('\tvideo_feats conv2x', video_feats['conv2x'].shape)
-        print('\tvideo_feats conv3x', video_feats['conv3x'].shape)
-        print('\tvideo_feats conv4x', video_feats['conv4x'].shape)
-        print('\tvideo_feats conv5x', video_feats['conv5x'].shape)
-        print('\tvideo_feats pool', video_feats['pool'].shape)
-        print('audio_feats keys', audio_feats.keys())
-        print('\taudio_feats conv2x', audio_feats['conv2x'].shape)
-        print('\taudio_feats conv3x', audio_feats['conv3x'].shape)
-        print('\taudio_feats conv4x', audio_feats['conv4x'].shape)
-        print('\taudio_feats conv5x', audio_feats['conv5x'].shape)
-        print('\taudio_feats pool', audio_feats['pool'].shape)
-        """
-
         # use the output of pool layers only
         video_feats = video_feats["pool"]
         audio_feats = audio_feats["pool"]
