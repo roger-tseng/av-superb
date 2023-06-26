@@ -145,7 +145,6 @@ class UpstreamExpert(nn.Module):
         # Collate audio and video into batch
         audios = pad_sequence(audio, batch_first=True)
         videos = torch.stack(video)
-
         videos = videos.transpose(0, 1).contiguous()
 
         _ , single_hiddens_0, multi_hidden_0 = self.multi_encoder(

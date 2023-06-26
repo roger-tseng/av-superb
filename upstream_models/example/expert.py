@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+# <<<<<<< HEAD
 """
 Custom class for loading audio-visual model and extract features
 Modified from https://github.com/s3prl/s3prl/blob/main/s3prl/upstream/example/expert.py
@@ -92,7 +92,7 @@ class UpstreamExpert(nn.Module):
 
         # Return intermediate layer representations for potential layer-wise experiments
         return {"hidden_states": [audio_feats, video_feats, layer1, layer2]}
-=======
+# =======
 """
 Custom class for loading audio-visual model and extract features 
 Modified from https://github.com/s3prl/s3prl/blob/main/s3prl/upstream/example/expert.py
@@ -223,4 +223,4 @@ class UpstreamExpert(nn.Module):
             "audio_feats": [audio_feats],
             "fusion_feats": [layer1, layer2],
         }
->>>>>>> origin/interface+avhubert+replai
+# >>>>>>> origin/interface+avhubert+replai
