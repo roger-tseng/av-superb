@@ -174,29 +174,33 @@ class UpstreamExpert(UpstreamBase):
     def forward(self, processed_data):
         device = processed_data[0][0].device
 
-        audio, video, paths = [], [], []
-        for audio_feats, video_feats, pth in processed_data:
-            diff = len(audio_feats) - len(video_feats)
-            if diff > 0:
-                audio_feats = audio_feats[:-diff]
-            elif diff < 0:
-                audio_feats = F.pad(audio_feats, (0, 0, 0, -diff), "constant", 0)
-            audio.append(audio_feats)
-            video.append(video_feats)
-            paths.append(pth)
+        paths = [pth if isinstance(pth, str) else pth[0] for _, _, pth in processed_data]
 
         if os.path.exists(paths[0]) and paths[0] != 'empty_filepath':
             # If one path exists, all should
             # This means audio and video already contain the final features
             # Need to stack them
+            audio, video, fusion = [], [], []
+            for audio_feats, video_feats, pth in processed_data:
+                audio.append(audio_feats)
+                video.append(video_feats)
+                fusion.append(pth[1])
             vf = torch.stack(video).to(device)
             af = torch.stack(audio).to(device)
-            ff = []
-            for i in range(len(vf)):
-                ff.append(torch.cat((video[i], audio[i])))
-            ff = torch.stack(ff).to(device)
+            ff = torch.stack(fusion).to(device)
             return {'video_feats':vf, 'audio_feats':af, 'fusion_feats':ff}
         else:
+            audio, video, paths = [], [], []
+            for audio_feats, video_feats, pth in processed_data:
+                diff = len(audio_feats) - len(video_feats)
+                if diff > 0:
+                    audio_feats = audio_feats[:-diff]
+                elif diff < 0:
+                    audio_feats = F.pad(audio_feats, (0, 0, 0, -diff), "constant", 0)
+                audio.append(audio_feats)
+                video.append(video_feats)
+                paths.append(pth)
+
             audio_length = torch.LongTensor([len(item) for item in audio])
             video_length = torch.LongTensor([len(item) for item in video])
             assert sum([a == v for a, v in zip(audio_length, video_length)]) == len(

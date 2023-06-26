@@ -86,7 +86,9 @@ class RandomDataset(Dataset):
         feature_path = '/saltpool0/scratch/layneberry/avhubert_output/' + self.dataset[idx]['path'][:-4].replace('/','_') + '.pth'
         if os.path.exists(feature_path):
             audio_features, video_features = torch.load(feature_path)
+            fusion_features = torch.load(feature_path + "_fusion")
             wav, frames = audio_features, video_features # for returning easily
+            feature_path = (feature_path, fusion_features)
         else:
             frames, wav, meta = torchvision.io.read_video(
                 self.full_path_root + self.dataset[idx]["path"],
