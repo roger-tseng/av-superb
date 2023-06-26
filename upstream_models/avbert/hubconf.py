@@ -23,26 +23,26 @@ def avbert_url(ckpt, refresh=False, *args, **kwargs):
     """
     return avbert_local(_urls_to_filepaths(ckpt, refresh=refresh, agent="gdown"), *args, **kwargs)
 
-def avbert_sum(refresh=False, *args, **kwargs):
+def avbert_time(refresh=False, *args, **kwargs):
     """
-    Sum features of three video crops
+    Interleave features of three video crops along time axis
         refresh (bool): whether to download ckpt/config again if existed
     """
     kwargs["ckpt"] = google_large_file_link("1T55DuJq0OYSdXVnDlOrgPSTwffVKsiFY")
-    kwargs["feature_combine"] = 'sum'
+    kwargs["feature_concat_axis"] = 'time'
     return avbert_url(refresh=refresh, *args, **kwargs)
 
-def avbert_concat(refresh=False, *args, **kwargs):
+def avbert_hidden(refresh=False, *args, **kwargs):
     """
     Concat features of three video crops along hidden dim axis
         refresh (bool): whether to download ckpt/config again if existed
     """
     kwargs["ckpt"] = google_large_file_link("1T55DuJq0OYSdXVnDlOrgPSTwffVKsiFY")
-    kwargs["feature_combine"] = 'concat'
+    kwargs["feature_concat_axis"] = 'hidden'
     return avbert_url(refresh=refresh, *args, **kwargs)
 
 def avbert(refresh=False, *args, **kwargs):
     """
-    Sums features of three video crops by default
+    Interleave features along time axis by default
     """
-    return avbert_sum(refresh=refresh, *args, **kwargs)
+    return avbert_time(refresh=refresh, *args, **kwargs)

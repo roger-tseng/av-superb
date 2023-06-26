@@ -272,18 +272,49 @@ class Runner:
 # >>>>>>> origin/interface+avhubert+replai
 
                     assert len(wavs) == len(frames)
-                    source = [
-                        (
-                            torch.FloatTensor(wav).to(self.args.device),
-                            torch.FloatTensor(frame).to(self.args.device),
-                        )
-                        for wav, frame in zip(wavs, frames)
-                    ]
-                    if self.upstream.trainable:
-                        features = self.upstream.model(source)
+                    if self.args.pooled_features_path and all(i == True for i in others[-1]):
+                        source = None
+                        features = dict()
+                        # "wavs" is overloaded into saved features here
+                        # can be list of Tensors, or list of list of Tensors
+                        if isinstance(wavs[0], (list, tuple)):
+                            features[self.args.upstream_feature_selection] = [torch.stack(layer).to(self.args.device) for layer in zip(*wavs)]
+                        else:
+                            features[self.args.upstream_feature_selection] = torch.stack(wavs).to(self.args.device)
                     else:
-                        with torch.no_grad():
+                        source = [
+                            (
+                                torch.FloatTensor(wav).to(self.args.device),
+                                torch.FloatTensor(frame).to(self.args.device),
+                            )
+                            for wav, frame in zip(wavs, frames)
+                        ]
+                        if self.upstream.trainable:
                             features = self.upstream.model(source)
+                        else:
+                            with torch.no_grad():
+                                features = self.upstream.model(source)
+                        if self.args.pooled_features_path:
+                            show(f"[Runner] - Save mean-pooled features of batch no. {batch_id}")
+                            assert isinstance(others[-1][0], str)
+                            with torch.no_grad():
+                                features = self.featurizer.model._select_feature(features)
+                                if isinstance(features, (list, tuple)):
+                                    features = [layer.mean(dim=1, keepdim=True) for layer in features]
+                                else:
+                                    features = features.mean(dim=1, keepdim=True)
+
+                            for i, names_k in enumerate(others[-1]):
+                                if isinstance(features, (list, tuple)):
+                                    save_target = [f[i].detach().cpu() for f in features]
+                                else:
+                                    save_target = features[i].detach().cpu()
+                                torch.save(save_target, f"{self.args.pooled_features_path}/{self.args.upstream}_{self.args.upstream_feature_selection}/{names_k}_pooled.pt")
+                            
+                            temp = dict()
+                            temp[self.args.upstream_feature_selection] = features
+                            features = temp
+
                     features = self.featurizer.model(source, features)
 
                     loss = self.downstream.model(
@@ -448,15 +479,47 @@ class Runner:
                 break
 
             assert len(wavs) == len(frames)
-            source = [
-                (
-                    torch.FloatTensor(wav).to(self.args.device),
-                    torch.FloatTensor(frame).to(self.args.device),
-                )
-                for wav, frame in zip(wavs, frames)
-            ]
+            if self.args.pooled_features_path and all(i == True for i in others[-1]):
+                source = None
+                features = dict()
+                # "wavs" is overloaded into saved features here
+                # can be list of Tensors, or list of list of Tensors
+                if isinstance(wavs[0], (list, tuple)):
+                    features[self.args.upstream_feature_selection] = [torch.stack(layer).to(self.args.device) for layer in zip(*wavs)]
+                else:
+                    features[self.args.upstream_feature_selection] = torch.stack(wavs).to(self.args.device)
+            else:
+                source = [
+                    (
+                        torch.FloatTensor(wav).to(self.args.device),
+                        torch.FloatTensor(frame).to(self.args.device),
+                    )
+                    for wav, frame in zip(wavs, frames)
+                ]
+                with torch.no_grad():
+                    features = self.upstream.model(source)
+                if self.args.pooled_features_path:
+                    show(f"[Runner] - Save mean-pooled features of batch no. {batch_id}")
+                    assert isinstance(others[-1][0], str)
+                    with torch.no_grad():
+                        features = self.featurizer.model._select_feature(features)
+                        if isinstance(features, (list, tuple)):
+                            features = [layer.mean(dim=1, keepdim=True) for layer in features]
+                        else:
+                            features = features.mean(dim=1, keepdim=True)
+
+                    for i, names_k in enumerate(others[-1]):
+                        if isinstance(features, (list, tuple)):
+                            save_target = [f[i].detach().cpu() for f in features]
+                        else:
+                            save_target = features[i].detach().cpu()
+                        torch.save(save_target, f"{self.args.pooled_features_path}/{self.args.upstream}_{self.args.upstream_feature_selection}/{names_k}_pooled.pt")
+                    
+                    temp = dict()
+                    temp[self.args.upstream_feature_selection] = features
+                    features = temp
+
             with torch.no_grad():
-                features = self.upstream.model(source)
                 features = self.featurizer.model(source, features)
                 self.downstream.model(
                     split,
