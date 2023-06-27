@@ -66,7 +66,7 @@ class ResizeCropFlip:
         transforms += [
             vT2.ClipToTensor(),
             vT.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-            vT.UniformTemporalSubsample(num_frames),
+            # vT.UniformTemporalSubsample(num_frames),
         ]
         self.t = T.Compose(transforms)
 

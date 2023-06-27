@@ -175,7 +175,8 @@ def get_downstream_args():
     backup_files = []
 
     if args.pooled_features_path:
-        os.makedirs(f"{args.pooled_features_path}/{args.upstream}_{args.upstream_feature_selection}", exist_ok=True)
+        for feature_selection in ['audio_feats', 'video_feats', 'fusion_feats']:
+            os.makedirs(f"{args.pooled_features_path}/{args.upstream}_{feature_selection}", exist_ok=True)
 
     if args.expdir is None:
         args.expdir = f"result/downstream/{args.expname}"

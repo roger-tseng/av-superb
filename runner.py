@@ -284,8 +284,8 @@ class Runner:
                     else:
                         source = [
                             (
-                                torch.FloatTensor(wav).to(self.args.device),
-                                torch.FloatTensor(frame).to(self.args.device),
+                                wav.float().to(self.args.device),
+                                frame.float().to(self.args.device),
                             )
                             for wav, frame in zip(wavs, frames)
                         ]
@@ -298,22 +298,21 @@ class Runner:
                             show(f"[Runner] - Save mean-pooled features of batch no. {batch_id}")
                             assert isinstance(others[-1][0], str)
                             with torch.no_grad():
-                                features = self.featurizer.model._select_feature(features)
-                                if isinstance(features, (list, tuple)):
-                                    features = [layer.mean(dim=1, keepdim=True) for layer in features]
-                                else:
-                                    features = features.mean(dim=1, keepdim=True)
+                                for key, feature in features.items():
+                                    if key[0] == '_':
+                                        continue
 
-                            for i, names_k in enumerate(others[-1]):
-                                if isinstance(features, (list, tuple)):
-                                    save_target = [f[i].detach().cpu() for f in features]
-                                else:
-                                    save_target = features[i].detach().cpu()
-                                torch.save(save_target, f"{self.args.pooled_features_path}/{self.args.upstream}_{self.args.upstream_feature_selection}/{names_k}_pooled.pt")
-                            
-                            temp = dict()
-                            temp[self.args.upstream_feature_selection] = features
-                            features = temp
+                                    if isinstance(feature, (list, tuple)):
+                                        feature = [layer.mean(dim=1, keepdim=True) for layer in feature]
+                                    else:
+                                        feature = feature.mean(dim=1, keepdim=True)
+
+                                    for i, names_k in enumerate(others[-1]):
+                                        if isinstance(feature, (list, tuple)):
+                                            save_target = [f[i].detach().cpu() for f in feature]
+                                        else:
+                                            save_target = feature[i].detach().cpu()
+                                        torch.save(save_target, f"{self.args.pooled_features_path}/{self.args.upstream}_{key}/{names_k}_pooled.pt")
 
                     features = self.featurizer.model(source, features)
 
@@ -491,8 +490,8 @@ class Runner:
             else:
                 source = [
                     (
-                        torch.FloatTensor(wav).to(self.args.device),
-                        torch.FloatTensor(frame).to(self.args.device),
+                        wav.float().to(self.args.device),
+                        frame.float().to(self.args.device),
                     )
                     for wav, frame in zip(wavs, frames)
                 ]
@@ -502,22 +501,23 @@ class Runner:
                     show(f"[Runner] - Save mean-pooled features of batch no. {batch_id}")
                     assert isinstance(others[-1][0], str)
                     with torch.no_grad():
-                        features = self.featurizer.model._select_feature(features)
-                        if isinstance(features, (list, tuple)):
-                            features = [layer.mean(dim=1, keepdim=True) for layer in features]
-                        else:
-                            features = features.mean(dim=1, keepdim=True)
+                        for key, feature in features.items():
 
-                    for i, names_k in enumerate(others[-1]):
-                        if isinstance(features, (list, tuple)):
-                            save_target = [f[i].detach().cpu() for f in features]
-                        else:
-                            save_target = features[i].detach().cpu()
-                        torch.save(save_target, f"{self.args.pooled_features_path}/{self.args.upstream}_{self.args.upstream_feature_selection}/{names_k}_pooled.pt")
-                    
-                    temp = dict()
-                    temp[self.args.upstream_feature_selection] = features
-                    features = temp
+                            if key[0] == '_':
+                                continue
+
+                            if isinstance(feature, (list, tuple)):
+                                feature = [layer.mean(dim=1, keepdim=True) for layer in feature]
+                            else:
+                                feature = feature.mean(dim=1, keepdim=True)
+
+                            for i, names_k in enumerate(others[-1]):
+                                if isinstance(feature, (list, tuple)):
+                                    save_target = [f[i].detach().cpu() for f in feature]
+                                else:
+                                    save_target = feature[i].detach().cpu()
+                                torch.save(save_target, f"{self.args.pooled_features_path}/{self.args.upstream}_{key}/{names_k}_pooled.pt")
+
 
             with torch.no_grad():
                 features = self.featurizer.model(source, features)
