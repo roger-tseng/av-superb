@@ -29,7 +29,7 @@ class UpstreamExpert(nn.Module):
         super().__init__()
 
         av_fusion = True
-        ckpt = torch.load('/media/rogert/DATA/mavil_as_pt_ft_a+v.pth', map_location='cpu')
+        ckpt = torch.load('/work/u8090533/mavil/mavil_as_pt_ft_a+v.pth', map_location='cpu')
         self.model = models_vitmm.vitmm_base_patch16(
                     num_classes=527,
                     drop_path_rate=0.1,
