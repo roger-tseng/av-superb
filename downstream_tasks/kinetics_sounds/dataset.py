@@ -64,7 +64,10 @@ class KineticsSoundsDataset(Dataset):
         self.preprocess = preprocess
         self.preprocess_audio = preprocess_audio
         self.preprocess_video = preprocess_video
+        
         self.upstream_name = kwargs['upstream']
+        self.upstream_feature_selection = kwargs['upstream_feature_selection']
+        self.pooled_features_path = kwargs['pooled_features_path']
 
         self.logs_file = open(kwargs["logs_file"], "w")
 
@@ -81,8 +84,17 @@ class KineticsSoundsDataset(Dataset):
         
         label = int(self.dataset[idx][1])
 
-        # Run preprocessing only if features are not precomputed
-        feature_path = f"/work/u8090533/features/{self.upstream_name}/{path.rsplit('/')[-1].rsplit('.')[0]}.pt"
+        basename = path.rsplit('/')[-1].rsplit('.')[0]
+
+        # Directly load pooled features if exist, 
+        # skipping video loading and preprocessing
+        if self.pooled_features_path:
+            pooled_feature_path = f"{self.pooled_features_path}/{self.upstream_name}_{self.upstream_feature_selection}/{basename}_pooled.pt"
+            if os.path.exists(pooled_feature_path):
+                pooled_feature = torch.load(pooled_feature_path)
+                return pooled_feature, pooled_feature, label, True
+
+        feature_path = f"/work/u8090533/features/{self.upstream_name}/{basename}.pt"
         if os.path.exists(feature_path):
             processed_wav, processed_frames = torch.load(feature_path)
         else:
@@ -136,15 +148,11 @@ class KineticsSoundsDataset(Dataset):
             # save
             # torch.save([processed_wav, processed_frames], feature_path)
 
-        return processed_wav, processed_frames, label
+        return processed_wav, processed_frames, label, basename
 
     def __len__(self):
         return len(self.dataset)
 
     def collate_fn(self, samples):
-        wavs, videos, labels = [], [], []
-        for wav, frames, label in samples:
-            wavs.append(wav)
-            videos.append(frames)
-            labels.append(label)
-        return wavs, videos, labels
+        wavs, videos, *others = zip(*samples)
+        return wavs, videos, *others

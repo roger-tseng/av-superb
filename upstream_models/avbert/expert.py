@@ -31,7 +31,7 @@ class UpstreamExpert(nn.Module):
         super().__init__()
 
         self.cfg = get_cfg()
-        self.feature_combine = kwargs['feature_combine']
+        self.feature_concat_axis = kwargs['feature_concat_axis']
 
         # NOTE: Encoders should return (batch_size, seq_len, hidden_dims)
         
@@ -160,12 +160,18 @@ class UpstreamExpert(nn.Module):
             visual_seq=[videos[2]], audio_seq=audios
         )
 
-        # Concat (768 x 3) or sum (768) along feature hidden dim axis 
+        # Concat features of three views along time axis (B x 3L x 768) or along hidden dim axis (B x L x 3*768)
         audio_feats = single_hiddens_0[1]
-        if self.feature_combine == 'sum':
-            video_feats = tuple(layer_0 + layer_1 + layer_2 for layer_0, layer_1, layer_2 in zip(single_hiddens_0[0], single_hiddens_1[0], single_hiddens_2[0]))
-            fusion_feats = tuple(layer_0 + layer_1 + layer_2 for layer_0, layer_1, layer_2 in zip(multi_hidden_0, multi_hidden_1, multi_hidden_2))
-        elif self.feature_combine == 'concat':
+        if self.feature_concat_axis == 'time':
+            video_feats = []
+            for layer_0, layer_1, layer_2 in zip(single_hiddens_0[0], single_hiddens_1[0], single_hiddens_2[0]):
+                stacked = torch.stack((layer_0, layer_1, layer_2), dim = 2)
+                video_feats.append(torch.flatten(stacked, start_dim=1, end_dim=2))
+            fusion_feats = []
+            for layer_0, layer_1, layer_2 in zip(multi_hidden_0, multi_hidden_1, multi_hidden_2):
+                stacked = torch.stack((layer_0, layer_1, layer_2), dim = 2)
+                fusion_feats.append(torch.flatten(stacked, start_dim=1, end_dim=2))
+        elif self.feature_concat_axis == 'hidden':
             video_feats = tuple(torch.cat((layer_0, layer_1, layer_2), dim = 2) for layer_0, layer_1, layer_2 in zip(single_hiddens_0[0], single_hiddens_1[0], single_hiddens_2[0]))
             fusion_feats = tuple(torch.cat((layer_0, layer_1, layer_2), dim = 2) for layer_0, layer_1, layer_2 in zip(multi_hidden_0, multi_hidden_1, multi_hidden_2))
         else:
