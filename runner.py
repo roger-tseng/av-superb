@@ -249,8 +249,8 @@ class Runner:
                     else:
                         source = [
                             (
-                                torch.FloatTensor(wav).to(self.args.device),
-                                torch.FloatTensor(frame).to(self.args.device),
+                                wav.float().to(self.args.device),
+                                frame.float().to(self.args.device),
                             )
                             for wav, frame in zip(wavs, frames)
                         ]
@@ -469,8 +469,8 @@ class Runner:
             else:
                 source = [
                     (
-                        torch.FloatTensor(wav).to(self.args.device),
-                        torch.FloatTensor(frame).to(self.args.device),
+                        wav.float().to(self.args.device),
+                        frame.float().to(self.args.device),
                     )
                     for wav, frame in zip(wavs, frames)
                 ]

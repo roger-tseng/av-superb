@@ -1,5 +1,6 @@
 from upstream_models.avbert.hubconf import *
 from upstream_models.example.hubconf import *
+from upstream_models.hubert.hubconf import *
 from upstream_models.mavil.hubconf import *
 from upstream_models.replai.hubconf import *
 from upstream_models.vhubert.hubconf import *

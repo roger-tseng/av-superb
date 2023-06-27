@@ -260,7 +260,7 @@ class UpstreamExpert(nn.Module):
             "video_feats": video_pooled_feats,
             "audio_feats": audio_pooled_feats,
             "fusion_feats": fusion_pooled_feats,
-            "video_seq_feats": video_seq_feats,
-            "audio_seq_feats": audio_seq_feats,
-            "fusion_seq_feats": fusion_seq_feats,
+            "_video_seq_feats": video_seq_feats,
+            "_audio_seq_feats": audio_seq_feats,
+            "_fusion_seq_feats": fusion_seq_feats,
         }
