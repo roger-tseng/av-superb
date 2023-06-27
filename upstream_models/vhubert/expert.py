@@ -187,7 +187,7 @@ class UpstreamExpert(UpstreamBase):
                 fusion.append(pth[1])
             vf = torch.stack(video).to(device)
             af = torch.stack(audio).to(device)
-            ff = torch.stack(fusion).to(device)
+            ff = [torch.stack(layer).to(device) for layer in zip(*fusion)]
             return {'video_feats':vf, 'audio_feats':af, 'fusion_feats':ff}
         else:
             audio, video, paths = [], [], []
