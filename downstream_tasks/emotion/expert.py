@@ -66,13 +66,13 @@ class DownstreamExpert(nn.Module):
         
         train_path = os.path.join(meta_data, self.fold.replace('fold', 'Session'), 'train_meta_data.json')
         test_path = os.path.join(meta_data, self.fold.replace('fold', 'Session'), 'test_meta_data.json')
-        dataset = IEMOCAPDataset(DATA_ROOT, train_path, preprocess, preprocess_audio, preprocess_video, upstream=kwargs['upstream'])
+        dataset = IEMOCAPDataset(DATA_ROOT, train_path, preprocess, preprocess_audio, preprocess_video, upstream=kwargs['upstream'], pooled_features_path=kwargs['pooled_features_path'], upstream_feature_selection=kwargs['upstream_feature_selection'])
         trainlen = int((1 - self.datarc['valid_ratio']) * len(dataset))
         lengths = [trainlen, len(dataset) - trainlen]
         
         torch.manual_seed(0)
         self.train_dataset, self.dev_dataset = random_split(dataset, lengths)
-        self.test_dataset = IEMOCAPDataset(DATA_ROOT, test_path, preprocess, preprocess_audio, preprocess_video, upstream=kwargs['upstream'])
+        self.test_dataset = IEMOCAPDataset(DATA_ROOT, test_path, preprocess, preprocess_audio, preprocess_video, upstream=kwargs['upstream'], pooled_features_path=kwargs['pooled_features_path'], upstream_feature_selection=kwargs['upstream_feature_selection'])
 
         # Model = eval(self.modelrc['select'])
         # model_conf = self.modelrc.get(self.modelrc['select'], {})
@@ -166,8 +166,8 @@ class DownstreamExpert(nn.Module):
         features = self.connector(features)
         predicted = self.model(features)
 
-        # utterance_labels = your_other_contents1
-        labels = torch.LongTensor(labels).to(features.device)        
+        utterance_labels = labels
+        labels = torch.LongTensor(utterance_labels).to(features.device)        
         # predicted = predicted[0]
         loss = self.objective(predicted, labels)
 

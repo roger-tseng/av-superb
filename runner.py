@@ -20,23 +20,12 @@ from tqdm import tqdm
 
 import hub
 from interfaces import Featurizer
-# <<<<<<< HEAD
 from util.helper import defaultdict, get_model_state, is_leader_process, show
 from util.optimizers import get_optimizer
 from util.schedulers import get_scheduler
-# =======
-from util.helper import defaultdict, get_model_state, is_leader_process, show
-from util.optimizers import get_optimizer
-from util.schedulers import get_scheduler
-# >>>>>>> origin/interface+avhubert+replai
 
 SAMPLE_RATE = 16000
 
-
-# <<<<<<< HEAD
-
-# =======
-# >>>>>>> origin/interface+avhubert+replai
 class ModelEntry:
     def __init__(self, model, name, trainable, interfaces):
         self.model = model
@@ -138,10 +127,6 @@ class Runner:
             f"downstream_tasks.{self.args.downstream}.expert"
         )
         Downstream = getattr(expert, "DownstreamExpert")
-# <<<<<<< HEAD
-#         # import pdb; pdb.set_trace()
-# =======
-# >>>>>>> origin/interface+avhubert+replai
 
         model = Downstream(
             preprocess=preprocess,
@@ -221,11 +206,11 @@ class Runner:
                     train_split, epoch=epoch
                 )
 # <<<<<<< HEAD
-                train_features, train_labels, a, b = next(iter(dataloader))
+                # train_features, train_labels, a, b = next(iter(dataloader))
                 # print(f"Feature batch shape: {train_features.size()}")
                 # print(f"Labels batch shape: {train_labels.size()}")
-                img = train_features[0].squeeze()
-                label = train_labels[0]
+                # img = train_features[0].squeeze()
+                # label = train_labels[0]
                 # plt.imshow(img, cmap="gray")
                 # plt.show()
                 
@@ -240,11 +225,11 @@ class Runner:
                     ):
                         dataloader.sampler.set_epoch(epoch)
 # <<<<<<< HEAD
-                        train_features, train_labels, a, b = next(iter(dataloader))
+                        # train_features, train_labels, a, b = next(iter(dataloader))
                         # print(f"Feature batch shape: {train_features.size()}")
                         # print(f"Labels batch shape: {train_labels.size()}")
-                        img = train_features[0].squeeze()
-                        label = train_labels[0]
+                        # img = train_features[0].squeeze()
+                        # label = train_labels[0]
                         # plt.imshow(img, cmap="gray")
                         # plt.show()
 
@@ -262,12 +247,9 @@ class Runner:
                         break
                     global_step = pbar.n + 1
 # <<<<<<< HEAD
-                    # import pdb; pdb.set_trace()
-                    # frames = tuple(float(frames) for frames in frames.strip("[[[]]]").split(","))
-                    # frames = float('.'.join(str(elem) for elem in frames))
-                    frames = tuple(map(lambda x: x.float(), frames))
-                    # frames = float(frames) for frame in (frames.strip("[]").split(","))
-                    # frames = float('.'.join(str(elem) for elem in frames))
+                    
+                    # frames = tuple(map(lambda x: x.float(), frames))
+                    
 # =======
 # >>>>>>> origin/interface+avhubert+replai
 

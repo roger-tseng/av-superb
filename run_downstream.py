@@ -13,11 +13,8 @@ from torch.distributed import get_world_size, is_initialized
 
 import hub
 from runner import Runner
-# <<<<<<< HEAD
-# from util.helper import (
-# =======
+
 from util.helper import (
-# >>>>>>> origin/interface+avhubert+replai
     backup,
     get_time_tag,
     hack_isinstance,
@@ -28,7 +25,6 @@ from util.helper import (
 
 def get_downstream_args():
     parser = argparse.ArgumentParser()
-
     # train or test for this experiment
     parser.add_argument(
         "-m", "--mode", choices=["train", "evaluate", "inference"], required=True
@@ -39,7 +35,6 @@ def get_downstream_args():
         "--override",
         help="Used to override args and config, this is at the highest priority",
     )
-
     # distributed training
     parser.add_argument(
         "--backend", default="nccl", help="The backend for distributed training"
@@ -50,7 +45,6 @@ def get_downstream_args():
         help=f"The GPU id this process should use while distributed training. \
                                None when not launched by torch.distributed.launch",
     )
-
     # use a ckpt as the experiment initialization
     # if set, all the args and config below this line will be overwrited by the ckpt
     # if a directory is specified, the latest ckpt will be used by default
@@ -60,7 +54,6 @@ def get_downstream_args():
         metavar="{CKPT_PATH,CKPT_DIR}",
         help="Resume training from a checkpoint",
     )
-
     # only load the parameters in the checkpoint without overwriting arguments and config, this is for evaluation
     parser.add_argument(
         "-i",
@@ -68,14 +61,12 @@ def get_downstream_args():
         metavar="CKPT_PATH",
         help="Load the checkpoint for evaluation",
     )
-
     # configuration for the experiment, including runner and downstream
     parser.add_argument(
         "-c",
         "--config",
         help="The yaml file for configuring the whole experiment except the upstream model",
     )
-
     # downstream settings
     parser.add_argument(
         "-d",
@@ -87,7 +78,6 @@ def get_downstream_args():
     parser.add_argument(
         "-v", "--downstream_variant", help="Downstream vairants given the same expert"
     )
-
     # upstream settings
     parser.add_argument(
         "--hub",
@@ -95,7 +85,6 @@ def get_downstream_args():
         choices=["torch", "huggingface"],
         help="The model Hub used to retrieve the upstream model.",
     )
-
     upstreams = [attr for attr in dir(hub) if attr[0] != "_"]
     parser.add_argument(
         "-u",
@@ -147,7 +136,6 @@ def get_downstream_args():
         action="store_true",
         help="Specify whether to normalize hidden features before weighted sum",
     )
-
     # experiment directory, choose one to specify
     # expname uses the default root directory: result/downstream
     parser.add_argument(
@@ -160,7 +148,6 @@ def get_downstream_args():
         action="store_true",
         help="Auto-resume if the expdir contains checkpoints",
     )
-
     # options
     parser.add_argument("--seed", default=1337, type=int)
     parser.add_argument("--device", default="cuda", help="model.to(device)")

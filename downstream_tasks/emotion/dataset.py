@@ -48,6 +48,8 @@ class IEMOCAPDataset(Dataset):
         self.preprocess_audio = preprocess_audio
         self.preprocess_video = preprocess_video
         self.upstream_name = kwargs['upstream']
+        self.upstream_feature_selection = kwargs['upstream_feature_selection']
+        self.pooled_features_path = kwargs['pooled_features_path']
 
         _, origin_sr = torchaudio.load(path_join(self.iemocap_root, self.meta_data[0]['path']))
         self.resampler = Resample(origin_sr, AUDIO_SAMPLE_RATE)
@@ -76,8 +78,16 @@ class IEMOCAPDataset(Dataset):
         label = self.meta_data[idx]['label']
         label = self.class_dict[label]
         
-        fname = "pre_features"
-        feature_path = f"/data/member1/user_tahsieh/IEMOCAP/pre_feature/{self.upstream_name}/{fname.rsplit('/')[-1].rsplit('.')[0]}.pt"
+        fname = self.meta_data[idx]['path']
+        basename = Path(self.meta_data[idx]['path']).stem
+        
+        if self.pooled_features_path:
+            pooled_feature_path = f"{self.pooled_features_path}/{self.upstream_name}_{self.upstream_feature_selection}/{basename}_pooled.pt"
+            if os.path.exists(pooled_feature_path):
+                pooled_feature = torch.load(pooled_feature_path)
+                return pooled_feature, pooled_feature, label, True
+
+        feature_path = f"/data/member1/user_tahsieh/IEMOCAP/preprocess_features/{self.upstream_name}/{fname.split('/')[0]}/{fname.split('/')[-2]}/{basename}.pt"
         
         if os.path.exists(feature_path):
             processed_wav, processed_frames = torch.load(feature_path)
@@ -94,19 +104,23 @@ class IEMOCAPDataset(Dataset):
                     processed_frames = self.preprocess_video(frames, video_fps)
                 else:
                     processed_frames = frames
-                
-                # torch.save([processed_wav, processed_frames], feature_path)
+            
+            # if not os.path.isdir(os.path.dirname(feature_path)):
+            #     os.mkdir(os.path.dirname(feature_path))
+            # torch.save([processed_wav, processed_frames], feature_path)
 
-        return processed_wav, processed_frames, label, Path(self.meta_data[idx]['path']).stem
+        return processed_wav, processed_frames, label, basename
         
     def __len__(self):
         return len(self.meta_data)
 
 def collate_fn(samples):
-    wavs, videos, labels, files_name = [], [], [], []
-    for wav, frames, label, file_name in samples:
-        wavs.append(wav)
-        videos.append(frames)
-        labels.append(label)
-        files_name.append(file_name)
-    return wavs, videos, labels, files_name
+    wavs, videos, *others = zip(*samples)
+    return wavs, videos, *others
+    # wavs, videos, labels, files_name = [], [], [], []
+    # for wav, frames, label, file_name in samples:
+    #     wavs.append(wav)
+    #     videos.append(frames)
+    #     labels.append(label)
+    #     files_name.append(file_name)
+    # return wavs, videos, labels, files_name
