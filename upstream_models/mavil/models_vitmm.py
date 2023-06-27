@@ -23,20 +23,9 @@ from .util.pos_embed import get_3d_sincos_pos_embed
 
 
 class VisionTransformerMM(timm.models.vision_transformer.VisionTransformer):
-    """Mulitmodal Vision Transformer with support for global average pooling (assume loading both audio and video)"""
-
-    def __init__(
-        self,
-        global_pool=False,
-        mask_2d=True,
-        av_fusion=False,
-        n_frm=8,
-        depth_av=0,
-        pos_train=False,
-        roll_mag_aug=False,
-        dataset="audioset",
-        **kwargs
-    ):
+    """ Mulitmodal Vision Transformer with support for global average pooling (assume loading both audio and video)
+    """
+    def __init__(self, global_pool=False, mask_2d=True, av_fusion=False, n_frm=8, depth_av=0, pos_train=False, ft=False, roll_mag_aug=False, dataset="audioset", **kwargs):
         super(VisionTransformerMM, self).__init__(**kwargs)
         self.av_fusion = av_fusion
         self.global_pool = global_pool
@@ -96,6 +85,7 @@ class VisionTransformerMM(timm.models.vision_transformer.VisionTransformer):
         self.av_fusion = av_fusion
         self.depth_av = depth_av
         if self.av_fusion:
+<<<<<<< HEAD
             self.blocks_av = nn.ModuleList(
                 [
                     Block(
@@ -111,6 +101,14 @@ class VisionTransformerMM(timm.models.vision_transformer.VisionTransformer):
             )
             self.fc_norm_av = norm_layer(2 * embed_dim)
             self.head_av = nn.Linear(2 * embed_dim, self.num_classes)
+=======
+            self.blocks_av = nn.ModuleList([
+                Block(embed_dim, num_heads, mlp_ratio, qkv_bias=True, qk_scale=None, norm_layer=norm_layer)
+            for i in range(self.depth_av)])
+            if ft:
+                self.fc_norm_av = norm_layer(2*embed_dim)
+                self.head_av = nn.Linear(2*embed_dim, self.num_classes)
+>>>>>>> 8b4ef1a92241d26b0af89101f3421c02a33f857f
 
         del self.head
         # must deleete otherwise distributed complains

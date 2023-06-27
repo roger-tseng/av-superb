@@ -27,21 +27,22 @@ class UpstreamExpert(nn.Module):
         super().__init__()
 
         av_fusion = True
-        ckpt = torch.load(
-            "/home/u7196393/mavil/mavil_as_pt_ft_a+v.pth", map_location="cpu"
-        )
+        ckpt = torch.load(ckpt, map_location='cpu')
+        # Fine-tuned model uses three fusion layers
+        self.ft = True if any('blocks_av.2' in key for key in ckpt['model'].keys()) else False
         self.model = models_vitmm.vitmm_base_patch16(
-            num_classes=527,
-            drop_path_rate=0.1,
-            global_pool=True,
-            mask_2d=True,
-            av_fusion=av_fusion,
-            depth_av=3 if av_fusion else 0,
-            n_frm=8,  # 8 frames per video
-            pos_train=False,
-        )
+                    num_classes=527,
+                    drop_path_rate=0.1,
+                    global_pool=True,
+                    mask_2d=True,
+                    av_fusion=av_fusion, 
+                    depth_av=3 if av_fusion and self.ft else 2 if av_fusion else 0,
+                    n_frm=8, # 8 frames per video
+                    pos_train=False,
+                    ft=self.ft,
+                )
 
-        img_size = (1024, 128)  # 1024, 128
+        img_size = (1024, 128) # 1024, 128
         in_chans = 1
         emb_dim = 768
         self.model.patch_embed = PatchEmbed_new(
@@ -52,12 +53,10 @@ class UpstreamExpert(nn.Module):
             stride=16,
         )  # no overlap. stride=img_size=16
         num_patches = self.model.patch_embed.num_patches
-        self.model.pos_embed = nn.Parameter(
-            torch.zeros(1, num_patches + 1, emb_dim), requires_grad=False
-        )  # fixed sin-cos embedding
-
-        checkpoint_model = ckpt["model"]
-        self.model.load_state_dict(checkpoint_model, strict=True)
+        self.model.pos_embed = nn.Parameter(torch.zeros(1, num_patches + 1, emb_dim), requires_grad=False)  # fixed sin-cos embedding
+        
+        checkpoint_model = ckpt['model']
+        self.model.load_state_dict(checkpoint_model, strict=False)
 
         self.audio_conf = {
             "sample_rate": 16000,
@@ -222,25 +221,21 @@ class UpstreamExpert(nn.Module):
             fusion_seq_feats = []
             fusion_pooled_feats = []
             for blk in self.model.blocks_av:
-                fusion_seq_feats.append(xv)
-                x = xv[:, 1:x_len, :].mean(
-                    dim=1, keepdim=True
-                )  # global pool without cls token
-                v = xv[:, x_len + 1 :, :].mean(
-                    dim=1, keepdim=True
-                )  # global pool without cls token
-                fusion_pooled_feats.append(torch.cat((x, v), dim=2))
+                
+                fusion_seq_feats.append(xv) 
+                x = xv[:, 1:x_len, :].mean(dim=1, keepdim=True)  # global pool without cls token
+                v = xv[:, x_len+1:,:].mean(dim=1, keepdim=True) # global pool without cls token
+                fusion_pooled_feats.append(torch.cat((x,v),dim=2))
 
-                xv = blk(xv)
+                xv =  blk(xv)
 
-            fusion_seq_feats.append(xv)
-            x = xv[:, 1:x_len, :].mean(
-                dim=1, keepdim=True
-            )  # global pool without cls token
-            v = xv[:, x_len + 1 :, :].mean(
-                dim=1, keepdim=True
-            )  # global pool without cls token
-            fusion_pooled_feats.append(self.model.fc_norm_av(torch.cat((x, v), dim=2)))
+            fusion_seq_feats.append(xv) 
+            x = xv[:, 1:x_len, :].mean(dim=1, keepdim=True)  # global pool without cls token
+            v = xv[:, x_len+1:,:].mean(dim=1, keepdim=True) # global pool without cls token
+            if self.ft:
+                fusion_pooled_feats.append(self.model.fc_norm_av(torch.cat((x,v),dim=2)))
+            else:
+                fusion_pooled_feats.append(torch.cat((x,v),dim=2))
 
         # Return intermediate layer representations for potential layer-wise experiments
         # Dict should contain three items, with keys as listed below:
