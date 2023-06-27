@@ -129,7 +129,7 @@ class KineticsSoundsDataset(Dataset):
                 video_samples = random.randint(
                     MIN_SEC * VIDEO_FRAME_RATE, MAX_SEC * VIDEO_FRAME_RATE
                 )
-                frames = torch.zeros([video_samples, 3, random.randint(50, HEIGHT), random.randint(50, WIDTH)])
+                frames = torch.ones(video_samples, 3, random.randint(50, HEIGHT), random.randint(50, WIDTH), dtype=torch.uint8)
                 video_fps = VIDEO_FRAME_RATE
 
             # preprocess
