@@ -266,20 +266,28 @@ class Runner:
                             assert isinstance(others[-1][0], str)
                             with torch.no_grad():
                                 for key, feature in features.items():
-                                    if key[0] == '_':
+                                    if key[0] == "_":
                                         continue
 
                                     if isinstance(feature, (list, tuple)):
-                                        feature = [layer.mean(dim=1, keepdim=True) for layer in feature]
+                                        feature = [
+                                            layer.mean(dim=1, keepdim=True)
+                                            for layer in feature
+                                        ]
                                     else:
                                         feature = feature.mean(dim=1, keepdim=True)
 
                                     for i, names_k in enumerate(others[-1]):
                                         if isinstance(feature, (list, tuple)):
-                                            save_target = [f[i].detach().cpu() for f in feature]
+                                            save_target = [
+                                                f[i].detach().cpu() for f in feature
+                                            ]
                                         else:
                                             save_target = feature[i].detach().cpu()
-                                        torch.save(save_target, f"{self.args.pooled_features_path}/{self.args.upstream}_{key}/{names_k}_pooled.pt")
+                                        torch.save(
+                                            save_target,
+                                            f"{self.args.pooled_features_path}/{self.args.upstream}_{key}/{names_k}_pooled.pt",
+                                        )
 
                     features = self.featurizer.model(source, features)
 
@@ -475,12 +483,13 @@ class Runner:
                     assert isinstance(others[-1][0], str)
                     with torch.no_grad():
                         for key, feature in features.items():
-
-                            if key[0] == '_':
+                            if key[0] == "_":
                                 continue
 
                             if isinstance(feature, (list, tuple)):
-                                feature = [layer.mean(dim=1, keepdim=True) for layer in feature]
+                                feature = [
+                                    layer.mean(dim=1, keepdim=True) for layer in feature
+                                ]
                             else:
                                 feature = feature.mean(dim=1, keepdim=True)
 
@@ -489,8 +498,10 @@ class Runner:
                                     save_target = [f[i].detach().cpu() for f in feature]
                                 else:
                                     save_target = feature[i].detach().cpu()
-                                torch.save(save_target, f"{self.args.pooled_features_path}/{self.args.upstream}_{key}/{names_k}_pooled.pt")
-
+                                torch.save(
+                                    save_target,
+                                    f"{self.args.pooled_features_path}/{self.args.upstream}_{key}/{names_k}_pooled.pt",
+                                )
 
             with torch.no_grad():
                 features = self.featurizer.model(source, features)

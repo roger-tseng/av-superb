@@ -65,9 +65,7 @@ class UpstreamExpert(nn.Module):
 
         # create model and load weights
         self.backbone = models.build_audio_video_model(model_conf, remove_head=True)
-        self.backbone.load_state_dict(
-            _weights, strict=True
-        )
+        self.backbone.load_state_dict(_weights, strict=True)
 
         self.audio_sample_rate = 16000
         self.video_frame_size = (112, 112)
