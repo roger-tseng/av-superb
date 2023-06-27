@@ -7,7 +7,7 @@ from timm.models.layers import to_2tuple
 
 print("Finished Imports...")
 av_fusion = False
-ckpt = torch.load('/media/rogert/DATA/mavil_as_pt_ft_a_v.pth', map_location='cpu')
+ckpt = torch.load('/work/u3933430/mavil_as_pt_ft_a_v.pth', map_location='cpu')
 model = models_vitmm.vitmm_base_patch16(
             num_classes=527,
             drop_path_rate=0.1,

@@ -69,7 +69,7 @@ class UCF101Dataset(Dataset):
         video_path = os.path.join(self.base_path, "UCF-101-VIDEO", self.split, video_name)
 
         basename = video_path.rsplit('/')[-1].rsplit('.')[0]
-        label = random.randint(0, self.class_num - 1)
+        label = int(video_name.split(".")[0].split("_")[-1]) - 1
 
         # Directly load pooled features if exist, 
         # skipping video loading and preprocessing
@@ -87,7 +87,7 @@ class UCF101Dataset(Dataset):
             frames, wav, _ = torchvision.io.read_video(
                 video_path, pts_unit="sec", output_format="TCHW"
             )
-            frames = frames.float()
+            # frames = frames.float()
             wav = wav.mean(dim=0).squeeze(0)
 
             if self.preprocess is not None:
