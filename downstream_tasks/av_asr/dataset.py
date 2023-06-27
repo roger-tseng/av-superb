@@ -71,6 +71,8 @@ class RandomDataset(Dataset):
                 open(self.full_path_root+"test_set_metadata_clean.json")
             )
 
+        self.all_lengths = json.load(open('all_audio_lengths.json'))
+
     def get_rates(self, idx):
         """
         Return audio sample rates and video frame rates
@@ -87,6 +89,7 @@ class RandomDataset(Dataset):
         if os.path.exists(feature_path):
             audio_features, video_features = torch.load(feature_path)
             wav, frames = audio_features, video_features # for returning easily
+            length = self.all_lengths[self.dataset[idx]['path']]
         else:
             frames, wav, meta = torchvision.io.read_video(
                 self.full_path_root + self.dataset[idx]["path"],

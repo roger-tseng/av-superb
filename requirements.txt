@@ -17,3 +17,4 @@ opencv-python-headless  # headless works better for twcc
 # replai
 munch
 pytorchvideo
+editdistance

@@ -5,6 +5,7 @@ Modified from https://github.com/s3prl/s3prl/blob/main/s3prl/downstream/example/
 import math
 import os
 import random
+import editdistance
 
 import torch
 import torch.nn as nn
@@ -184,8 +185,18 @@ class DownstreamExpert(nn.Module):
         uer, wer = 100.0, 100.0
         if unit_length_sum > 0:
             uer = 100.0 * unit_error_sum / unit_length_sum
+        else:
+            print('Warning: Unit Length Sum was zero!')
         if word_length_sum > 0:
             wer = 100.0 * word_error_sum / word_length_sum
+        else:
+            print('Warning: Word Length Sum was zero!')
+        if unit_length_sum == 0 and word_length_sum == 0:
+            print('Terminating on zero units found. Inputs were:')
+            print('\tpred_tokens_all', pred_tokens_all)
+            print('\tpred_words_all', pred_words_all)
+            print('\ttarget_tokens_all', target_tokens_all)
+            print('\ttarget_words_all', target_words_all)
         return uer, wer
 
     def _decode(self, log_probs, input_lens):
@@ -253,7 +264,8 @@ class DownstreamExpert(nn.Module):
                 the loss to be optimized, should not be detached
                 a single scalar in torch.FloatTensor
         """
-
+        device = features[0].device
+        
         labels, paths, lens = your_other_contents1
         labels, labels_len = self._get_lens_and_pad(labels, device)
 
@@ -261,9 +273,7 @@ class DownstreamExpert(nn.Module):
         for i in range(len(features)):
             unpadded_features.append(features[i][:lens[i]])
         log_probs, log_probs_len = self._get_log_probs(unpadded_features)
-        device = features[0].device
-
-
+        
         loss = self.objective(
             log_probs.transpose(0, 1), labels, log_probs_len, labels_len
         )
@@ -273,6 +283,8 @@ class DownstreamExpert(nn.Module):
             print('log_probs was shape', log_probs.shape)
             print('passed log_probs_len', log_probs_len)
             print('and labels_len', labels_len)
+            print('for video with len', lens)
+            # exit(0)
         records["loss"].append(loss.item())
 
         target_tokens_batch = []
@@ -286,8 +298,8 @@ class DownstreamExpert(nn.Module):
             target_words = (
                 target_tokens.replace(" ", "").replace("|", " ").strip().split()
             )
-
             target_tokens_batch.append(target_tokens)
+            target_words_batch.append(target_words)
 
         with torch.no_grad():
             pred_tokens_batch, pred_words_batch = self._decode(
