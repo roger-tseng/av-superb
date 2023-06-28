@@ -117,6 +117,9 @@ class UpstreamExpert(UpstreamBase):
         Replace this function to preprocess audio waveforms into your input format
         audio: (audio_channels, audio_length), where audio_channels is usually 1 or 2
         """
+        if len(audio.shape) == 2:
+            audio = audio.mean(dim=0)
+
         # Resample audio
         if audio_sample_rate != self.audio_sample_rate:
             audio = torchaudio.functional.resample(
