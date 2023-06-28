@@ -94,7 +94,7 @@ class VggsoundDataset(Dataset):
         else:
             frames, wav, meta = torchvision.io.read_video(filepath, pts_unit="sec", output_format="TCHW")
 
-            if self.upstream_name != "mavil":
+            if "mavil" not in self.upstream_name:
                 frames = frames.float()
             
             wav = wav.mean(dim=0).squeeze(0)
