@@ -12,7 +12,7 @@ def mavil_local(ckpt, *args, **kwargs):
     The model from local ckpt
         ckpt (str): PATH
     """
-    assert os.path.isfile(ckpt)
+    # assert os.path.isfile(ckpt)
     return _UpstreamExpert(ckpt, *args, **kwargs)
 
 def mavil_url(ckpt, refresh=False, *args, **kwargs):
