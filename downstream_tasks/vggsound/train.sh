@@ -10,4 +10,6 @@ cd ../../
 
 # python3 run_downstream.py -m train -n testmavilbasetest -u mavil_base -d vggsound -s fusion_feats --pooled_features_path /work/u2707828/features/
 
-python3 run_downstream.py -m train -n testavberttest1234582 -u avbert -d vggsound -s fusion_feats --pooled_features_path /work/u2707828/features/
+# python3 run_downstream.py -m train -n testavberttest1234582 -u avbert -d vggsound -s fusion_feats --pooled_features_path /work/u2707828/features/
+
+python3 run_downstream.py -m train -n testhuberttest1234582 -u hubert -d vggsound -s audio_feats --pooled_features_path /work/u2707828/features/
