@@ -16,7 +16,7 @@
 ###############
 import os
 
-from utils.download import _urls_to_filepaths
+from util.download import _urls_to_filepaths
 
 from .expert import UpstreamExpert as _UpstreamExpert
 
