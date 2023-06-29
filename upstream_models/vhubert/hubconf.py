@@ -19,6 +19,7 @@ import os
 from utils.download import _urls_to_filepaths
 
 from .expert import UpstreamExpert as _UpstreamExpert
+from .expert import FinetunedUpstreamExpert as _FinetunedUpstreamExpert
 
 # -------------#
 
@@ -29,7 +30,10 @@ def avhubert_local(ckpt, *args, **kwargs):
         ckpt (str): PATH
     """
     assert os.path.isfile(ckpt)
-    return _UpstreamExpert(ckpt, *args, **kwargs)
+    if kwargs.get("finetune"):
+        return _FinetunedUpstreamExpert(ckpt, *args, **kwargs)
+    else:
+        return _UpstreamExpert(ckpt, *args, **kwargs)
 
 
 def avhubert_url(ckpt, refresh=False, *args, **kwargs):
@@ -59,6 +63,16 @@ def avhubert_base_lrs3(refresh=False, *args, **kwargs):
     ] = "https://dl.fbaipublicfiles.com/avhubert/model/lrs3/clean-pretrain/base_lrs3_iter5.pt"
     return avhubert_url(refresh=refresh, *args, **kwargs)
 
+def avhubert_ft_lrs3_433(refresh=False, *args, **kwargs):
+    """
+    The avhubert base model trained on LRS3 then fine-tuned on LRS3-433h
+        refresh (bool): whether to download ckpt/config again if existed
+    """
+    kwargs[
+        "ckpt"
+    ] = "https://dl.fbaipublicfiles.com/avhubert/model/lrs3/vsr/base_lrs3_433h.pt"
+    kwargs["finetune"] = True
+    return avhubert_url(refresh=refresh, *args, **kwargs)
 
 def avhubert_large_lrs3(refresh=False, *args, **kwargs):
     """
