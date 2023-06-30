@@ -119,6 +119,14 @@ class DownstreamExpert(nn.Module):
             "best_score", torch.ones(1) * 1000
         )  # increased from 100 since WER can be > 100, and we want at least one checkpoint to get saved
 
+        """
+        Hard-coding the weighted sum to AV-HuBERT for now to get results by the submission deadline
+        The branch for storing AV-HuBERT feats is full of not-very-general pieces; this is engineering-for-my-machine-only logic
+        """
+        self.layer_num = 13
+        self.weights = nn.Parameter(torch.ones(self.layer_num))    
+        self.normalize = False
+
     # Interface
     def get_dataloader(self, split, epoch: int = 0):
         """
@@ -163,6 +171,39 @@ class DownstreamExpert(nn.Module):
             num_workers=self.datarc["num_workers"],
             collate_fn=dataset.collate_fn,
         )
+
+    def _weighted_sum(self, feature):
+        assert self.layer_num == len(feature), (
+            "If you run into this error, there is a great chance"
+            " you are finetuning the upstream with wav2vec2's transformer blocks"
+            " in weighted-sum mode (default), including wav2vec2, hubert, and decoar2."
+            " These models use the layerdrop technique which causes the different number"
+            " of layer forwards between different model forwards, resulting in different"
+            " number of hidden states for different model forwards. Hence, finetuning"
+            " these upstreams is essentially incompatible with weight-sum mode unless"
+            " you turn off the layerdrop option in fairseq. See:"
+            " https://github.com/pytorch/fairseq/blob/f6abcc2a67328bee8b15c596bb626ce2d720aae6/fairseq/models/wav2vec/wav2vec2.py#L857"
+            " However, since finetuning upstreams will backward the gradient through all layers"
+            " which serves the same functionality as weighted-sum: all layers can be used for different"
+            " downstream tasks. Hence instead of finetuning upstream with weighted-sum, we suggest to"
+            " follow the more common setting: finetuning upstream with the last layer. Please use the"
+            " following options: --upstream_trainable --upstream_feature_selection last_hidden_state."
+            " Or: -f -s last_hidden_state"
+        )
+        stacked_feature = torch.stack(feature, dim=0)
+
+        if self.normalize:
+            stacked_feature = torch.nn.functional.layer_norm(
+                stacked_feature, (stacked_feature.shape[-1],)
+            )
+
+        _, *origin_shape = stacked_feature.shape
+        stacked_feature = stacked_feature.view(self.layer_num, -1)
+        norm_weights = torch.nn.functional.softmax(self.weights, dim=-1)
+        weighted_feature = (norm_weights.unsqueeze(-1) * stacked_feature).sum(dim=0)
+        weighted_feature = weighted_feature.view(*origin_shape)
+
+        return weighted_feature
 
     def _compute_metrics(
         self, pred_tokens_all, pred_words_all, target_tokens_all, target_words_all
@@ -269,14 +310,25 @@ class DownstreamExpert(nn.Module):
         labels, paths, lens = your_other_contents1
         labels, labels_len = self._get_lens_and_pad(labels, device)
 
-        unpadded_features = []
-        for i in range(len(features)):
-            unpadded_features.append(features[i][:lens[i]])
-        log_probs, log_probs_len = self._get_log_probs(unpadded_features)
-        
+        if len(features) > 1:
+            if len(features) != self.layer_num:
+                if len(features[0]) == self.layer_num:
+                    features = [self._weighted_sum(feat) for feat in features]
+            else:
+                features = self._weighted_sum(features).unsqueeze(0)
+
+        try:
+            unpadded_features = []
+            for i in range(len(features)):
+                unpadded_features.append(features[i][:lens[i]])
+            log_probs, log_probs_len = self._get_log_probs(unpadded_features) 
+        except:
+            print('Failed to pad features of shape', features.shape)
+
         loss = self.objective(
             log_probs.transpose(0, 1), labels, log_probs_len, labels_len
         )
+        """
         if loss == 0.0:
             print('Got loss of 0.0!')
             print('labels was len', len(labels))
@@ -285,6 +337,7 @@ class DownstreamExpert(nn.Module):
             print('and labels_len', labels_len)
             print('for video with len', lens)
             # exit(0)
+        """
         records["loss"].append(loss.item())
 
         target_tokens_batch = []
@@ -370,5 +423,5 @@ class DownstreamExpert(nn.Module):
         save_names = []
         if split == "dev" and wer < self.best_score:
             self.best_score = torch.ones(1) * wer
-            save_names.append("f{split}-best.ckpt")
+            save_names.append(f"{split}-best.ckpt")
         return save_names

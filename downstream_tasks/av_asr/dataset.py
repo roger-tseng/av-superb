@@ -86,10 +86,12 @@ class RandomDataset(Dataset):
     def __getitem__(self, idx):
         file_path = self.full_path_root + self.dataset[idx]['path']
         feature_path = '/saltpool0/scratch/layneberry/avhubert_output/' + self.dataset[idx]['path'][:-4].replace('/','_') + '.pth'
-        if os.path.exists(feature_path):
+        if os.path.exists(feature_path) and os.path.exists(feature_path+'_fusion'):
             audio_features, video_features = torch.load(feature_path)
+            fusion_features = torch.load(feature_path + "_fusion")
             wav, frames = audio_features, video_features # for returning easily
             length = self.all_lengths[self.dataset[idx]['path']]
+            feature_path = (feature_path, fusion_features)
         else:
             frames, wav, meta = torchvision.io.read_video(
                 self.full_path_root + self.dataset[idx]["path"],
@@ -105,7 +107,7 @@ class RandomDataset(Dataset):
             if self.preprocess_video != None:
                 frames = self.preprocess_video(frames, self.VIDEO_FRAME_RATE)
             frames = frames.float()
-            length = len(frames)
+            length = len(frames) 
 
         labels = self.dictionary.encode_line(
             " ".join(list(self.dataset[idx]["text"])),

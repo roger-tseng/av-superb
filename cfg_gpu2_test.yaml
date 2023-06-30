@@ -3,9 +3,9 @@ runner:
   gradient_clipping: 1
   gradient_accumulate_steps: 2
 
-  log_step: 50
-  eval_step: 50
-  save_step: 500
+  log_step: 100
+  eval_step: 1000
+  save_step: 1000
   max_keep: 1
   eval_dataloaders:
     - dev
@@ -13,22 +13,22 @@ runner:
 
 optimizer:
   name: AdamW
-  lr: 1.0e-3
+  lr: 5.0e-4
 
 # comment the whole scheduler config block
 # to disable learning rate scheduling
 scheduler:
   name: linear_schedule_with_warmup
-  num_warmup_steps: 1400
+  num_warmup_steps: 1500
 
 downstream_expert:
   datarc:
     num_workers: 4
-    train_batch_size: 64
-    eval_batch_size: 64
+    train_batch_size: 32
+    eval_batch_size: 32
     lrs_version: 3 # choices are 2 (BBC) or 3 (TED)
 
   modelrc:
     input_dim: 256
-    upsample_rate: 1
-    dropout_rate: .25
+    upsample_rate: 2
+    dropout_rate: .2
