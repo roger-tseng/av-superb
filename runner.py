@@ -221,7 +221,7 @@ class Runner:
                 # try/except block for forward/backward
                 try:
                     labels, paths, lens = others
-                    
+
                     if pbar.n >= pbar.total:
                         break
                     global_step = pbar.n + 1

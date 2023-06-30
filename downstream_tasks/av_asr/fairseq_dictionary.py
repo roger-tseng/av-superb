@@ -9,9 +9,11 @@ import os
 import re
 import typing as tp
 from collections import Counter
-# from multiprocessing import Pool
 
 import torch
+
+# from multiprocessing import Pool
+
 
 SPACE_NORMALIZER = re.compile(r"\s+")
 

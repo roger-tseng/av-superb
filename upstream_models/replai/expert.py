@@ -123,7 +123,7 @@ class UpstreamExpert(nn.Module):
         """
         if len(audio.shape) == 2:
             audio = audio.mean(dim=0)
-        
+
         _audio_length_sec = len(audio) / audio_sample_rate
         num_temporal_frames = int(_audio_length_sec / 2.0 * 128)
         _audio_transform = build_transforms(
@@ -166,14 +166,16 @@ class UpstreamExpert(nn.Module):
         """
         bsz = len(source)
         audio, video = zip(*source)
-        
+
         # Collate audio and video into batch
-        audio = [a.squeeze() for a in audio] 
+        audio = [a.squeeze() for a in audio]
 
         # Need to ensure at least one sample is at least 128 long
         if audio[0].shape[0] < 128:
             needed = 128 - audio[0].shape[0]
-            audio[0] = torch.nn.functional.pad(audio[0], (0,0,0,needed), 'constant', 0.0)    
+            audio[0] = torch.nn.functional.pad(
+                audio[0], (0, 0, 0, needed), "constant", 0.0
+            )
         wavs = pad_sequence(audio, batch_first=True).unsqueeze(dim=1)
         # TODO: might need to pad video too
         video = [v.permute(1, 0, 2, 3) for v in video]
@@ -192,7 +194,7 @@ class UpstreamExpert(nn.Module):
         # use the output of pool layers only
         video_feats = video_feats["pool"]
         audio_feats = audio_feats["pool"]
-        
+
         # convert video_feats to shape (bsz,seq_length//8,hid_dim)
         # in RepLAI paper, the video input size is fixed to 8 frames. Hence, we regard 8 frames as a chunck
         video_feats = video_feats.reshape(bsz, 512, -1)
@@ -202,7 +204,7 @@ class UpstreamExpert(nn.Module):
         # in RepLAI paper, the audio input size is fixed to 128 frames. Hence, we regard 128 frames as a chunck
         audio_feats = audio_feats.reshape(bsz, 512, -1)
         audio_feats = audio_feats.permute(0, 2, 1)
-        
+
         # Return intermediate layer representations for potential layer-wise experiments
         # perhpas we should unify the return data format (such as the suggestion from David, video_feats, audio_feats and fusion_feats)
 

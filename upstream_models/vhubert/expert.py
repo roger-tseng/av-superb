@@ -7,9 +7,9 @@
 """*********************************************************************************************"""
 
 import argparse
+import os
 from concurrent.futures import process
 
-import os
 import fairseq
 import numpy as np
 import torch
@@ -174,9 +174,15 @@ class UpstreamExpert(UpstreamBase):
     def forward(self, processed_data):
         device = processed_data[0][0].device
 
-        paths = [pth if isinstance(pth, str) else pth[0] for _, _, pth in processed_data]
+        paths = [
+            pth if isinstance(pth, str) else pth[0] for _, _, pth in processed_data
+        ]
 
-        if os.path.exists(paths[0]) and os.path.exists(paths[0]+'_fusion') and paths[0] != 'empty_filepath':
+        if (
+            os.path.exists(paths[0])
+            and os.path.exists(paths[0] + "_fusion")
+            and paths[0] != "empty_filepath"
+        ):
             # If one path exists, all should
             # This means audio and video already contain the final features
             # Need to stack them
@@ -188,7 +194,7 @@ class UpstreamExpert(UpstreamBase):
             vf = torch.stack(video).to(device)
             af = torch.stack(audio).to(device)
             ff = [torch.stack(layer).to(device) for layer in zip(*fusion)]
-            return {'video_feats':vf, 'audio_feats':af, 'fusion_feats':ff}
+            return {"video_feats": vf, "audio_feats": af, "fusion_feats": ff}
         else:
             audio, video, paths = [], [], []
             for audio_feats, video_feats, pth in processed_data:
@@ -209,10 +215,26 @@ class UpstreamExpert(UpstreamBase):
             max_len = 165
             for l in audio_length:
                 if l > max_len:
-                    print('Problem! found a video with more than', max_len, 'tokens')
+                    print("Problem! found a video with more than", max_len, "tokens")
             # replaced max(audio_length) with a pre-defined max length (max_len) so different batches get the same amount of padding
-            audio[0] = torch.cat((audio[0], torch.zeros([max_len - audio[0].shape[0]] + list(audio[0].shape[1:])).to(device)), axis=0)
-            video[0] = torch.cat((video[0], torch.zeros([max_len - video[0].shape[0]] + list(video[0].shape[1:])).to(device)), axis=0)
+            audio[0] = torch.cat(
+                (
+                    audio[0],
+                    torch.zeros(
+                        [max_len - audio[0].shape[0]] + list(audio[0].shape[1:])
+                    ).to(device),
+                ),
+                axis=0,
+            )
+            video[0] = torch.cat(
+                (
+                    video[0],
+                    torch.zeros(
+                        [max_len - video[0].shape[0]] + list(video[0].shape[1:])
+                    ).to(device),
+                ),
+                axis=0,
+            )
             padding_mask = ~torch.lt(
                 torch.arange(max_len).unsqueeze(0),
                 (audio_length).unsqueeze(1),
@@ -226,13 +248,19 @@ class UpstreamExpert(UpstreamBase):
             result = self.model(
                 source, padding_mask=padding_mask, mask=False, features_only=True
             )
-            
+
             # TODO: unpack and save separately!
             for i in range(len(paths)):
-                torch.save([result['features_video'].transpose(1,2)[i].cpu(), result['features_audio'].transpose(1,2)[i].cpu()], paths[i])
+                torch.save(
+                    [
+                        result["features_video"].transpose(1, 2)[i].cpu(),
+                        result["features_audio"].transpose(1, 2)[i].cpu(),
+                    ],
+                    paths[i],
+                )
 
-            vf = result['features_video'].transpose(1,2)
-            af = result['features_audio'].transpose(1,2)
+            vf = result["features_video"].transpose(1, 2)
+            af = result["features_audio"].transpose(1, 2)
 
         return {
             "video_feats": vf,
