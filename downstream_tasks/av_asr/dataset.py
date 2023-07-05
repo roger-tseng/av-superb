@@ -14,7 +14,7 @@ from torch.utils.data.dataset import Dataset
 from .fairseq_dictionary import Dictionary
 
 PATH_ROOT = (
-    "/saltpool0/data/layneberry/lrs"  # Inside Dataset init, appends either '2/' or '3/'
+    "/work/b07901163/av/lrs"  # Inside Dataset init, appends either '2/' or '3/'
 )
 
 # Other parameters

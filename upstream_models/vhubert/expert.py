@@ -174,9 +174,12 @@ class UpstreamExpert(UpstreamBase):
     def forward(self, processed_data):
         device = processed_data[0][0].device
 
-        paths = [
-            pth if isinstance(pth, str) else pth[0] for _, _, pth in processed_data
-        ]
+        # paths = [
+        #     pth if isinstance(pth, str) else pth[0] for _, _, pth in processed_data
+        # ]
+        paths = ['null']*len(processed_data)
+        if len(processed_data[0]) == 2:
+            processed_data = [(a,b, 'null') for a,b in processed_data]
 
         if (
             os.path.exists(paths[0])
