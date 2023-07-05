@@ -14,25 +14,16 @@ from torch.utils.data.dataset import Dataset
 from .fairseq_dictionary import Dictionary
 
 PATH_ROOT = (
-    "/work/b07901163/av/lrs"  # Inside Dataset init, appends either '2/' or '3/'
+    "/livingrooms/rogertseng/lrs"  # Inside Dataset init, appends either '2/' or '3/'
 )
-
-# Other parameters
-AUDIO_SAMPLE_RATE = 16000
-VIDEO_FRAME_RATE = 25
-MIN_SEC = 0.48
-MAX_SEC = 6.2
-HEIGHT = 224
-WIDTH = 224
-
 
 class RandomDataset(Dataset):
     def __init__(
         self,
+        preprocess=None,
         preprocess_audio=None,
         preprocess_video=None,
         split=None,
-        lrs_version=None,
         **kwargs
     ):
         """
@@ -55,14 +46,16 @@ class RandomDataset(Dataset):
         self.dictionary = Dictionary.load("downstream_tasks/av_asr/char.dict")
         self.class_num = len(self.dictionary)
 
-        self.AUDIO_SAMPLE_RATE = AUDIO_SAMPLE_RATE
-        self.VIDEO_FRAME_RATE = VIDEO_FRAME_RATE
-
+        self.preprocess = preprocess
         self.preprocess_audio = preprocess_audio
         self.preprocess_video = preprocess_video
 
-        self.lrs_version = lrs_version
-        self.full_path_root = PATH_ROOT + str(lrs_version) + "/"
+        self.upstream_name = kwargs['upstream']
+        self.upstream_feature_selection = kwargs['upstream_feature_selection']
+        self.pooled_features_path = kwargs['pooled_features_path']
+        self.lrs_version = kwargs['lrs_version']
+
+        self.full_path_root = PATH_ROOT + str(self.lrs_version) + "/"
 
         if split == "train":
             self.dataset = json.load(
@@ -77,53 +70,45 @@ class RandomDataset(Dataset):
                 open(self.full_path_root + "test_set_metadata_clean.json")
             )
 
-        self.all_lengths = json.load(open("all_audio_lengths.json"))
-
     def __getitem__(self, idx):
-        file_path = self.full_path_root + self.dataset[idx]["path"]
-        feature_path = (
-            "/saltpool0/scratch/layneberry/avhubert_output/"
-            + self.dataset[idx]["path"][:-4].replace("/", "_")
-            + ".pth"
-        )
-        if os.path.exists(feature_path) and os.path.exists(feature_path + "_fusion"):
-            audio_features, video_features = torch.load(feature_path)
-            fusion_features = torch.load(feature_path + "_fusion")
-            wav, frames = audio_features, video_features  # for returning easily
-            length = self.all_lengths[self.dataset[idx]["path"]]
-            feature_path = (feature_path, fusion_features)
-        else:
-            frames, wav, meta = torchvision.io.read_video(
-                self.full_path_root + self.dataset[idx]["path"],
-                pts_unit="sec",
-                output_format="TCHW",
-            )
-            assert meta["audio_fps"] == self.AUDIO_SAMPLE_RATE
-            assert meta["video_fps"] == self.VIDEO_FRAME_RATE
-
-            wav = wav.squeeze(0)
-            if self.preprocess_audio != None:
-                wav = self.preprocess_audio(wav, self.AUDIO_SAMPLE_RATE)
-            if self.preprocess_video != None:
-                frames = self.preprocess_video(frames, self.VIDEO_FRAME_RATE)
-            frames = frames.float()
-            length = len(frames)
-
+        path = self.full_path_root + self.dataset[idx]["path"]
         labels = self.dictionary.encode_line(
             " ".join(list(self.dataset[idx]["text"])),
             line_tokenizer=lambda x: x.split(),
         ).long()
-        return wav, frames, labels, feature_path, length
+
+        basename = path.replace('/', '_').rsplit('.')[0]
+        if self.pooled_features_path:
+            pooled_feature_path = f"{self.pooled_features_path}/{self.upstream_name}_{self.upstream_feature_selection}/{basename}_pooled.pt"
+            if os.path.exists(pooled_feature_path):
+                pooled_feature = torch.load(pooled_feature_path)
+                return pooled_feature, pooled_feature, labels, True
+
+        frames, wav, meta = torchvision.io.read_video(
+            path,
+            pts_unit="sec",
+            output_format="TCHW",
+        )
+        audio_sr, video_fps = meta["audio_fps"], meta["video_fps"]
+
+        wav = wav.squeeze(0)
+        if self.preprocess is not None:
+            processed_frames, processed_wav = self.preprocess(frames, wav, video_fps, audio_sr)
+        else:    
+            if self.preprocess_audio is not None:
+                processed_wav = self.preprocess_audio(wav, audio_sr)
+            else:
+                processed_wav = wav
+            if self.preprocess_video is not None:
+                processed_frames = self.preprocess_video(frames, video_fps)
+            else:
+                processed_frames = frames
+
+        return processed_wav, processed_frames, labels, basename
 
     def __len__(self):
         return len(self.dataset)
 
     def collate_fn(self, samples):
-        wavs, videos, labels, paths, lens = [], [], [], [], []
-        for wav, frames, label, pth, length in samples:
-            wavs.append(wav)
-            videos.append(frames)
-            labels.append(label)
-            paths.append(pth)
-            lens.append(length)
-        return wavs, videos, labels, paths, lens
+        wavs, videos, *others = zip(*samples)
+        return wavs, videos, *others

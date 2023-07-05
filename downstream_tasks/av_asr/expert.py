@@ -39,6 +39,7 @@ class DownstreamExpert(nn.Module):
 
     def __init__(
         self,
+        preprocess,
         preprocess_audio,
         preprocess_video,
         upstream_dim,
@@ -100,13 +101,34 @@ class DownstreamExpert(nn.Module):
         self.dictionary = Dictionary.load("downstream_tasks/av_asr/char.dict")
 
         self.train_dataset = RandomDataset(
-            preprocess_audio, preprocess_video, split="train", **self.datarc
+            preprocess, 
+            preprocess_audio, 
+            preprocess_video, 
+            split="train", 
+            upstream=kwargs['upstream'],
+            pooled_features_path=kwargs['pooled_features_path'],
+            upstream_feature_selection=kwargs['upstream_feature_selection'], 
+            **self.datarc
         )
         self.dev_dataset = RandomDataset(
-            preprocess_audio, preprocess_video, split="val", **self.datarc
+            preprocess, 
+            preprocess_audio, 
+            preprocess_video, 
+            upstream=kwargs['upstream'],
+            pooled_features_path=kwargs['pooled_features_path'],
+            upstream_feature_selection=kwargs['upstream_feature_selection'], 
+            split="val", 
+            **self.datarc
         )
         self.test_dataset = RandomDataset(
-            preprocess_audio, preprocess_video, split="test", **self.datarc
+            preprocess, 
+            preprocess_audio, 
+            preprocess_video, 
+            upstream=kwargs['upstream'],
+            pooled_features_path=kwargs['pooled_features_path'],
+            upstream_feature_selection=kwargs['upstream_feature_selection'], 
+            split="test", 
+            **self.datarc
         )
 
         self.connector = nn.Linear(upstream_dim, self.modelrc["input_dim"])
@@ -118,14 +140,6 @@ class DownstreamExpert(nn.Module):
         self.register_buffer(
             "best_score", torch.ones(1) * 1000
         )  # increased from 100 since WER can be > 100, and we want at least one checkpoint to get saved
-
-        """
-        Hard-coding the weighted sum to AV-HuBERT for now to get results by the submission deadline
-        The branch for storing AV-HuBERT feats is full of not-very-general pieces; this is engineering-for-my-machine-only logic
-        """
-        self.layer_num = 13
-        self.weights = nn.Parameter(torch.ones(self.layer_num))
-        self.normalize = False
 
     # Interface
     def get_dataloader(self, split, epoch: int = 0):
@@ -171,39 +185,6 @@ class DownstreamExpert(nn.Module):
             num_workers=self.datarc["num_workers"],
             collate_fn=dataset.collate_fn,
         )
-
-    def _weighted_sum(self, feature):
-        assert self.layer_num == len(feature), (
-            "If you run into this error, there is a great chance"
-            " you are finetuning the upstream with wav2vec2's transformer blocks"
-            " in weighted-sum mode (default), including wav2vec2, hubert, and decoar2."
-            " These models use the layerdrop technique which causes the different number"
-            " of layer forwards between different model forwards, resulting in different"
-            " number of hidden states for different model forwards. Hence, finetuning"
-            " these upstreams is essentially incompatible with weight-sum mode unless"
-            " you turn off the layerdrop option in fairseq. See:"
-            " https://github.com/pytorch/fairseq/blob/f6abcc2a67328bee8b15c596bb626ce2d720aae6/fairseq/models/wav2vec/wav2vec2.py#L857"
-            " However, since finetuning upstreams will backward the gradient through all layers"
-            " which serves the same functionality as weighted-sum: all layers can be used for different"
-            " downstream tasks. Hence instead of finetuning upstream with weighted-sum, we suggest to"
-            " follow the more common setting: finetuning upstream with the last layer. Please use the"
-            " following options: --upstream_trainable --upstream_feature_selection last_hidden_state."
-            " Or: -f -s last_hidden_state"
-        )
-        stacked_feature = torch.stack(feature, dim=0)
-
-        if self.normalize:
-            stacked_feature = torch.nn.functional.layer_norm(
-                stacked_feature, (stacked_feature.shape[-1],)
-            )
-
-        _, *origin_shape = stacked_feature.shape
-        stacked_feature = stacked_feature.view(self.layer_num, -1)
-        norm_weights = torch.nn.functional.softmax(self.weights, dim=-1)
-        weighted_feature = (norm_weights.unsqueeze(-1) * stacked_feature).sum(dim=0)
-        weighted_feature = weighted_feature.view(*origin_shape)
-
-        return weighted_feature
 
     def _compute_metrics(
         self, pred_tokens_all, pred_words_all, target_tokens_all, target_words_all
@@ -268,7 +249,7 @@ class DownstreamExpert(nn.Module):
         return all_seqs, seq_lens
 
     # Interface
-    def forward(self, split, features, labels, paths, lens, records, **kwargs):
+    def forward(self, split, features, labels, basenames, records, **kwargs):
         """
         Args:
             split: string
@@ -317,9 +298,10 @@ class DownstreamExpert(nn.Module):
                 features = self._weighted_sum(features).unsqueeze(0)
 
         try:
-            unpadded_features = []
-            for i in range(len(features)):
-                unpadded_features.append(features[i][: lens[i]])
+            unpadded_features = features
+            # unpadded_features = []
+            # for i in range(len(features)):
+            #     unpadded_features.append(features[i][: lens[i]])
             log_probs, log_probs_len = self._get_log_probs(unpadded_features)
         except:
             print("Failed to pad features of shape", features.shape)

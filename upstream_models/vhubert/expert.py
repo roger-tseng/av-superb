@@ -7,7 +7,6 @@
 """*********************************************************************************************"""
 
 import argparse
-import os
 from concurrent.futures import process
 
 import fairseq
@@ -174,100 +173,37 @@ class UpstreamExpert(UpstreamBase):
     def forward(self, processed_data):
         device = processed_data[0][0].device
 
-        # paths = [
-        #     pth if isinstance(pth, str) else pth[0] for _, _, pth in processed_data
-        # ]
-        paths = ['null']*len(processed_data)
-        if len(processed_data[0]) == 2:
-            processed_data = [(a,b, 'null') for a,b in processed_data]
+        audio, video = [], []
+        for audio_feats, video_feats in processed_data:
+            diff = len(audio_feats) - len(video_feats)
+            if diff > 0:
+                audio_feats = audio_feats[:-diff]
+            elif diff < 0:
+                audio_feats = F.pad(audio_feats, (0, 0, 0, -diff), "constant", 0)
+            audio.append(audio_feats)
+            video.append(video_feats)
 
-        if (
-            os.path.exists(paths[0])
-            and os.path.exists(paths[0] + "_fusion")
-            and paths[0] != "empty_filepath"
-        ):
-            # If one path exists, all should
-            # This means audio and video already contain the final features
-            # Need to stack them
-            audio, video, fusion = [], [], []
-            for audio_feats, video_feats, pth in processed_data:
-                audio.append(audio_feats)
-                video.append(video_feats)
-                fusion.append(pth[1])
-            vf = torch.stack(video).to(device)
-            af = torch.stack(audio).to(device)
-            ff = [torch.stack(layer).to(device) for layer in zip(*fusion)]
-            return {"video_feats": vf, "audio_feats": af, "fusion_feats": ff}
-        else:
-            audio, video, paths = [], [], []
-            for audio_feats, video_feats, pth in processed_data:
-                diff = len(audio_feats) - len(video_feats)
-                if diff > 0:
-                    audio_feats = audio_feats[:-diff]
-                elif diff < 0:
-                    audio_feats = F.pad(audio_feats, (0, 0, 0, -diff), "constant", 0)
-                audio.append(audio_feats)
-                video.append(video_feats)
-                paths.append(pth)
-
-            audio_length = torch.LongTensor([len(item) for item in audio])
-            video_length = torch.LongTensor([len(item) for item in video])
-            assert sum([a == v for a, v in zip(audio_length, video_length)]) == len(
-                audio_length
-            ), f"each audio should have the same temporal length with the corresponding video, but they are not: audio_length: {audio_length}, video_length: {video_length}"
-            max_len = 165
-            for l in audio_length:
-                if l > max_len:
-                    print("Problem! found a video with more than", max_len, "tokens")
-            # replaced max(audio_length) with a pre-defined max length (max_len) so different batches get the same amount of padding
-            audio[0] = torch.cat(
-                (
-                    audio[0],
-                    torch.zeros(
-                        [max_len - audio[0].shape[0]] + list(audio[0].shape[1:])
-                    ).to(device),
-                ),
-                axis=0,
-            )
-            video[0] = torch.cat(
-                (
-                    video[0],
-                    torch.zeros(
-                        [max_len - video[0].shape[0]] + list(video[0].shape[1:])
-                    ).to(device),
-                ),
-                axis=0,
-            )
-            padding_mask = ~torch.lt(
-                torch.arange(max_len).unsqueeze(0),
-                (audio_length).unsqueeze(1),
-            ).to(device)
-            padded_audio = pad_sequence(audio, batch_first=True)
-            padded_video = pad_sequence(video, batch_first=True)
-            source = {
-                "audio": padded_audio.transpose(1, 2),
-                "video": padded_video.unsqueeze(dim=1),
-            }
-            result = self.model(
-                source, padding_mask=padding_mask, mask=False, features_only=True
-            )
-
-            # TODO: unpack and save separately!
-            # for i in range(len(paths)):
-            #     torch.save(
-            #         [
-            #             result["features_video"].transpose(1, 2)[i].cpu(),
-            #             result["features_audio"].transpose(1, 2)[i].cpu(),
-            #         ],
-            #         paths[i],
-            #     )
-
-            vf = result["features_video"].transpose(1, 2)
-            af = result["features_audio"].transpose(1, 2)
-
+        audio_length = torch.LongTensor([len(item) for item in audio])
+        video_length = torch.LongTensor([len(item) for item in video])
+        assert sum([a == v for a, v in zip(audio_length, video_length)]) == len(
+            audio_length
+        ), f"each audio should have the same temporal length with the corresponding video, but they are not: audio_length: {audio_length}, video_length: {video_length}"
+        padding_mask = ~torch.lt(
+            torch.arange(max(audio_length)).unsqueeze(0),
+            (audio_length).unsqueeze(1),
+        ).to(device)
+        padded_audio = pad_sequence(audio, batch_first=True)
+        padded_video = pad_sequence(video, batch_first=True)
+        source = {
+            "audio": padded_audio.transpose(1, 2),
+            "video": padded_video.unsqueeze(dim=1),
+        }
+        result = self.model(
+            source, padding_mask=padding_mask, mask=False, features_only=True
+        )
         return {
-            "video_feats": vf,
-            "audio_feats": af,
+            "video_feats": result["features_video"].transpose(1, 2),
+            "audio_feats": result["features_audio"].transpose(1, 2),
             # fusion_feats are handled by UpstreamBase's hooks
         }
 

@@ -200,7 +200,6 @@ class Featurizer(nn.Module):
                         upstream.preprocess_video(video, VIDEO_SAMPLE_RATE).to(
                             upstream_device
                         ),
-                        "empty_filepath",
                     )
                     for audio, video in paired_wavs
                 ]
