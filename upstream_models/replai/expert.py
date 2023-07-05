@@ -179,6 +179,13 @@ class UpstreamExpert(nn.Module):
 
         # Collate audio and video into batch
         audio = [a.squeeze() for a in audio]
+
+        # Need to ensure at least one sample is at least 128 long
+        if audio[0].shape[0] < 128:
+            needed = 128 - audio[0].shape[0]
+            audio[0] = torch.nn.functional.pad(
+                audio[0], (0, 0, 0, needed), "constant", 0.0
+            )
         wavs = pad_sequence(audio, batch_first=True).unsqueeze(dim=1)
         # Pad video along time axis, video starts with channel x time x height x width
         video = [v.permute(1, 0, 2, 3) for v in video]

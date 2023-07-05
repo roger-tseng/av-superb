@@ -107,6 +107,7 @@ class UpstreamBase(nn.Module, metaclass=initHook):
         self._hook_hiddens.clear()
 
         result = super().__call__(wavs, *args, **kwargs) or {}
+        # paths = [pth if isinstance(pth, str) else pth[0] for _, _, pth in wavs]
         assert isinstance(result, dict)
 
         if len(self._hook_hiddens) > 0:
@@ -134,6 +135,12 @@ class UpstreamBase(nn.Module, metaclass=initHook):
                     file=sys.stderr,
                 )
                 raise ValueError
+
+            # if not isinstance(wavs[-1][-1], tuple):
+            #     for i in range(len(paths)):
+            #         torch.save(
+            #             [hidden[i].cpu() for hidden in hiddens], paths[i] + "_fusion"
+            #         )
 
             result["_hidden_states_info"], result[key] = names, hiddens
 
@@ -193,6 +200,7 @@ class Featurizer(nn.Module):
                         upstream.preprocess_video(video, VIDEO_SAMPLE_RATE).to(
                             upstream_device
                         ),
+                        "empty_filepath",
                     )
                     for audio, video in paired_wavs
                 ]

@@ -22,7 +22,9 @@ pytorchvideo
 simplejson
 scipy
 # mavil
-timm ==0.3.2 
 # after timm installation, replace line 6 of 
 # ENV_PATH/lib/python3.9/site-packages/timm/models/layers/helpers.py with 
 # import collections.abc as container_abcs
+timm ==0.3.2 
+# asr downstream task
+editdistance
