@@ -16,6 +16,7 @@ from tensorboardX import SummaryWriter
 from torch.distributed import get_rank, get_world_size, is_initialized
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DistributedSampler
+from torch.nn.utils.rnn import pad_sequence
 from tqdm import tqdm
 
 import hub
@@ -232,15 +233,18 @@ class Runner:
                     global_step = pbar.n + 1
 
                     assert len(wavs) == len(frames)
+                    lens = None
                     if self.args.pooled_features_path and all(i == True for i in others[-1]):
                         source = None
                         features = dict()
                         # "wavs" is overloaded into saved features here
                         # can be list of Tensors, or list of list of Tensors
                         if isinstance(wavs[0], (list, tuple)):
-                            features[self.args.upstream_feature_selection] = [torch.stack(layer).to(self.args.device) for layer in zip(*wavs)]
+                            lens = [len(wav[0]) for wav in wavs]
+                            features[self.args.upstream_feature_selection] = [pad_sequence(layer, batch_first=True).to(self.args.device) for layer in zip(*wavs)]
                         else:
-                            features[self.args.upstream_feature_selection] = torch.stack(wavs).to(self.args.device)
+                            lens = [len(wav) for wav in wavs]
+                            features[self.args.upstream_feature_selection] = pad_sequence(wavs, batch_first=True).to(self.args.device)
                     else:
                         source = [
                             (
@@ -280,7 +284,7 @@ class Runner:
                                             save_target = feature[i].detach().cpu()
                                         torch.save(save_target, f"{self.args.pooled_features_path}/{self.args.upstream}_{key}/{names_k}_pooled.pt")
 
-                    features = self.featurizer.model(source, features)
+                    features = self.featurizer.model(source, features, lens)
 
                     loss = self.downstream.model(
                         train_split,
@@ -441,15 +445,18 @@ class Runner:
                 break
 
             assert len(wavs) == len(frames)
+            lens = None
             if self.args.pooled_features_path and all(i == True for i in others[-1]):
                 source = None
                 features = dict()
                 # "wavs" is overloaded into saved features here
                 # can be list of Tensors, or list of list of Tensors
                 if isinstance(wavs[0], (list, tuple)):
-                    features[self.args.upstream_feature_selection] = [torch.stack(layer).to(self.args.device) for layer in zip(*wavs)]
+                    lens = [len(wav[0]) for wav in wavs]
+                    features[self.args.upstream_feature_selection] = [pad_sequence(layer, batch_first=True).to(self.args.device) for layer in zip(*wavs)]
                 else:
-                    features[self.args.upstream_feature_selection] = torch.stack(wavs).to(self.args.device)
+                    lens = [len(wav) for wav in wavs]
+                    features[self.args.upstream_feature_selection] = pad_sequence(wavs, batch_first=True).to(self.args.device)
             else:
                 source = [
                     (
@@ -489,7 +496,7 @@ class Runner:
 
 
             with torch.no_grad():
-                features = self.featurizer.model(source, features)
+                features = self.featurizer.model(source, features, lens)
                 self.downstream.model(
                     split,
                     features,

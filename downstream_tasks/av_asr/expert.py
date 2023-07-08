@@ -290,13 +290,6 @@ class DownstreamExpert(nn.Module):
 
         labels, labels_len = self._get_lens_and_pad(labels, device)
 
-        if len(features) > 1:
-            if len(features) != self.layer_num:
-                if len(features[0]) == self.layer_num:
-                    features = [self._weighted_sum(feat) for feat in features]
-            else:
-                features = self._weighted_sum(features).unsqueeze(0)
-
         try:
             unpadded_features = features
             # unpadded_features = []
