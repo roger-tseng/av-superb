@@ -5,13 +5,10 @@ import numpy as np
 import os
 import torchaudio
 from torch.utils.data import Dataset
-from torchaudio.transforms import Resample
 import imageio
 import cv2
 import torch
 
-
-AUDIO_SAMPLE_RATE = 44100
 
 miss = '/data/member1/user_tahsieh/IEMOCAP/miss.txt' 
 miss_list = []
@@ -51,12 +48,8 @@ class IEMOCAPDataset(Dataset):
         self.upstream_feature_selection = kwargs['upstream_feature_selection']
         self.pooled_features_path = kwargs['pooled_features_path']
 
-        _, origin_sr = torchaudio.load(path_join(self.iemocap_root, self.meta_data[0]['path']))
-        self.resampler = Resample(origin_sr, AUDIO_SAMPLE_RATE)
-
     def __getitem__(self, idx):
         wav, audio_sr = torchaudio.load(path_join(self.iemocap_root, self.meta_data[idx]['path']))
-        wav = self.resampler(wav).squeeze(0)
 
         avi_path = path_join(self.iemocap_root, os.path.splitext(self.meta_data[idx]['path'])[0].replace('wav', 'avi_sentence')+'.mp4')
         vid = imageio.get_reader(avi_path, 'ffmpeg')
