@@ -18,7 +18,7 @@ miss_list = []
 with open(miss, 'r') as f:
     line = f.readline()
     while line:
-        line = f.readline().replace('\n','') #去掉換行
+        line = f.readline().replace('\n','')
         miss_list.append(line)
 f.close()
 
@@ -116,6 +116,7 @@ class IEMOCAPDataset(Dataset):
 
 def collate_fn(samples):
     wavs, videos, *others = zip(*samples)
+    
     return wavs, videos, *others
     # wavs, videos, labels, files_name = [], [], [], []
     # for wav, frames, label, file_name in samples:
