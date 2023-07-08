@@ -70,7 +70,14 @@ class RandomDataset(Dataset):
                 open(self.full_path_root + "test_set_metadata_clean.json")
             )
 
+        self.skip_steps = 0
+
     def __getitem__(self, idx):
+        if self.skip_steps > 0:
+            # Skip this datapoint to resume training
+            self.skip_steps -= 1
+            return False, False, False, False
+
         path = self.full_path_root + self.dataset[idx]["path"]
         labels = self.dictionary.encode_line(
             " ".join(list(self.dataset[idx]["text"])),

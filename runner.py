@@ -188,7 +188,7 @@ class Runner:
             desc="overall",
             file=tqdm_file,
         )
-        init_step = self.init_ckpt.get("Step")
+        init_step = self.init_ckpt.get("Step", 0)
         if init_step:
             pbar.n = init_step
 
@@ -216,10 +216,16 @@ class Runner:
                 else:
                     raise
 
+            gradient_accumulate_steps = self.config["runner"].get(
+                "gradient_accumulate_steps"
+            )
+            dataloader.dataset.skip_steps = dataloader.batch_size * gradient_accumulate_steps * init_step % len(dataloader.dataset)
             for batch_id, (wavs, frames, *others) in enumerate(
                 tqdm(dataloader, dynamic_ncols=True, desc="train", file=tqdm_file)
             ):
                 # try/except block for forward/backward
+                if batch_id < init_step * gradient_accumulate_steps % len(dataloader.dataset):
+                    continue
                 try:
                     if pbar.n >= pbar.total:
                         break
@@ -249,6 +255,12 @@ class Runner:
                             with torch.no_grad():
                                 features = self.upstream.model(source)
                         if self.args.pooled_features_path:
+                            if batch_id == 0:
+                                for feature_selection in features.keys():
+                                    if feature_selection[0] == '_':
+                                        continue
+                                    os.makedirs(f"{self.args.pooled_features_path}/{self.args.upstream}_{feature_selection}", exist_ok=True)
+
                             show(f"[Runner] - Save mean-pooled features of batch no. {batch_id}")
                             assert isinstance(others[-1][0], str)
                             with torch.no_grad():
@@ -256,10 +268,10 @@ class Runner:
                                     if key[0] == '_':
                                         continue
 
-                                    if isinstance(feature, (list, tuple)):
-                                        feature = [layer.mean(dim=1, keepdim=True) for layer in feature]
-                                    else:
-                                        feature = feature.mean(dim=1, keepdim=True)
+                                    # if isinstance(feature, (list, tuple)):
+                                    #     feature = [layer.mean(dim=1, keepdim=True) for layer in feature]
+                                    # else:
+                                    #     feature = feature.mean(dim=1, keepdim=True)
 
                                     for i, names_k in enumerate(others[-1]):
                                         if isinstance(feature, (list, tuple)):
@@ -278,9 +290,6 @@ class Runner:
                     )
                     batch_ids.append(batch_id)
 
-                    gradient_accumulate_steps = self.config["runner"].get(
-                        "gradient_accumulate_steps"
-                    )
                     (loss / gradient_accumulate_steps).backward()
                     del loss
 
@@ -452,6 +461,12 @@ class Runner:
                 with torch.no_grad():
                     features = self.upstream.model(source)
                 if self.args.pooled_features_path:
+                    if batch_id == 0:
+                        for feature_selection in features.keys():
+                            if feature_selection[0] == '_':
+                                continue
+                            os.makedirs(f"{self.args.pooled_features_path}/{self.args.upstream}_{feature_selection}", exist_ok=True)
+
                     show(f"[Runner] - Save mean-pooled features of batch no. {batch_id}")
                     assert isinstance(others[-1][0], str)
                     with torch.no_grad():
@@ -460,10 +475,10 @@ class Runner:
                             if key[0] == '_':
                                 continue
 
-                            if isinstance(feature, (list, tuple)):
-                                feature = [layer.mean(dim=1, keepdim=True) for layer in feature]
-                            else:
-                                feature = feature.mean(dim=1, keepdim=True)
+                            # if isinstance(feature, (list, tuple)):
+                            #     feature = [layer.mean(dim=1, keepdim=True) for layer in feature]
+                            # else:
+                            #     feature = feature.mean(dim=1, keepdim=True)
 
                             for i, names_k in enumerate(others[-1]):
                                 if isinstance(feature, (list, tuple)):
