@@ -14,7 +14,7 @@ from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader, DistributedSampler, random_split
 
 from .dataset import IEMOCAPDataset, collate_fn
-from ..model import *
+# from ..model import *
 from .model import *
 
 def get_ddp_sampler(dataset: IEMOCAPDataset, epoch: int):
@@ -66,16 +66,16 @@ class DownstreamExpert(nn.Module):
         
         train_path = os.path.join(meta_data, self.fold.replace('fold', 'Session'), 'train_meta_data.json')
         test_path = os.path.join(meta_data, self.fold.replace('fold', 'Session'), 'test_meta_data.json')
+        
+        
         dataset = IEMOCAPDataset(DATA_ROOT, train_path, preprocess, preprocess_audio, preprocess_video, upstream=kwargs['upstream'], pooled_features_path=kwargs['pooled_features_path'], upstream_feature_selection=kwargs['upstream_feature_selection'])
         trainlen = int((1 - self.datarc['valid_ratio']) * len(dataset))
         lengths = [trainlen, len(dataset) - trainlen]
-        
+
         torch.manual_seed(0)
         self.train_dataset, self.dev_dataset = random_split(dataset, lengths)
         self.test_dataset = IEMOCAPDataset(DATA_ROOT, test_path, preprocess, preprocess_audio, preprocess_video, upstream=kwargs['upstream'], pooled_features_path=kwargs['pooled_features_path'], upstream_feature_selection=kwargs['upstream_feature_selection'])
 
-        # Model = eval(self.modelrc['select'])
-        # model_conf = self.modelrc.get(self.modelrc['select'], {})
         self.connector = nn.Linear(upstream_dim, self.modelrc["input_dim"])
         self.model = Model(
             **self.modelrc
@@ -107,8 +107,6 @@ class DownstreamExpert(nn.Module):
             return self._get_eval_dataloader(self.test_dataset)
 
     def _get_train_dataloader(self, dataset, epoch: int):
-        from s3prl.utility.data import get_ddp_sampler
-
         sampler = get_ddp_sampler(dataset, epoch)
         return DataLoader(
             dataset,
@@ -160,15 +158,12 @@ class DownstreamExpert(nn.Module):
                 a single scalar in torch.FloatTensor
         """
         
-        device = features[0].device
-        features_len = torch.IntTensor([len(feat) for feat in features]).to(device=device)
         features = pad_sequence(features, batch_first=True)
         features = self.connector(features)
         predicted = self.model(features)
 
         utterance_labels = labels
         labels = torch.LongTensor(utterance_labels).to(features.device)        
-        # predicted = predicted[0]
         loss = self.objective(predicted, labels)
 
         predicted_classid = predicted.max(dim=-1).indices

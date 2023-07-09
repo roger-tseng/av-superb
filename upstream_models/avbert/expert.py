@@ -101,7 +101,8 @@ class UpstreamExpert(nn.Module):
             visual_seqs.append(visual_seq)
 
         visual_seqs = torch.stack(visual_seqs)
-
+        
+        waveform = audio
         if len(audio.shape) == 1:
             waveform = audio.unsqueeze(0)
         

@@ -4,11 +4,11 @@ from os.path import join as path_join
 import numpy as np
 import os
 import torchaudio
+import torchvision.io
 from torch.utils.data import Dataset
 import imageio
 import cv2
 import torch
-
 
 miss = '/data/member1/user_tahsieh/IEMOCAP/miss.txt' 
 miss_list = []
@@ -49,25 +49,6 @@ class IEMOCAPDataset(Dataset):
         self.pooled_features_path = kwargs['pooled_features_path']
 
     def __getitem__(self, idx):
-        wav, audio_sr = torchaudio.load(path_join(self.iemocap_root, self.meta_data[idx]['path']))
-
-        avi_path = path_join(self.iemocap_root, os.path.splitext(self.meta_data[idx]['path'])[0].replace('wav', 'avi_sentence')+'.mp4')
-        vid = imageio.get_reader(avi_path, 'ffmpeg')
-        capture = cv2.VideoCapture(avi_path)
-        video_fps = capture.get(cv2.CAP_PROP_FPS)
-        frame_count=capture.get(cv2.CAP_PROP_FRAME_COUNT)
-        images = []
-
-        for frame_num in range(int(frame_count)):
-            image = vid.get_data(frame_num)
-            image = np.array(image)
-            images.append(image)
-
-        images = np.stack(images)
-        images = torch.from_numpy(images)
-        frames = torch.permute(images, (0, 3, 1, 2))
-        frames = frames.float()
-
         label = self.meta_data[idx]['label']
         label = self.class_dict[label]
         
@@ -85,6 +66,11 @@ class IEMOCAPDataset(Dataset):
         if os.path.exists(feature_path):
             processed_wav, processed_frames = torch.load(feature_path)
         else:
+            wav, audio_sr = torchaudio.load(path_join(self.iemocap_root, self.meta_data[idx]['path']))
+            avi_path = path_join(self.iemocap_root, os.path.splitext(self.meta_data[idx]['path'])[0].replace('wav', 'avi_sentence')+'.mp4')
+            frames, _, rates = torchvision.io.read_video(avi_path, pts_unit="sec", output_format="TCHW")
+            video_fps = rates["video_fps"]
+            
             if self.preprocess is not None:
                 processed_frames, processed_wav = self.preprocess(frames, wav, video_fps, audio_sr)
             else:    
