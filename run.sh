@@ -9,10 +9,12 @@ feats=$2
 lr=$3
 mkdir -p "/home/rogertseng/audiovisual-benchmark/features/${model}";
 python run_downstream.py -m train \
+    --auto_resume \
+    -c /home/rogertseng/audiovisual-benchmark/downstream_tasks/av_asr/config_layne_best.yaml \
     -d av_asr \
     -u $model \
     -s $feats \
-    -p "/home/rogertseng/audiovisual-benchmark/result/av_asr/${model}/${feats}/${lr}" \
+    -p "/home/rogertseng/audiovisual-benchmark/result/av_asr/${model}/${feats}/${lr}_layne" \
     --pooled_features_path "/home/rogertseng/audiovisual-benchmark/features/${model}" \
     -o "config.optimizer.lr=${lr}" # 2>&1 | tee -a "/home/rogertseng/audiovisual-benchmark/features/${model}/out.log"
 # done
