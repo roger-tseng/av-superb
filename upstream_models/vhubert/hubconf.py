@@ -51,6 +51,34 @@ def avhubert(refresh=False, *args, **kwargs):
     """
     return avhubert_base_lrs3(refresh=refresh, *args, **kwargs)
 
+def avhubert_audio(refresh=False, *args, **kwargs):
+    """
+    The default model
+        refresh (bool): whether to download ckpt/config again if existed
+    """
+    model = avhubert(refresh=refresh, *args, **kwargs)
+    model.model.modality_dropout = 1
+    model.model.audio_dropout = 0
+    return model
+
+def avhubert_video(refresh=False, *args, **kwargs):
+    """
+    The default model
+        refresh (bool): whether to download ckpt/config again if existed
+    """
+    model = avhubert(refresh=refresh, *args, **kwargs)
+    model.model.modality_dropout = 1
+    model.model.audio_dropout = 1
+    return model
+
+def avhubert_fusion(refresh=False, *args, **kwargs):
+    """
+    The default model
+        refresh (bool): whether to download ckpt/config again if existed
+    """
+    model = avhubert(refresh=refresh, *args, **kwargs)
+    model.model.modality_dropout = 0
+    return model
 
 ############### AV-HuBERT trained on LRS3 ###############
 def avhubert_base_lrs3(refresh=False, *args, **kwargs):
@@ -73,6 +101,35 @@ def avhubert_ft_lrs3_433(refresh=False, *args, **kwargs):
     ] = "https://dl.fbaipublicfiles.com/avhubert/model/lrs3/vsr/base_lrs3_433h.pt"
     kwargs["finetune"] = True
     return avhubert_url(refresh=refresh, *args, **kwargs)
+
+def avhubert_ft_lrs3_433_audio(refresh=False, *args, **kwargs):
+    """
+    The avhubert base model trained on LRS3 then fine-tuned on LRS3-433h
+        refresh (bool): whether to download ckpt/config again if existed
+    """
+    model = avhubert_ft_lrs3_433(refresh=refresh, *args, **kwargs)
+    model.model.modality_dropout = 1
+    model.model.audio_dropout = 0
+    return model
+
+def avhubert_ft_lrs3_433_video(refresh=False, *args, **kwargs):
+    """
+    The avhubert base model trained on LRS3 then fine-tuned on LRS3-433h
+        refresh (bool): whether to download ckpt/config again if existed
+    """
+    model = avhubert_ft_lrs3_433(refresh=refresh, *args, **kwargs)
+    model.model.modality_dropout = 1
+    model.model.audio_dropout = 1
+    return model
+
+def avhubert_ft_lrs3_433_fusion(refresh=False, *args, **kwargs):
+    """
+    The avhubert base model trained on LRS3 then fine-tuned on LRS3-433h
+        refresh (bool): whether to download ckpt/config again if existed
+    """
+    model = avhubert_ft_lrs3_433(refresh=refresh, *args, **kwargs)
+    model.model.modality_dropout = 0
+    return model
 
 def avhubert_large_lrs3(refresh=False, *args, **kwargs):
     """
