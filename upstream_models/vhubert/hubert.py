@@ -627,12 +627,13 @@ class AVHubertModel(BaseFairseqModel):
         # features_audio = self.forward_features(src_audio, modality='audio') # features: [B, F, T]
         # features_video = self.forward_features(src_video, modality='video')
         modality_drop_prob, audio_drop_prob = np.random.random(), np.random.random()
-        if self.training:
-            if modality_drop_prob < self.modality_dropout:
-                if audio_drop_prob < self.audio_dropout:
-                    features_audio = 0 * features_audio
-                else:
-                    features_video = 0 * features_video
+
+        if modality_drop_prob < self.modality_dropout:
+            if audio_drop_prob < self.audio_dropout:
+                features_audio = 0 * features_audio
+            else:
+                features_video = 0 * features_video
+
         if self.modality_fuse == "concat":
             features = torch.cat([features_audio, features_video], dim=1)
         elif self.modality_fuse == "add":
