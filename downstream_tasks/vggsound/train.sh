@@ -19,7 +19,3 @@ cd ../../
 
 # python3 run_downstream.py -m train -n testavhubert_large_lrs3 -u avhubert_large_lrs3 -d vggsound -s fusion_feats --pooled_features_path /work/u2707828/features/
 
-gdown --fuzzy https://drive.google.com/file/d/1L9aM0S2_Nrbk-LPrq_K36VhZQR_53_Rl/view?usp=sharing
-mkdir ../../result/vggsound/
-unzip result.zip -d ../../result/vggsound/
-rm result.zip
