@@ -11,63 +11,69 @@ paths = {
     "avhubert_audio": {
         "audio": "NA", 
         "video": "NA", 
-        "fusion": "", 
+        "fusion": "./result/downstream/avhubert_audio_fusion_lr1e-4/dev-best.ckpt", 
     },
     "avhubert_video": {
         "audio": "NA", 
         "video": "NA", 
-        "fusion": "", 
+        "fusion": "./result/downstream/avhubert_video_fusion_lr1e-3/dev-best.ckpt", 
     },
     "avhubert": {
         "audio": "NA", 
         "video": "NA", 
-        "fusion": "result/av_asr/avhubert/fusion_feats/1.0e-3_layne/dev-best.ckpt", 
+        "fusion": "./result/downstream/avhubert_fusion_lr1e-3/dev-best.ckpt", 
     },
     "replai": {
-        "audio": "NA", # "result/av_asr/replai/audio_feats/1.0e-3_layne/dev-best.ckpt", 
-        "video": "NA", #"result/av_asr/replai/video_feats/1.0e-3_layne/dev-best.ckpt", 
+        "audio": "./result/downstream/replai_audio_lr1e-3/dev-best.ckpt", 
+        "video": "./result/downstream/replai_video_lr1e-3/dev-best.ckpt",
         "fusion": "NA", 
     },
     "avbert": {
-        "audio": "result/av_asr/avbert/audio_feats/1.0e-4_layne/dev-best.ckpt", 
-        "video": "result/av_asr/avbert/video_feats/1.0e-3_layne/dev-best.ckpt", 
-        "fusion": "result/av_asr/avbert/fusion_feats/1.0e-4_layne/dev-best.ckpt", 
+        "audio": "./result/downstream/avbert_audio_lr1e-3/dev-best.ckpt", 
+        "video": "./result/downstream/avbert_video_lr1e-3/dev-best.ckpt", 
+        "fusion": "./result/downstream/avbert_fusion_lr1e-3/dev-best.ckpt", 
     },
     "mavil_base": {
-        "audio": "result/av_asr/mavil_base/audio_seq_feats/1.0e-3_layne/dev-best.ckpt", 
-        "video": "result/av_asr/mavil_base/video_seq_feats/1.0e-4_layne/dev-best.ckpt", 
-        "fusion": "result/av_asr/mavil_base/fusion_seq_feats/1.0e-3_layne/dev-best.ckpt", 
+        "audio": "./result/downstream/mavil_base_audio_lr1e-4/dev-best.ckpt", 
+        "video": "./result/downstream/mavil_base_video_lr1e-4/dev-best.ckpt", 
+        "fusion": "./result/downstream/mavil_base_fusion_lr1e-5/dev-best.ckpt", 
     },
-    "mavil_local": {
-        "audio": "result/av_asr/mavil_local -k /home/rogertseng/audiovisual-benchmark/mavil_as_pt_ft_a+v.pth/audio_seq_feats/1.0e-3_layne/dev-best.ckpt", 
-        "video": "result/av_asr/mavil_local -k /home/rogertseng/audiovisual-benchmark/mavil_as_pt_ft_a+v.pth/video_seq_feats/1.0e-4_layne/dev-best.ckpt", 
-        "fusion": "result/av_asr/mavil_local -k /home/rogertseng/audiovisual-benchmark/mavil_as_pt_ft_a+v.pth/fusion_seq_feats/1.0e-3_layne/dev-best.ckpt", 
+    # "mavil_local": {
+    #     "audio": "", 
+    #     "video": "", 
+    #     "fusion": "", 
+    # },
+    "mavil": {
+        "audio": "./result/downstream/mavil_audio_lr1e-5/dev-best.ckpt", 
+        "video": "./result/downstream/mavil_video_lr1e-4/dev-best.ckpt", 
+        "fusion": "./result/downstream/mavil_fusion_lr1e-5/dev-best.ckpt", 
     },
     "hubert": {
-        "audio": "result/av_asr/hubert/audio_feats/1.0e-3_layne/dev-best.ckpt", 
+        "audio": "./result/downstream/hubert_audio_lr1e-3/dev-best.ckpt", 
         "video": "NA", 
         "fusion": "NA", 
     },
     "avhubert_ft_lrs3_433": {
         "audio": "NA", 
         "video": "NA", 
-        "fusion": "result/av_asr/avhubert_ft_lrs3_433/fusion_feats/1.0e-3_layne/dev-best.ckpt", 
+        "fusion": "./result/downstream/avhubert_ft_lrs3_433_fusion_lr1e-3/dev-best.ckpt", 
     },
     "avhubert_ft_lrs3_433_audio": {
         "audio": "NA", 
         "video": "NA", 
-        "fusion": "", 
+        "fusion": "./result/downstream/avhubert_ft_lrs3_433_audio_fusion_lr1e-3/dev-best.ckpt", 
     },
     "avhubert_ft_lrs3_433_video": {
         "audio": "NA", 
         "video": "NA", 
-        "fusion": "", 
+        "fusion": "./result/downstream/avhubert_ft_lrs3_433_video_fusion_lr1e-4/dev-best.ckpt", 
     },
 }
 
 for model, ckpts in paths.items():
 
-    features_path = f"/home/rogertseng/audiovisual-benchmark/features/{model}"
+    # features_path = f"/home/rogertseng/audiovisual-benchmark/features/{model}"
+    features_path = f"/work/u8090533/pooled_features"
 
     print(f"Model: {model}")
 
