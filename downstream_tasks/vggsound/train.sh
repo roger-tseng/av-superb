@@ -17,5 +17,16 @@ cd ../../
 
 # python3 run_downstream.py -m train -n testavhubert -u avhubert -d vggsound -s audio_feats --pooled_features_path /work/u2707828/features/
 
-# python3 run_downstream.py -m train -n testavhubert_large_lrs3 -u avhubert_large_lrs3 -d vggsound -s fusion_feats --pooled_features_path /work/u2707828/features/
+
+
+#################################################################################################################################
+
+
+# python3 run_downstream.py -m train -n avhubert_audio_vggsound_lr1E05 -u avhubert_audio -d vggsound -s fusion_feats --pooled_features_path /work/u2707828/features/
+
+# python3 run_downstream.py -m train -n avhubert_video_vggsound_lr1E05 -u avhubert_video -d vggsound -s fusion_feats --pooled_features_path /work/u2707828/features/
+
+# python3 run_downstream.py -m train -n avhubert_ft_lrs3_433_audio_vggsound_lr1E05 -u avhubert_ft_lrs3_433_audio -d vggsound -s fusion_feats --pooled_features_path /work/u2707828/features/
+
+python3 run_downstream.py -m train -n avhubert_ft_lrs3_433_video_vggsound_lr1E05 -u avhubert_ft_lrs3_433_video -d vggsound -s fusion_feats --pooled_features_path /work/u2707828/features/
 
