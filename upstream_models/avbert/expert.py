@@ -104,7 +104,11 @@ class UpstreamExpert(nn.Module):
 
         if len(audio.shape) == 1:
             waveform = audio.unsqueeze(0)
-        
+        else:
+            waveform = audio
+        if len(waveform[0]) < 16385:
+            pad = torch.nn.ZeroPad2d((0, 16385-len(waveform[0]), 0, 0))
+            waveform = pad(waveform)
         waveform = resample(
             waveform,
             audio_sample_rate,
