@@ -11,63 +11,63 @@ paths = {
     "avhubert_audio": {
         "audio": "NA", 
         "video": "NA", 
-        "fusion": "", 
+        "fusion": "result/downstream/avhubert_audio_vggsound_lr1E03/states-5000.ckpt", 
     },
     "avhubert_video": {
         "audio": "NA", 
         "video": "NA", 
-        "fusion": "", 
+        "fusion": "result/downstream/avhubert_video_vggsound_lr1E03/states-5000.ckpt", 
     },
     "avhubert": {
         "audio": "NA", 
         "video": "NA", 
-        "fusion": "result/av_asr/avhubert/fusion_feats/1.0e-3_layne/dev-best.ckpt", 
+        "fusion": "result/downstream/avhubert_vggsound_fusion_lr1E03/states-5000.ckpt", 
     },
     "replai": {
-        "audio": "NA", # "result/av_asr/replai/audio_feats/1.0e-3_layne/dev-best.ckpt", 
-        "video": "NA", #"result/av_asr/replai/video_feats/1.0e-3_layne/dev-best.ckpt", 
+        "audio": "NA", # result/downstream/replai_vggsound_audio_lr1E02/states-5000.ckpt
+        "video": "NA", # result/downstream/replai_vggsound_video_lr1E03/states-5000.ckpt  
         "fusion": "NA", 
     },
     "avbert": {
-        "audio": "result/av_asr/avbert/audio_feats/1.0e-4_layne/dev-best.ckpt", 
-        "video": "result/av_asr/avbert/video_feats/1.0e-3_layne/dev-best.ckpt", 
-        "fusion": "result/av_asr/avbert/fusion_feats/1.0e-4_layne/dev-best.ckpt", 
+        "audio": "result/downstream/avbert_vggsound_audio_lr1E03/states-5000.ckpt", 
+        "video": "result/downstream/avbert_vggsound_video_lr1E03/states-5000.ckpt", 
+        "fusion": "result/downstream/avbert_vggsound_fusion_lr1E03/states-5000.ckpt", 
     },
     "mavil_base": {
-        "audio": "result/av_asr/mavil_base/audio_seq_feats/1.0e-3_layne/dev-best.ckpt", 
-        "video": "result/av_asr/mavil_base/video_seq_feats/1.0e-4_layne/dev-best.ckpt", 
-        "fusion": "result/av_asr/mavil_base/fusion_seq_feats/1.0e-3_layne/dev-best.ckpt", 
+        "audio": "result/downstream/mavilbase_vggsound_audio_lr1E03/states-5000.ckpt", 
+        "video": "result/downstream/mavilbase_vggsound_video_lr1E04/states-5000.ckpt", 
+        "fusion": "result/downstream/mavilbase_vggsound_fusion_lr1E04/states-5000.ckpt", 
     },
     "mavil_local": {
-        "audio": "result/av_asr/mavil_local -k /home/rogertseng/audiovisual-benchmark/mavil_as_pt_ft_a+v.pth/audio_seq_feats/1.0e-3_layne/dev-best.ckpt", 
-        "video": "result/av_asr/mavil_local -k /home/rogertseng/audiovisual-benchmark/mavil_as_pt_ft_a+v.pth/video_seq_feats/1.0e-4_layne/dev-best.ckpt", 
-        "fusion": "result/av_asr/mavil_local -k /home/rogertseng/audiovisual-benchmark/mavil_as_pt_ft_a+v.pth/fusion_seq_feats/1.0e-3_layne/dev-best.ckpt", 
+        "audio": "result/downstream/mavil_vggsound_audio_lr1E03/states-5000.ckpt", 
+        "video": "result/downstream/mavil_vggsound_video_lr1E04/states-5000.ckpt", 
+        "fusion": "result/downstream/mavil_vggsound_fusion_lr1E04/states-5000.ckpt", 
     },
     "hubert": {
-        "audio": "result/av_asr/hubert/audio_feats/1.0e-3_layne/dev-best.ckpt", 
+        "audio": "result/downstream/hubert_vggsound_audio_lr1E03/states-5000.ckpt", 
         "video": "NA", 
         "fusion": "NA", 
     },
     "avhubert_ft_lrs3_433": {
         "audio": "NA", 
         "video": "NA", 
-        "fusion": "result/av_asr/avhubert_ft_lrs3_433/fusion_feats/1.0e-3_layne/dev-best.ckpt", 
+        "fusion": "result/downstream/avhubert_ft_lrs3_433_vggsound_fusion_lr1E03/states-5000.ckpt", 
     },
     "avhubert_ft_lrs3_433_audio": {
         "audio": "NA", 
         "video": "NA", 
-        "fusion": "", 
+        "fusion": "result/downstream/avhubert_ft_lrs3_433_audio_vggsound_lr1E03/states-5000.ckpt", 
     },
     "avhubert_ft_lrs3_433_video": {
         "audio": "NA", 
         "video": "NA", 
-        "fusion": "", 
+        "fusion": "result/downstream/avhubert_ft_lrs3_433_video_vggsound_lr1E03/states-5000.ckpt", 
     },
 }
 
 for model, ckpts in paths.items():
 
-    features_path = f"/home/rogertseng/audiovisual-benchmark/features/{model}"
+    features_path = f"/work/u2707828/features/"
 
     print(f"Model: {model}")
 
@@ -101,7 +101,7 @@ for model, ckpts in paths.items():
         for feat in tqdm(glob(f"{features_path}/{model}_{feat_type}**/*.pt", recursive=True)[:10000]):
             feature = torch.load(feat)
             assert isinstance(feature, list), f"{feat_type} features of {model} may not have used weighted-sum!"
-            assert len(feature) == len(weights), f"should have {len(weights)} layers, but found {len(weights)} features"
+            assert len(feature) == len(weights), f"should have {len(weights)} layers, but found {len(feature)} features"
             
             for i, layer in enumerate(feature):
                 layer_norms[f'layer{i}'].append(layer.norm(p=2,dim=0))
