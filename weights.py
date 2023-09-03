@@ -11,63 +11,63 @@ paths = {
     "avhubert_audio": {
         "audio": "NA", 
         "video": "NA", 
-        "fusion": "", 
+        "fusion": "result/downstream/avhubert_audio_fusion_1E-5_pooled/states-30000.ckpt", 
     },
     "avhubert_video": {
         "audio": "NA", 
         "video": "NA", 
-        "fusion": "", 
+        "fusion": "result/downstream/avhubert_video_fusion_1E-3_pooled/states-30000.ckpt", 
     },
     "avhubert": {
         "audio": "NA", 
         "video": "NA", 
-        "fusion": "result/av_asr/avhubert/fusion_feats/1.0e-3_layne/dev-best.ckpt", 
+        "fusion": "result/downstream/avhubert_fusion_1E-3_pooled/states-30000.ckpt", 
     },
     "replai": {
-        "audio": "NA", # "result/av_asr/replai/audio_feats/1.0e-3_layne/dev-best.ckpt", 
-        "video": "NA", #"result/av_asr/replai/video_feats/1.0e-3_layne/dev-best.ckpt", 
+        "audio": "NA", # "result/downstream/replai_audio_1E-3_pooled/states-30000.ckpt" 
+        "video": "NA", # "result/downstream/replai_video_1E-3_pooled/states-30000.ckpt"
         "fusion": "NA", 
     },
     "avbert": {
-        "audio": "result/av_asr/avbert/audio_feats/1.0e-4_layne/dev-best.ckpt", 
-        "video": "result/av_asr/avbert/video_feats/1.0e-3_layne/dev-best.ckpt", 
-        "fusion": "result/av_asr/avbert/fusion_feats/1.0e-4_layne/dev-best.ckpt", 
+        "audio": "result/downstream/avbert_audio_1E-3_pooled/states-30000.ckpt", 
+        "video": "result/downstream/avbert_video_1E-3_pooled/states-30000.ckpt", 
+        "fusion": "result/downstream/avbert_fusion_1E-3_pooled/states-30000.ckpt", 
     },
     "mavil_base": {
-        "audio": "result/av_asr/mavil_base/audio_seq_feats/1.0e-3_layne/dev-best.ckpt", 
-        "video": "result/av_asr/mavil_base/video_seq_feats/1.0e-4_layne/dev-best.ckpt", 
-        "fusion": "result/av_asr/mavil_base/fusion_seq_feats/1.0e-3_layne/dev-best.ckpt", 
+        "audio": "result/downstream/mavil_base_audio_1E-4_pooled/states-30000.ckpt",
+        "video": "result/downstream/mavil_base_video_1E-3_pooled/states-30000.ckpt",
+        "fusion": "result/downstream/mavil_base_fusion_1E-5_pooled/states-30000.ckpt",
     },
     "mavil_local": {
-        "audio": "result/av_asr/mavil_local -k /home/rogertseng/audiovisual-benchmark/mavil_as_pt_ft_a+v.pth/audio_seq_feats/1.0e-3_layne/dev-best.ckpt", 
-        "video": "result/av_asr/mavil_local -k /home/rogertseng/audiovisual-benchmark/mavil_as_pt_ft_a+v.pth/video_seq_feats/1.0e-4_layne/dev-best.ckpt", 
-        "fusion": "result/av_asr/mavil_local -k /home/rogertseng/audiovisual-benchmark/mavil_as_pt_ft_a+v.pth/fusion_seq_feats/1.0e-3_layne/dev-best.ckpt", 
+        "audio": "result/downstream/mavil_local_audio_1E-4_pooled/states-30000.ckpt", 
+        "video": "result/downstream/mavil_local_video_1E-4_pooled/states-30000.ckpt", 
+        "fusion": "result/downstream/mavil_local_fusion_1E-5_pooled/states-30000.ckpt", 
     },
     "hubert": {
-        "audio": "result/av_asr/hubert/audio_feats/1.0e-3_layne/dev-best.ckpt", 
+        "audio": "result/downstream/hubert_audio_1E-4_pooled/states-30000.ckpt", 
         "video": "NA", 
         "fusion": "NA", 
     },
     "avhubert_ft_lrs3_433": {
         "audio": "NA", 
         "video": "NA", 
-        "fusion": "result/av_asr/avhubert_ft_lrs3_433/fusion_feats/1.0e-3_layne/dev-best.ckpt", 
+        "fusion": "result/downstream/avhubert_ft_lrs3_433_fusion_1E-5_pooled/states-30000.ckpt", 
     },
     "avhubert_ft_lrs3_433_audio": {
         "audio": "NA", 
         "video": "NA", 
-        "fusion": "", 
+        "fusion": "result/downstream/avhubert_ft_lrs3_433_audio_fusion_1E-5_pooled/states-30000.ckpt", 
     },
     "avhubert_ft_lrs3_433_video": {
         "audio": "NA", 
         "video": "NA", 
-        "fusion": "", 
+        "fusion": "result/downstream/avhubert_ft_lrs3_433_video_fusion_1E-4_pooled/states-30000.ckpt", 
     },
 }
 
 for model, ckpts in paths.items():
 
-    features_path = f"/home/rogertseng/audiovisual-benchmark/features/{model}"
+    features_path = f"/work/u3933430/features"
 
     print(f"Model: {model}")
 
