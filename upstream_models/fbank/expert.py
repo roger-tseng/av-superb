@@ -29,6 +29,8 @@ class UpstreamExpert(UpstreamBase):
     def __init__(self, model_config, **kwargs):
         super().__init__(**kwargs)
 
+        self.audio_sample_rate = 16000
+        
         with open(model_config, "r") as file:
             self.config = yaml.load(file, Loader=yaml.FullLoader)
 
