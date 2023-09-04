@@ -207,6 +207,7 @@ class UpstreamExpert(UpstreamBase):
             # fusion_feats are handled by UpstreamBase's hooks
         }
 
+
 class FinetunedUpstreamExpert(UpstreamBase):
     def __init__(self, ckpt, **kwargs):
         super().__init__(**kwargs)
@@ -221,12 +222,14 @@ class FinetunedUpstreamExpert(UpstreamBase):
 
         # transfer some stuff from cfg.task
         cfg.sample_rate = bundle["cfg"]["model"]["w2v_args"]["task"]["sample_rate"]
-        cfg.stack_order_audio = bundle["cfg"]["model"]["w2v_args"]["task"]["stack_order_audio"]
+        cfg.stack_order_audio = bundle["cfg"]["model"]["w2v_args"]["task"][
+            "stack_order_audio"
+        ]
         cfg.normalize = bundle["cfg"]["model"]["w2v_args"]["task"]["normalize"]
 
         # hard code some stuff
         bundle["model"] = {
-            k[len("encoder.w2v_model."):]: bundle["model"][k]
+            k[len("encoder.w2v_model.") :]: bundle["model"][k]
             for k in bundle["model"].keys()
             if k.startswith("encoder.w2v_model.")
         }
@@ -238,7 +241,9 @@ class FinetunedUpstreamExpert(UpstreamBase):
         self.video_frame_rate = 25
 
         model = AVHubertModel(cfg, dictionaries)
-        model.load_state_dict(bundle["model"], strict=False) # final_proj removed for finetuning
+        model.load_state_dict(
+            bundle["model"], strict=False
+        )  # final_proj removed for finetuning
         self.model = model.eval()
         self.cfg = cfg
         assert (
