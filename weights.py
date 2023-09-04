@@ -8,66 +8,68 @@ import torch
 import torch.nn.functional as F
 
 paths = {
-    "avhubert_audio": {
-        "audio": "NA", 
-        "video": "NA", 
-        "fusion": "", 
-    },
-    "avhubert_video": {
-        "audio": "NA", 
-        "video": "NA", 
-        "fusion": "", 
-    },
-    "avhubert": {
-        "audio": "NA", 
-        "video": "NA", 
-        "fusion": "result/av_asr/avhubert/fusion_feats/1.0e-3_layne/dev-best.ckpt", 
-    },
-    "replai": {
-        "audio": "NA", # "result/av_asr/replai/audio_feats/1.0e-3_layne/dev-best.ckpt", 
-        "video": "NA", #"result/av_asr/replai/video_feats/1.0e-3_layne/dev-best.ckpt", 
-        "fusion": "NA", 
-    },
-    "avbert": {
-        "audio": "result/av_asr/avbert/audio_feats/1.0e-4_layne/dev-best.ckpt", 
-        "video": "result/av_asr/avbert/video_feats/1.0e-3_layne/dev-best.ckpt", 
-        "fusion": "result/av_asr/avbert/fusion_feats/1.0e-4_layne/dev-best.ckpt", 
-    },
-    "mavil_base": {
-        "audio": "result/av_asr/mavil_base/audio_seq_feats/1.0e-3_layne/dev-best.ckpt", 
-        "video": "result/av_asr/mavil_base/video_seq_feats/1.0e-4_layne/dev-best.ckpt", 
-        "fusion": "result/av_asr/mavil_base/fusion_seq_feats/1.0e-3_layne/dev-best.ckpt", 
-    },
-    "mavil_local": {
-        "audio": "result/av_asr/mavil_local -k /home/rogertseng/audiovisual-benchmark/mavil_as_pt_ft_a+v.pth/audio_seq_feats/1.0e-3_layne/dev-best.ckpt", 
-        "video": "result/av_asr/mavil_local -k /home/rogertseng/audiovisual-benchmark/mavil_as_pt_ft_a+v.pth/video_seq_feats/1.0e-4_layne/dev-best.ckpt", 
-        "fusion": "result/av_asr/mavil_local -k /home/rogertseng/audiovisual-benchmark/mavil_as_pt_ft_a+v.pth/fusion_seq_feats/1.0e-3_layne/dev-best.ckpt", 
-    },
-    "hubert": {
-        "audio": "result/av_asr/hubert/audio_feats/1.0e-3_layne/dev-best.ckpt", 
-        "video": "NA", 
-        "fusion": "NA", 
-    },
-    "avhubert_ft_lrs3_433": {
-        "audio": "NA", 
-        "video": "NA", 
-        "fusion": "result/av_asr/avhubert_ft_lrs3_433/fusion_feats/1.0e-3_layne/dev-best.ckpt", 
-    },
+        
+   # "avhubert_audio": {
+   #     "audio": "NA", 
+   #     "video": "NA", 
+   #     "fusion": "/work/u7196393/result/avhubert_audio_connector_mean_linear_-3/states-5000.ckpt", 
+   # },
+   # "avhubert_video": {
+   #     "audio": "NA", 
+   #     "video": "NA", 
+   #     "fusion": "/work/u7196393/result/avhubert_video_connector_mean_linear_-3/states-5000.ckpt", 
+   # },
+   # "avhubert": {
+   #     "audio": "NA", 
+   #     "video": "NA", 
+   #     "fusion": "/work/u7196393/result/new_avhubert_connector_mean_linear_-3/states-5000.ckpt", 
+   # },
+   # "replai": {
+   #     "audio": "NA", # "result/av_asr/replai/audio_feats/1.0e-3_layne/dev-best.ckpt", 
+   #     "video": "NA", #"result/av_asr/replai/video_feats/1.0e-3_layne/dev-best.ckpt", 
+   #     "fusion": "NA", 
+   # },
+   # "avbert": {
+   #     "audio": "/work/u7196393/result/avbert_connector_mean_linear_audio_-3/states-5000.ckpt", 
+   #     "video": "/work/u7196393/result/avbert_connector_mean_linear_video_-3/states-5000.ckpt", 
+   #     "fusion": "/work/u7196393/result/avbert_connector_mean_linear_-3/states-5000.ckpt", 
+   # },
+   # "mavil_base": {
+   #     "audio": "/work/u7196393/result/mavil_base_connector_mean_linear_audio_-3/states-5000.ckpt", 
+   #     "video": "/work/u7196393/result/mavil_base_connector_mean_linear_video_-3/states-5000.ckpt", 
+   #     "fusion": "/work/u7196393/result/mavil_base_connector_mean_linear_-4/states-5000.ckpt", 
+   # },
+   # "mavil_local": {
+   #     "audio": "/work/u7196393/result/mavil_connector_mean_linear_audio_-4/states-5000.ckpt", 
+   #     "video": "/work/u7196393/result/mavil_connector_mean_linear_video_-3/states-5000.ckpt", 
+   #     "fusion": "/work/u7196393/result/mavil_connector_mean_linear_-4/states-5000.ckpt", 
+   # },
+   # "hubert": {
+   #     "audio": "/work/u7196393/result/hubert_connector_mean_linear_audio_-2/states-5000.ckpt", 
+   #     "video": "NA", 
+   #     "fusion": "NA", 
+   # },
+   # "avhubert_ft_lrs3_433": {
+   #     "audio": "NA", 
+   #     "video": "NA", 
+   #     "fusion": "/work/u7196393/result/avhubert_ft_connector_mean_linear_-2/states-5000.ckpt", 
+   # },
+    
     "avhubert_ft_lrs3_433_audio": {
         "audio": "NA", 
         "video": "NA", 
-        "fusion": "", 
+        "fusion": "/work/u7196393/result/avhubert_ft_audio_connector_mean_linear_-4/states-5000.ckpt", 
     },
     "avhubert_ft_lrs3_433_video": {
         "audio": "NA", 
         "video": "NA", 
-        "fusion": "", 
+        "fusion": "/work/u7196393/result/avhubert_ft_video_connector_mean_linear_-3/states-5000.ckpt", 
     },
 }
 
 for model, ckpts in paths.items():
 
-    features_path = f"/home/rogertseng/audiovisual-benchmark/features/{model}"
+    features_path = f"/work/u7196393/pooled_features"
 
     print(f"Model: {model}")
 

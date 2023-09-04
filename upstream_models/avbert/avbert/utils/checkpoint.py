@@ -47,8 +47,8 @@ def load_finetune_checkpoint(model, state_dict, data_parallel=False, use_trans=F
                 partial_dict[key[7:]] = state_dict[key]
 
     update_dict = {k: v for k, v in partial_dict.items() if k in model_dict}
-    ms.load_state_dict(update_dict, strict=False)
-
+    missing_keys, unexpected_keys = ms.load_state_dict(update_dict, strict=True)
+    return missing_keys, unexpected_keys
 
 def save_checkpoint(state, is_best=False, filename="checkpoint.pyth"):
     """

@@ -4,6 +4,9 @@ from upstream_models.hubert.hubconf import *
 from upstream_models.mavil.hubconf import *
 from upstream_models.replai.hubconf import *
 from upstream_models.vhubert.hubconf import *
+from upstream_models.fbank.hubconf import *
+from upstream_models.hog.hubconf import *
+
 
 
 def options(only_registered_ckpt: bool = False):
