@@ -12,7 +12,12 @@ transformers
 tensorboardX
 gdown
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+# histogram of gradients
+scikit-image
+>>>>>>> 0ab89a26625e70b6f8fef98f8f11c4558b0a25f7
 # avhubert
 fairseq >=0.10.2        # tested with 0.12.2
 opencv-python-headless  # headless works better for twcc
