@@ -11,6 +11,8 @@ requests
 transformers
 tensorboardX
 gdown
+# histogram of gradients
+scikit-image
 # avhubert
 fairseq ==0.12.2        # tested with 0.12.2
 opencv-python-headless  # headless works better for twcc
