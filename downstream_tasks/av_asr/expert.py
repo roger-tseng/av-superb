@@ -395,7 +395,7 @@ class DownstreamExpert(nn.Module):
         print(f"{split} wer: {wer}")
 
         save_names = []
-        if split == "dev" and wer < self.best_score:
-            self.best_score = torch.ones(1) * wer
+        if split == "dev" and uer < self.best_score:
+            self.best_score = torch.ones(1) * uer
             save_names.append(f"{split}-best.ckpt")
         return save_names
