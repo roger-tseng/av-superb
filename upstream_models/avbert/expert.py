@@ -3,6 +3,7 @@ Custom class for loading audio-visual model and extract features
 Modified from https://github.com/s3prl/s3prl/blob/main/s3prl/upstream/example/expert.py
 """
 import math
+from collections import OrderedDict
 from typing import Dict, List, Tuple, Union
 
 import torch
@@ -35,17 +36,25 @@ class UpstreamExpert(nn.Module):
 
         # NOTE: Encoders should return (batch_size, seq_len, hidden_dims)
         
-        checkpoint = torch.load(
+        weights = torch.load(
             ckpt, map_location='cpu'
+        )['state_dict']
+        weights = OrderedDict(
+            {
+                k.split('.', 1)[1]: weights[k]
+                for k in weights.keys()
+                if k.startswith("avbert.")
+            }
         )
 
         self.multi_encoder = AVBert(self.cfg)
-        cu.load_finetune_checkpoint(
+        missing_keys, unexpected_keys = cu.load_finetune_checkpoint(
             self.multi_encoder,
-            checkpoint['state_dict'],
+            weights,
             self.cfg.NUM_GPUS > 1,
             self.cfg.MODEL.USE_TRANSFORMER,
         )
+        assert len(missing_keys) == 0 and len(unexpected_keys) == 0
 
     def preprocess_video(self, video, video_frame_rate):
         """

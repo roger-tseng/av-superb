@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*- #
 """*********************************************************************************************"""
-#   FileName     [ upstream/baseline/extracter.py ]
-#   Synopsis     [ the baseline feature extracter with torchaudio.compliance.kaldi as backend ]
-#   Author       [ S3PRL ]
+#   FileName     [ Modified from https://github.com/s3prl/s3prl/blob/main/s3prl/upstream/baseline/extracter.py ]
+#   Synopsis     [ baseline feature extracter with torchaudio.compliance.kaldi as backend ]
+#   Author       [ S3PRL (Leo Yang) ]
 #   Copyright    [ Copyleft(c), Speech Lab, NTU, Taiwan ]
 """*********************************************************************************************"""
-
 
 ###############
 # IMPORTATION #
