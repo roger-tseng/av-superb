@@ -4,11 +4,11 @@
 # cd /home/rogertseng/audiovisual-benchmark
 # conda activate av
 
-for lr in "1.0e-5" "1.0e-4"
+for lr in "1.0e-5" "1.0e-2"
 do
-    for model in avbert
+    for model in $1
     do
-        for feats in fusion_feats
+        for feats in $2
         do
             mkdir -p "features/${model}";
             python run_downstream.py -m train \

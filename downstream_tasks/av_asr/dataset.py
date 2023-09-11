@@ -14,7 +14,7 @@ from torch.utils.data.dataset import Dataset
 from .fairseq_dictionary import Dictionary
 
 PATH_ROOT = (
-    "/livingrooms/rogertseng/lrs"  # Inside Dataset init, appends either '2/' or '3/'
+    "/home/rogert/Desktop/lrs"  # Inside Dataset init, appends either '2/' or '3/'
 )
 
 class RandomDataset(Dataset):

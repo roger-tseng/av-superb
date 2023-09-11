@@ -1,15 +1,15 @@
-# for model in "avbert" "replai" "mavil_base" "avhubert_ft_lrs3_433" "hubert" "avhubert_large_lrs3" "mavil_local -k /home/rogertseng/audiovisual-benchmark/mavil_as_pt_ft_a+v.pth"
+# for model in "avbert" "replai" "mavil_base" "avhubert_ft_lrs3_433" "hubert" "avhubert_large_lrs3" "mavil_local -k mavil_as_pt_ft_a+v.pth"
 # do
-source /home/rogertseng/.bashrc
-cd /home/rogertseng/audiovisual-benchmark
-conda activate av
+# source /home/rogertseng/.bashrc
+# cd /home/rogertseng/audiovisual-benchmark
+# conda activate av
 
 model=$1
-mkdir -p "/home/rogertseng/audiovisual-benchmark/features/${model}";
+mkdir -p "features/${model}";
 python run_downstream.py -m train \
-    -c "/home/rogertseng/audiovisual-benchmark/downstream_tasks/av_asr/config_save.yaml" \
+    -c "downstream_tasks/av_asr/config_save.yaml" \
     -d av_asr \
     -u $model \
-    -p "/home/rogertseng/audiovisual-benchmark/result/store/${model}" \
-    --pooled_features_path "/home/rogertseng/audiovisual-benchmark/features/${model}" # 2>&1 | tee -a "/home/rogertseng/audiovisual-benchmark/features/${model}/out.log"
+    -p "result/store/${model}" \
+    --pooled_features_path "features/${model}" # 2>&1 | tee -a "features/${model}/out.log"
 # done
