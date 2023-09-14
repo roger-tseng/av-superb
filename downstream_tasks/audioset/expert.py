@@ -128,9 +128,6 @@ class DownstreamExpert(nn.Module):
             output_class_num=self.train_dataset.class_num,
             **self.modelrc,
         )
-        # self.objective = nn.CrossEntropyLoss()
-        # self.objective = nn.MultiLabelSoftMarginLoss()
-        # self.objective = nn.BCELoss()
         self.objective = nn.BCEWithLogitsLoss()
         self.register_buffer("best_score", torch.zeros(1))
         # for mAP
@@ -147,14 +144,6 @@ class DownstreamExpert(nn.Module):
             return self._get_eval_dataloader(self.test_dataset)
 
     def _get_train_dataloader(self, dataset, epoch: int):
-        # csvname = "audioset_train_weight.csv"
-        # csvpath = "/".join([self.datarc["csv_root"], csvname])
-        # train_samples_weight = np.loadtxt(csvpath, delimiter=",")
-        # print("train_weight[0]=", train_samples_weight[0])
-        # print("train_weight[1]=", train_samples_weight[1])
-        # sampler = WeightedRandomSampler(
-        #    train_samples_weight, len(train_samples_weight), replacement=True
-        # )
         sampler = get_ddp_sampler(dataset, epoch)
         return DataLoader(
             dataset,
@@ -218,56 +207,15 @@ class DownstreamExpert(nn.Module):
 
         utterance_labels = labels
 
-        # test
-        # print(utterance_labels)
-        #####
-
         labels = torch.LongTensor(utterance_labels).to(
             features.device
         )  # accum_step*class_num
-        # labels =pad_sequence(labels,padding_value=-1)
-        # print(labels)
-        # labels = labels.squeeze(1)
         predicted = predicted.float()
-        find = 0
-        for i in range(527):
-            if math.isnan(predicted[0][i]) and find == 0:
-                print(f"error find NaN")
-                find = 1
         labels = labels.float()
-        # print(predicted.dtype)
-        # print(labels.dtype)
         loss = self.objective(predicted, labels)
-        # predicted_classid = predicted.max(dim=-1).indices
         records["loss"].append(loss.item())
-        # print(f'predicts {self.predicts.is_cuda} predicted{predicted.is_cuda}')
         self.predicts = torch.cat((self.predicts.to("cuda"), predicted.to("cuda")), 0)
         self.targets = torch.cat((self.targets.to("cuda"), labels.to("cuda")), 0)
-        # print(f'predicts shape {self.predicts.shape}, targets shape {self.targets.shape}')
-        # mAP = average_precision_score(
-        #     labels.cpu().detach().numpy(),
-        #     predicted.cpu().detach().numpy(),
-        #     average="samples",
-        # )
-        # print(mAP)
-        # AP=[]
-        # for i in range(predicted.shape[1]):
-        #     y_target=[]
-        #     y_predicted=[]
-        #     for j in range (predicted.shape[0]):
-        #         y_predicted.append(1 if (predicted[j][i].item() > 0.5 ) else 0)
-        #         y_target.append(labels[j][i].item())
-        #     y_target=np.array(y_target)
-        #     y_predicted=np.array(y_predicted)
-        #     if y_target.mean(axis=0) == y_predicted.mean(axis=0) and y_predicted.mean(axis=0) == 0:
-        #         AP.append(1)
-        #     else:
-        #         AP.append(average_precision_score(y_target, y_predicted))
-        #     #if y_target.mean()
-        #     #print(AP)
-        # mAP=np.mean(AP)
-
-        # records['acc'] += (predicted_classid == labels).view(-1).cpu().float().tolist()
 
         return loss
 
@@ -309,38 +257,12 @@ class DownstreamExpert(nn.Module):
                 according to the evaluation result, like the best.ckpt on the dev set
                 You can return nothing or an empty list when no need to save the checkpoint
         """
-        # threshold=self.datarc['threshold']
-        # print(f'predicts shape{self.predicts.shape[0]},{self.predicts.shape[1]}')
-        my_array = []
-        # ans_array=[]
-        for i in range(5):
-            tmp = []
-            ans = []
-            for j in range(self.predicts.shape[0]):
-                tmp.append(self.predicts[j, i].tolist())
-                ans.append(self.targets[j, i].tolist())
-            my_array.append(tmp)
-            my_array.append(ans)
-        with open("tmp_file.csv", "w") as f:
-            csv.writer(f, delimiter=",").writerows(my_array)
-            print("write file ")
-        # np.array(ans_array)
-        # my_df = pd.DataFrame(my_array)
-        # my_df.to_csv('my_array.csv',header = False, index= False)
-        # ans_df = pd.DataFrame(ans_array)
-        # ans_df.to_csv('ans_array.csv',header = False, index= False)
         mAP = average_precision_score(
             self.targets.cpu().detach().numpy(),
             self.predicts.cpu().detach().numpy(),
             average="macro",
         )
-        s_mAP = average_precision_score(
-            self.targets.cpu().detach().numpy(),
-            self.predicts.cpu().detach().numpy(),
-            average="samples",
-        )
         records["mAP"].append(mAP)
-        records["s_mAP"].append(s_mAP)
         print()
         save_names = []
         for key, values in records.items():
@@ -349,7 +271,7 @@ class DownstreamExpert(nn.Module):
                 f"audioset/{split}-{key}", average, global_step=global_step
             )
             print(f"{split}_{key}: {average}")
-            if split == "dev" and key == "acc" and average > self.best_score:
+            if split == "dev" and key == "mAP" and average > self.best_score:
                 self.best_score = torch.ones(1) * average
                 save_names.append(f"{split}-best.ckpt")
         self.predicts = torch.empty((0, 527))

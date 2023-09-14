@@ -36,13 +36,11 @@ class UpstreamExpert(nn.Module):
         self.feature_concat_axis = kwargs["feature_concat_axis"]
 
         # NOTE: Encoders should return (batch_size, seq_len, hidden_dims)
-        
-        weights = torch.load(
-            ckpt, map_location='cpu'
-        )['state_dict']
+
+        weights = torch.load(ckpt, map_location="cpu")["state_dict"]
         weights = OrderedDict(
             {
-                k.split('.', 1)[1]: weights[k]
+                k.split(".", 1)[1]: weights[k]
                 for k in weights.keys()
                 if k.startswith("avbert.")
             }

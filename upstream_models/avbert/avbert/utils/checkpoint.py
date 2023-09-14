@@ -50,6 +50,7 @@ def load_finetune_checkpoint(model, state_dict, data_parallel=False, use_trans=F
     missing_keys, unexpected_keys = ms.load_state_dict(update_dict, strict=True)
     return missing_keys, unexpected_keys
 
+
 def save_checkpoint(state, is_best=False, filename="checkpoint.pyth"):
     """
     Save the model weights to the checkpoint.

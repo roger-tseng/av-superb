@@ -4,11 +4,6 @@ import os
 import random
 
 
-# def getFilename(l):
-#     filename = "_".join(
-#         [l[0], str(int(float(l[1]) * 1000)), str(int(float(l[2]) * 1000)) + ".flac"]
-#     )
-#     return filename
 def getFilename(l):
     filename = "_".join([l[0] + ".mp4"])
     return filename
@@ -56,14 +51,6 @@ if __name__ == "__main__":
     dictionary = dict([])
     for data in datas:
         dictionary[getFilename(data)] = data
-    # existing_files = os.listdir(data_folder)
-
-    # for filename in existing_files:
-    #    data = dictionary[filename]
-    #    if data[-1] == "test":
-    #        test.append(data)
-    #    else:
-    #        train.append(data)
 
     lsla = [
         i.split()
@@ -82,10 +69,6 @@ if __name__ == "__main__":
 
         data = dictionary[filename]
         train.append(data)
-        # if data[-1] == "test":
-        #     test.append(data)
-        # else:
-        #     train.append(data)
 
     print("starting split valid and train")
     random.seed(324)
@@ -109,8 +92,3 @@ if __name__ == "__main__":
         train = train[:train_len]
         print("writing test csv")
         writecsv(test, dest_folder + "audioset_test.csv")
-    # valid_index = sorted(random.sample(range(len(train)),len(train)//10),reverse=True)
-
-    # for i in valid_index:
-    #     valid.append(train[i])
-    #     del train[i]

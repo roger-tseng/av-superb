@@ -1,21 +1,20 @@
-import yaml
 import torch
 import torch.nn as nn
 import torchaudio
 import torchaudio.transforms as aT
 import torchvision
+import yaml
+from skimage.feature import hog
 from torch import Tensor
 from torch.nn.utils.rnn import pad_sequence
 
 from interfaces import UpstreamBase
 
-from skimage.feature import hog
 
 ###################
 # UPSTREAM EXPERT #
 ###################
 class UpstreamExpert(UpstreamBase):
-
     def __init__(self, model_config, **kwargs):
         super().__init__(**kwargs)
 
@@ -26,7 +25,6 @@ class UpstreamExpert(UpstreamBase):
             self.config = yaml.load(file, Loader=yaml.FullLoader)
 
     def preprocess_video(self, video, video_frame_rate):
-        
         # Resize video frames
         video_frames = []
         for frame in video:
@@ -57,7 +55,7 @@ class UpstreamExpert(UpstreamBase):
             video = video.mean(dim=1)
 
         return video
-    
+
     def preprocess_audio(self, audio, audio_sample_rate):
         """
         Replace this function to preprocess audio waveforms into your input format
@@ -67,24 +65,28 @@ class UpstreamExpert(UpstreamBase):
             audio = audio[0]
 
         return audio[0]
-    
-    def forward(self, source):
 
+    def forward(self, source):
         audio, video = zip(*source)
 
         # TODO: add here, try out hyperparams that work decently
-        # 
-        # ( Add moving object detection if useful, as shown in Section 3.1: 
+        #
+        # ( Add moving object detection if useful, as shown in Section 3.1:
         # https://www.mdpi.com/1424-8220/20/24/7299 )
         #
 
-        videos = pad_sequence(video, batch_first = True)
+        videos = pad_sequence(video, batch_first=True)
 
         video_feats = []
         for video in videos:
             video_feat = []
             for frame in video:
-                feat = hog(frame.cpu(), orientations=8, pixels_per_cell=(16, 16), cells_per_block=(1, 1))
+                feat = hog(
+                    frame.cpu(),
+                    orientations=8,
+                    pixels_per_cell=(16, 16),
+                    cells_per_block=(1, 1),
+                )
                 feat = torch.from_numpy(feat)
                 video_feat.append(feat)
             video_feat = torch.stack(video_feat)

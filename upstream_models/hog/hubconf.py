@@ -24,6 +24,7 @@ def baseline_local(model_config, *args, **kwargs):
     assert os.path.isfile(model_config)
     return _UpstreamExpert(model_config, *args, **kwargs)
 
+
 def hog(*args, **kwargs):
     """
     Baseline feature - Histogram of gradients

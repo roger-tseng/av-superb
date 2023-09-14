@@ -7,15 +7,18 @@
 """*********************************************************************************************"""
 
 
+import torchaudio
 import yaml
 from torch.nn.utils.rnn import pad_sequence
 
 from interfaces import UpstreamBase
+
 from .extracter import get_extracter
-import torchaudio
+
 # from .preprocessor import get_preprocessor
 
 SAMPLE_RATE = 16000
+
 
 ###################
 # UPSTREAM EXPERT #
@@ -30,7 +33,7 @@ class UpstreamExpert(UpstreamBase):
         super().__init__(**kwargs)
 
         self.audio_sample_rate = 16000
-        
+
         with open(model_config, "r") as file:
             self.config = yaml.load(file, Loader=yaml.FullLoader)
 
@@ -57,7 +60,7 @@ class UpstreamExpert(UpstreamBase):
 
     def preprocess_video(self, video, video_frame_rate):
         return video[0][0][0]
-    
+
     def preprocess_audio(self, audio, audio_sample_rate):
         """
         Replace this function to preprocess audio waveforms into your input format
@@ -73,9 +76,8 @@ class UpstreamExpert(UpstreamBase):
             )
 
         return audio
-    
-    def forward(self, source):
 
+    def forward(self, source):
         wavs, video = zip(*source)
 
         if "kaldi" in self.config:
