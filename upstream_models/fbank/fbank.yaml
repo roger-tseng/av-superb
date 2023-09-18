@@ -11,4 +11,4 @@ delta:
   win_length: 5
 
 cmvn:
-  use_cmvn: True
+  use_cmvn: False

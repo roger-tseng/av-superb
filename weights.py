@@ -11,57 +11,57 @@ paths = {
     "avhubert_audio": {
         "audio": "NA", 
         "video": "NA", 
-        "fusion": "result/downstream/avhubert_audio_fusion_1E-5_pooled/states-30000.ckpt", 
+        "fusion": "NA", #"result/downstream/avhubert_audio_fusion_1E-5_pooled/states-30000.ckpt", 
     },
     "avhubert_video": {
         "audio": "NA", 
         "video": "NA", 
-        "fusion": "result/downstream/avhubert_video_fusion_1E-3_pooled/states-30000.ckpt", 
+        "fusion": "NA", #"result/downstream/avhubert_video_fusion_1E-3_pooled/states-30000.ckpt", 
     },
     "avhubert": {
         "audio": "NA", 
         "video": "NA", 
-        "fusion": "result/downstream/avhubert_fusion_1E-3_pooled/states-30000.ckpt", 
+        "fusion": "NA", #"result/downstream/avhubert_fusion_1E-3_pooled/states-30000.ckpt", 
     },
     "replai": {
-        "audio": "NA", # "result/downstream/replai_audio_1E-3_pooled/states-30000.ckpt" 
-        "video": "NA", # "result/downstream/replai_video_1E-3_pooled/states-30000.ckpt"
+        "audio": "NA",
+        "video": "NA",
         "fusion": "NA", 
     },
     "avbert": {
-        "audio": "result/downstream/avbert_audio_1E-3_pooled/states-30000.ckpt", 
+        "audio": "result/downstream/avbert_audio_1E-4_pooled/states-30000.ckpt", 
         "video": "result/downstream/avbert_video_1E-3_pooled/states-30000.ckpt", 
-        "fusion": "result/downstream/avbert_fusion_1E-3_pooled/states-30000.ckpt", 
+        "fusion": "result/downstream/avbert_fusion_1E-4_pooled/states-30000.ckpt", 
     },
     "mavil_base": {
-        "audio": "result/downstream/mavil_base_audio_1E-4_pooled/states-30000.ckpt",
-        "video": "result/downstream/mavil_base_video_1E-3_pooled/states-30000.ckpt",
-        "fusion": "result/downstream/mavil_base_fusion_1E-5_pooled/states-30000.ckpt",
+        "audio": "NA", #"result/downstream/mavil_base_audio_1E-4_pooled/states-30000.ckpt",
+        "video": "NA", #"result/downstream/mavil_base_video_1E-3_pooled/states-30000.ckpt",
+        "fusion": "NA", #"result/downstream/mavil_base_fusion_1E-5_pooled/states-30000.ckpt",
     },
     "mavil_local": {
-        "audio": "result/downstream/mavil_local_audio_1E-4_pooled/states-30000.ckpt", 
-        "video": "result/downstream/mavil_local_video_1E-4_pooled/states-30000.ckpt", 
-        "fusion": "result/downstream/mavil_local_fusion_1E-5_pooled/states-30000.ckpt", 
+        "audio": "NA", #"result/downstream/mavil_local_audio_1E-4_pooled/states-30000.ckpt", 
+        "video": "NA", #"result/downstream/mavil_local_video_1E-4_pooled/states-30000.ckpt", 
+        "fusion": "NA", #"result/downstream/mavil_local_fusion_1E-5_pooled/states-30000.ckpt", 
     },
     "hubert": {
-        "audio": "result/downstream/hubert_audio_1E-4_pooled/states-30000.ckpt", 
+        "audio": "NA", #"result/downstream/hubert_audio_1E-4_pooled/states-30000.ckpt", 
         "video": "NA", 
         "fusion": "NA", 
     },
     "avhubert_ft_lrs3_433": {
         "audio": "NA", 
         "video": "NA", 
-        "fusion": "result/downstream/avhubert_ft_lrs3_433_fusion_1E-5_pooled/states-30000.ckpt", 
+        "fusion": "NA", #"result/downstream/avhubert_ft_lrs3_433_fusion_1E-5_pooled/states-30000.ckpt", 
     },
     "avhubert_ft_lrs3_433_audio": {
         "audio": "NA", 
         "video": "NA", 
-        "fusion": "result/downstream/avhubert_ft_lrs3_433_audio_fusion_1E-5_pooled/states-30000.ckpt", 
+        "fusion": "NA", #"result/downstream/avhubert_ft_lrs3_433_audio_fusion_1E-5_pooled/states-30000.ckpt", 
     },
     "avhubert_ft_lrs3_433_video": {
         "audio": "NA", 
         "video": "NA", 
-        "fusion": "result/downstream/avhubert_ft_lrs3_433_video_fusion_1E-4_pooled/states-30000.ckpt", 
+        "fusion": "NA", #"result/downstream/avhubert_ft_lrs3_433_video_fusion_1E-4_pooled/states-30000.ckpt", 
     },
 }
 

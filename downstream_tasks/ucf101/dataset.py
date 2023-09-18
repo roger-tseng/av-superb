@@ -87,7 +87,6 @@ class UCF101Dataset(Dataset):
             frames, wav, _ = torchvision.io.read_video(
                 video_path, pts_unit="sec", output_format="TCHW"
             )
-            # frames = frames.float()
             wav = wav.mean(dim=0).squeeze(0)
 
             if self.preprocess is not None:

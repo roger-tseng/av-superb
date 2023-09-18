@@ -144,7 +144,6 @@ data
 # experiment files
 *.png
 *.pkl
-*.yaml
 *.sh
 *.pt
 *.tar
