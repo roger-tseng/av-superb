@@ -255,6 +255,10 @@ class Runner:
                             with torch.no_grad():
                                 features = self.upstream.model(source)
                         if self.args.pooled_features_path:
+                            if batch_id == 0:
+                                for feature_selection in features.keys():
+                                    os.makedirs(f"{self.args.pooled_features_path}/{self.args.upstream}_{feature_selection}", exist_ok=True)
+
                             show(f"[Runner] - Save mean-pooled features of batch no. {batch_id}")
                             assert isinstance(others[-1][0], str)
                             with torch.no_grad():
