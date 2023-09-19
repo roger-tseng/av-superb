@@ -1,3 +1,9 @@
+# Author: Yuan Tseng
+# Train/eval loop
+
+# Modified from S3PRL 
+# (Authors: Leo Yang, Andy T. Liu and S3PRL team, https://github.com/s3prl/s3prl/blob/main/s3prl/downstream/runner.py)
+
 import glob
 import importlib
 import math

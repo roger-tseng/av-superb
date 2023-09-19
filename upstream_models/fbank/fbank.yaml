@@ -1,3 +1,5 @@
+# Copied from S3PRL 
+# (Authors: Leo Yang, Andy T. Liu and S3PRL team, https://github.com/s3prl/s3prl/blob/main/s3prl/upstream/baseline/fbank_no_cmvn.yaml)
 kaldi:
   feat_type: fbank
   fbank:
@@ -11,4 +13,4 @@ delta:
   win_length: 5
 
 cmvn:
-  use_cmvn: True
+  use_cmvn: False

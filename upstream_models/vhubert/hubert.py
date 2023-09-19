@@ -1,3 +1,6 @@
+# This file is modified from code licensed under the AV-HuBERT license (see COPYRIGHT)
+# Copyright (c) Meta Platforms, Inc. All Rights Reserved.
+
 # Copyright (c) Facebook, Inc. and its affiliates.
 # All rights reserved.
 #

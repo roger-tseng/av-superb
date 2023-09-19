@@ -1,3 +1,9 @@
+# Author: Yuan Tseng
+# Custom classes for interfacing upstream models and downstream tasks
+
+# Modified from S3PRL
+# (Authors: Leo Yang, Andy T. Liu and S3PRL team, https://github.com/s3prl/s3prl/blob/main/s3prl/upstream/interfaces.py)
+
 import random
 import sys
 from typing import Callable, Dict, List, Tuple, Union

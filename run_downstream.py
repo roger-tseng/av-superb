@@ -1,3 +1,9 @@
+# Author: Yuan Tseng
+# Main script for running experiments
+
+# Modified from S3PRL 
+# (Authors: Leo Yang, Andy T. Liu and S3PRL team, https://github.com/s3prl/s3prl/blob/main/s3prl/run_downstream.py)
+
 import argparse
 import glob
 import logging

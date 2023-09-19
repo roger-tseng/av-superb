@@ -1,3 +1,6 @@
+# Copied from S3PRL 
+# (https://github.com/s3prl/s3prl/blob/main/s3prl/utility/helper.py)
+
 # -*- coding: utf-8 -*- #
 """*********************************************************************************************"""
 #   FileName     [ utility/helper.py ]

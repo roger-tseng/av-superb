@@ -1,7 +1,3 @@
-"""
-Custom class for loading audio-visual model and extract features 
-Modified from https://github.com/s3prl/s3prl/blob/main/s3prl/upstream/example/expert.py
-"""
 import math
 from collections import OrderedDict
 from typing import Dict, List, Tuple, Union
