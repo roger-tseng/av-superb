@@ -109,7 +109,9 @@ class UpstreamExpert(nn.Module):
 
         if len(audio.shape) == 1:
             waveform = audio.unsqueeze(0)
-        
+        else:
+            waveform = audio.mean(dim=0, keepdim=True)
+
         waveform = resample(
             waveform,
             audio_sample_rate,

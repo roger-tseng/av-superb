@@ -73,7 +73,15 @@ class UpstreamExpert(nn.Module):
         ])
 
     def preprocess_video(self, video, video_frame_rate):
-        # 1. Resample video
+        
+        # 1. TCHW -> THWC and repeat until four sec. if too short
+        video = torch.permute(video, (0,2,3,1))
+        n_target_frm = int(self.video_len * video_frame_rate)
+        if video.shape[0] < n_target_frm:
+            n_repeats = n_target_frm//video.shape[0] + 1
+            video = video.repeat(n_repeats,1,1,1)
+
+        # 2. Resample video
         # (from https://github.com/pytorch/vision/blob/5b07d6c9c6c14cf88fc545415d63021456874744/torchvision/datasets/video_utils.py#L278)
         step = float(video_frame_rate) / self.video_frame_rate
         if step.is_integer():
@@ -86,14 +94,9 @@ class UpstreamExpert(nn.Module):
             idxs = torch.arange(num_frames, dtype=torch.float32) * step
             idxs = idxs.floor().to(torch.int64)
         video = video[idxs]
-        
-        # 2. TCHW -> THWC and crop/repeat to four sec.
-        video = torch.permute(video, (0,2,3,1))
-        n_target_frm = self.video_len * self.video_frame_rate       # 8 frames per clip
-        if video.shape[0] < n_target_frm:
-            n_repeats = n_target_frm//video.shape[0] + 1
-            video = video.repeat(n_repeats,1,1,1)
-        video = video[:8]
+
+        # 3. Crop to 4 seconds
+        video = video[:self.video_len * self.video_frame_rate] # 8 frames per clip
 
         preprocessed_video = self.video_transform(video)
         return preprocessed_video
