@@ -1,17 +1,32 @@
-# AV-SUPERB: A MULTI-TASK EVALUATION BENCHMARK FOR AUDIO-VISUAL REPRESENTATION MODELS
+# AV-SUPERB
 
-## Usage 
+<p align="center">  
+    <a href="https://arxiv.org/abs/2309.10787">Paper</a>,
+    <a href="https://av.superbbenchmark.org/">Submission leaderboard</a>
+</p>
 
-TBA
+## Model Evaluation
 
+### 1. Using our toolkit:
 Training:
 ```
 python run_downsteam -m train -u <upstream model name> -d <downstream task name> -s <feature type>
 ```
+TBA
+
+### 2. Using our submission platform:
+TBA
 
 ## Citation
 
-TBA
+```
+@article{tseng2023avsuperb,
+  title={AV-SUPERB: A Multi-Task Evaluation Benchmark for Audio-Visual Representation Models},
+  author={Yuan Tseng and Layne Berry and Yi-Ting Chen and I-Hsiang Chiu and Hsuan-Hao Lin and Max Liu and Puyuan Peng and Yi-Jen Shih and Hung-Yu Wang and Haibin Wu and Po-Yao Huang and Chun-Mao Lai and Shang-Wen Li and David Harwath and Yu Tsao and Shinji Watanabe and Abdelrahman Mohamed and Chi-Luen Feng and Hung-yi Lee},
+  journal={arXiv preprint arXiv:2309.10787},
+  year={2023}
+}
+```
 
 ## License
 
