@@ -195,7 +195,7 @@ class Runner:
             desc="overall",
             file=tqdm_file,
         )
-        init_step = self.init_ckpt.get("Step")
+        init_step = self.init_ckpt.get("Step", 0)
         if init_step:
             pbar.n = init_step
 
@@ -223,10 +223,16 @@ class Runner:
                 else:
                     raise
 
+            gradient_accumulate_steps = self.config["runner"].get(
+                "gradient_accumulate_steps"
+            )
+            dataloader.dataset.skip_steps = dataloader.batch_size * gradient_accumulate_steps * init_step % len(dataloader.dataset)
             for batch_id, (wavs, frames, *others) in enumerate(
                 tqdm(dataloader, dynamic_ncols=True, desc="train", file=tqdm_file)
             ):
                 # try/except block for forward/backward
+                if batch_id < init_step * gradient_accumulate_steps % len(dataloader.dataset):
+                    continue
                 try:
                     if pbar.n >= pbar.total:
                         break
@@ -261,6 +267,8 @@ class Runner:
                         if self.args.pooled_features_path:
                             if batch_id == 0:
                                 for feature_selection in features.keys():
+                                    if feature_selection[0] == '_':
+                                        continue
                                     os.makedirs(f"{self.args.pooled_features_path}/{self.args.upstream}_{feature_selection}", exist_ok=True)
 
                             show(f"[Runner] - Save mean-pooled features of batch no. {batch_id}")
@@ -292,9 +300,6 @@ class Runner:
                     )
                     batch_ids.append(batch_id)
 
-                    gradient_accumulate_steps = self.config["runner"].get(
-                        "gradient_accumulate_steps"
-                    )
                     (loss / gradient_accumulate_steps).backward()
                     del loss
 
@@ -471,6 +476,8 @@ class Runner:
                 if self.args.pooled_features_path:
                     if batch_id == 0:
                         for feature_selection in features.keys():
+                            if feature_selection[0] == '_':
+                                continue
                             os.makedirs(f"{self.args.pooled_features_path}/{self.args.upstream}_{feature_selection}", exist_ok=True)
 
                     show(f"[Runner] - Save mean-pooled features of batch no. {batch_id}")
