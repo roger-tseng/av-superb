@@ -80,7 +80,7 @@ class KineticsSoundsDataset(Dataset):
                 pooled_feature = torch.load(pooled_feature_path)
                 return pooled_feature, pooled_feature, label, True
 
-        feature_path = f"/work/u8090533/features/{self.upstream_name}/{basename}.pt"
+        feature_path = f"{self.kinetics_root}/features/{self.upstream_name}/{basename}.pt"
         if os.path.exists(feature_path):
             processed_wav, processed_frames = torch.load(feature_path)
         else:

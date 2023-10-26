@@ -1,11 +1,11 @@
 runner:
-  total_steps: 20000
+  total_steps: 50000
   gradient_clipping: 1
   gradient_accumulate_steps: 2
 
-  log_step: 10
-  eval_step: 20
-  save_step: 20
+  log_step: 40
+  eval_step: 1000
+  save_step: 1000
   max_keep: 1
   eval_dataloaders:
     - dev
@@ -13,25 +13,25 @@ runner:
 
 optimizer:
   name: AdamW
-  lr: 2.0e-4
+  lr: 1.0e-3
 
 # comment the whole scheduler config block
 # to disable learning rate scheduling
-scheduler:
-  name: linear_schedule_with_warmup
-  num_warmup_steps: 1400
+# scheduler:
+#   name: linear_schedule_with_warmup
+#   num_warmup_steps: 1400
 
 downstream_expert:
   datarc:
-    kinetics_root: "/work/u3933430/kinetics" 
-    train_meta_location: "/work/u3933430/kinetics/processed_data_full_val/train_meta_10_shuffled.csv"
-    val_meta_location: "/work/u3933430/kinetics/processed_data_full_val/val_meta_10_shuffled.csv"
-    test_meta_location: "/work/u3933430/kinetics/processed_data_full_val/test_meta_10_shuffled.csv"
-    num_workers: 12
-    train_batch_size: 8
-    eval_batch_size: 8
+    class_num: 32
+    kinetics_root: "/work/b07901163/av/k400" 
+    train_meta_location: "/home/b07901163/audiovisual-benchmark/downstream_tasks/kinetics_sounds/train_data_path.csv"
+    val_meta_location: "/home/b07901163/audiovisual-benchmark/downstream_tasks/kinetics_sounds/val_data_path.csv"
+    test_meta_location: "/home/b07901163/audiovisual-benchmark/downstream_tasks/kinetics_sounds/test_data_path.csv"
+    num_workers: 2
+    train_batch_size: 16
+    eval_batch_size: 16
+    logs_file: "/home/b07901163/audiovisual-benchmark/downstream_tasks/kinetics_sounds/log.txt"
 
   modelrc:
-    input_dim: 128 
-    hidden_dim: 64 
-    hidden_layers: 1
+    input_dim: 256
