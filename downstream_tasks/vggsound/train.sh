@@ -1,32 +1,3 @@
 cd ../../
-# python3 run_downstream.py -m train -n avbert_vggsound_fusion_lr1E03 -u avbert -d vggsound -s fusion_feats
-# python3 run_downstream.py -m train -e ./result/downstream/avbert_vggsound_fusion_lr1E03/states-50.ckpt
-
-# python3 run_downstream.py -m train -n avhubert_vggsound_fusion_lr1E04 -u avhubert -d vggsound -s fusion_feats
-
-
-# python3 run_downstream.py -m train -n avhubert_ft_lrs3_433_vggsound_fusion_lr1E02 -u avhubert_ft_lrs3_433 -d vggsound -s fusion_feats --pooled_features_path /work/u2707828/features/
-
-# python3 run_downstream.py -m train -n avhubert_vggsound_video_lr1E05 -u avhubert -d vggsound -s video_feats --pooled_features_path /work/u2707828/features/
-
-
-# python3 run_downstream.py -m train -n mavil_vggsound_fusion_lr1E02 -u mavil_base -k /work/u2707828/mavil_as_pt_ft_a+v.pth -d vggsound -s fusion_feats --pooled_features_path /work/u2707828/features/
-
-
-# python3 run_downstream.py -m train -n testhubert -u hubert -d vggsound -s audio_feats --pooled_features_path /work/u2707828/features/
-
-# python3 run_downstream.py -m train -n testavhubert -u avhubert -d vggsound -s audio_feats --pooled_features_path /work/u2707828/features/
-
-
-
-#################################################################################################################################
-
-
-# python3 run_downstream.py -m train -n avhubert_audio_vggsound_lr1E05 -u avhubert_audio -d vggsound -s fusion_feats --pooled_features_path /work/u2707828/features/
-
-# python3 run_downstream.py -m train -n avhubert_video_vggsound_lr1E05 -u avhubert_video -d vggsound -s fusion_feats --pooled_features_path /work/u2707828/features/
-
-# python3 run_downstream.py -m train -n avhubert_ft_lrs3_433_audio_vggsound_lr1E05 -u avhubert_ft_lrs3_433_audio -d vggsound -s fusion_feats --pooled_features_path /work/u2707828/features/
-
-python3 run_downstream.py -m train -n avhubert_ft_lrs3_433_video_vggsound_lr1E05 -u avhubert_ft_lrs3_433_video -d vggsound -s fusion_feats --pooled_features_path /work/u2707828/features/
+python3 run_downstream.py -m train -n [name] -u [upstream model] -d vggsound -s [audio_feats | video_feats | fusion_feats] --pooled_features_path [feature directory path]
 
