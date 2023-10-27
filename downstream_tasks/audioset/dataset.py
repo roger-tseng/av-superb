@@ -1,18 +1,8 @@
 import csv
 import os
-import random
-
-import librosa
-import numpy as np
-import soundfile as sf
 import torch
-import torch.nn as nn
-import torchaudio
 import torchvision.io
-import torchvision.transforms as transforms
-from scipy import signal
 from torch.utils.data.dataset import Dataset
-from torchaudio.transforms import Resample
 
 
 class AudiosetDataset(Dataset):
@@ -37,9 +27,6 @@ class AudiosetDataset(Dataset):
         self.upstream_name = kwargs["upstream"]
         self.upstream_feature_selection = kwargs["upstream_feature_selection"]
         self.pooled_features_path = kwargs["pooled_features_path"]
-
-    def get_rates(self, idx):
-        return SAMPLE_RATE, VIDEO_FRAME_RATE
 
     def __getitem__(self, idx):
         filename = "_".join(
@@ -86,12 +73,12 @@ class AudiosetDataset(Dataset):
                 )
             else:
                 if self.preprocess_audio is not None:
-                    if "mavil" in self.upstream_name:
-                        processed_wav = self.preprocess_audio(
-                            wav, audio_sr, fbank_mean=-4.2677393, fbank_std=4.5689974
-                        )
-                    else:
-                        processed_wav = self.preprocess_audio(wav, audio_sr)
+                    # if "mavil" in self.upstream_name:
+                    #     processed_wav = self.preprocess_audio(
+                    #         wav, audio_sr, fbank_mean=-4.2677393, fbank_std=4.5689974
+                    #     )
+                    # else:
+                    processed_wav = self.preprocess_audio(wav, audio_sr)
                 else:
                     processed_wav = wav
                 if self.preprocess_video is not None:

@@ -24,9 +24,9 @@ optimizer:
 
 downstream_expert:
   datarc:
-    csv_root: "/work/u7196393/testAudioset/csv"
-    train_root: "/work/u7196393/testAudioset/data/balanced_train/video_mp4_288p"
-    test_root: "/work/u7196393/testAudioset/data/eval/video_mp4_288p"
+    csv_root: "./downstream_tasks/audioset/audioset_preprocess/csv"
+    train_root: "/work/b07901163/av/AudioSet-20K/balanced_train/video_mp4_288p"
+    test_root: "/work/b07901163/av/AudioSet-20K/eval/video_mp4_288p"
     num_workers: 4
     train_batch_size: 2
     eval_batch_size: 2
