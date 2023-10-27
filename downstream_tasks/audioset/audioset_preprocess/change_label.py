@@ -32,37 +32,21 @@ if __name__ == "__main__":
     for line in class_labels[1:]:
         index = line[0]
         mid = line[1]
-        # print(mid)
         mid_to_index[mid] = index
-
-    # labels = dict([])
-    # labels_inverse = dict([])
-    # print(mid_to_index['/m/068hy'])
 
     newdatas = list([])
 
     for data in datas[3:]:
         newdata = data
-        # if data[2] not in labels:
-        #     labels[data[2]] = len(labels)
-        #     labels_inverse[labels[data[2]]] = data[2]
         midlist = data[3:]
         midlist[0] = midlist[0][2:]
-        # print(midlist[0])
         midlist[-1] = midlist[-1][:-1]
-        # print(midlist[-1])
         cnt = 0
         for mid in midlist:
             newdata[3 + cnt] = str(mid_to_index[mid])
             cnt += 1
-        # newdata[2] = str(labels[data[2]])
         newdatas.append(newdata)
 
     with open(dest_folder + args.output_filename, "w") as f:
         writer = csv.writer(f)
         writer.writerows(newdatas)
-
-    # with open(dest_folder+"labels.csv","w") as f:
-    #     writer = csv.writer(f)
-    #     for i in range(len(labels)):
-    #         writer.writerow([labels_inverse[i],i])
