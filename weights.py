@@ -29,21 +29,21 @@ paths = {
    #     "video": "NA", #"result/av_asr/replai/video_feats/1.0e-3_layne/dev-best.ckpt", 
    #     "fusion": "NA", 
    # },
-   # "avbert": {
-   #     "audio": "/work/u7196393/result/avbert_connector_mean_linear_audio_-3/states-5000.ckpt", 
-   #     "video": "/work/u7196393/result/avbert_connector_mean_linear_video_-3/states-5000.ckpt", 
-   #     "fusion": "/work/u7196393/result/avbert_connector_mean_linear_-3/states-5000.ckpt", 
-   # },
-   # "mavil_base": {
-   #     "audio": "/work/u7196393/result/mavil_base_connector_mean_linear_audio_-3/states-5000.ckpt", 
-   #     "video": "/work/u7196393/result/mavil_base_connector_mean_linear_video_-3/states-5000.ckpt", 
-   #     "fusion": "/work/u7196393/result/mavil_base_connector_mean_linear_-4/states-5000.ckpt", 
-   # },
-   # "mavil_local": {
-   #     "audio": "/work/u7196393/result/mavil_connector_mean_linear_audio_-4/states-5000.ckpt", 
-   #     "video": "/work/u7196393/result/mavil_connector_mean_linear_video_-3/states-5000.ckpt", 
-   #     "fusion": "/work/u7196393/result/mavil_connector_mean_linear_-4/states-5000.ckpt", 
-   # },
+    "avbert": {
+        "audio": "/work/u7196393/result/avbert_connector_mean_linear_audio_-3/states-5000.ckpt", 
+        "video": "/work/u7196393/result/avbert_connector_mean_linear_video_-3/states-5000.ckpt", 
+        "fusion": "/work/u7196393/result/avbert_connector_mean_linear_-3/states-5000.ckpt", 
+    },
+    "mavil_base": {
+        "audio": "/work/u7196393/result/mavil_base_std_connector_mean_linear_audio_-3/states-5000.ckpt", 
+        "video": "/work/u7196393/result/mavil_base_std_connector_mean_linear_video_-3/states-5000.ckpt", 
+        "fusion": "/work/u7196393/result/mavil_base_std_connector_mean_linear_-4/states-5000.ckpt", 
+    },
+    "mavil_local": {
+        "audio": "/work/u7196393/result/mavil_local_std_connector_mean_linear_audio_-4/states-5000.ckpt", 
+        "video": "/work/u7196393/result/mavil_local_std_connector_mean_linear_video_-3/states-5000.ckpt", 
+        "fusion": "/work/u7196393/result/mavil_local_std_connector_mean_linear_-4/states-5000.ckpt", 
+    },
    # "hubert": {
    #     "audio": "/work/u7196393/result/hubert_connector_mean_linear_audio_-2/states-5000.ckpt", 
    #     "video": "NA", 
@@ -55,16 +55,16 @@ paths = {
    #     "fusion": "/work/u7196393/result/avhubert_ft_connector_mean_linear_-2/states-5000.ckpt", 
    # },
     
-    "avhubert_ft_lrs3_433_audio": {
-        "audio": "NA", 
-        "video": "NA", 
-        "fusion": "/work/u7196393/result/avhubert_ft_audio_connector_mean_linear_-4/states-5000.ckpt", 
-    },
-    "avhubert_ft_lrs3_433_video": {
-        "audio": "NA", 
-        "video": "NA", 
-        "fusion": "/work/u7196393/result/avhubert_ft_video_connector_mean_linear_-3/states-5000.ckpt", 
-    },
+   # "avhubert_ft_lrs3_433_audio": {
+   #     "audio": "NA", 
+   #     "video": "NA", 
+   #     "fusion": "/work/u7196393/result/avhubert_ft_audio_connector_mean_linear_-4/states-5000.ckpt", 
+   # },
+   # "avhubert_ft_lrs3_433_video": {
+   #     "audio": "NA", 
+   #     "video": "NA", 
+   #     "fusion": "/work/u7196393/result/avhubert_ft_video_connector_mean_linear_-3/states-5000.ckpt", 
+   # },
 }
 
 for model, ckpts in paths.items():

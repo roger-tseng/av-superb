@@ -311,19 +311,19 @@ class DownstreamExpert(nn.Module):
         """
         # threshold=self.datarc['threshold']
         # print(f'predicts shape{self.predicts.shape[0]},{self.predicts.shape[1]}')
-        my_array = []
+        #my_array=[]
         # ans_array=[]
-        for i in range(5):
-            tmp = []
-            ans = []
-            for j in range(self.predicts.shape[0]):
-                tmp.append(self.predicts[j, i].tolist())
-                ans.append(self.targets[j, i].tolist())
-            my_array.append(tmp)
-            my_array.append(ans)
-        with open("tmp_file.csv", "w") as f:
-            csv.writer(f, delimiter=",").writerows(my_array)
-            print("write file ")
+        #for i in range(5):
+        #    tmp = []
+        #    ans = []
+        #    for j in range(self.predicts.shape[0]):
+        #        tmp.append(self.predicts[j, i].tolist())
+        #        ans.append(self.targets[j, i].tolist())
+        #    my_array.append(tmp)
+        #    my_array.append(ans)
+        #with open("tmp_file.csv", "w") as f:
+        #    csv.writer(f, delimiter=",").writerows(my_array)
+        #    print("write file ")
         # np.array(ans_array)
         # my_df = pd.DataFrame(my_array)
         # my_df.to_csv('my_array.csv',header = False, index= False)
@@ -334,13 +334,13 @@ class DownstreamExpert(nn.Module):
             self.predicts.cpu().detach().numpy(),
             average="macro",
         )
-        s_mAP = average_precision_score(
-            self.targets.cpu().detach().numpy(),
-            self.predicts.cpu().detach().numpy(),
-            average="samples",
-        )
+        #s_mAP = average_precision_score(
+        #    self.targets.cpu().detach().numpy(),
+        #    self.predicts.cpu().detach().numpy(),
+        #    average="samples",
+        #)
         records["mAP"].append(mAP)
-        records["s_mAP"].append(s_mAP)
+        #records["s_mAP"].append(s_mAP)
         print()
         save_names = []
         for key, values in records.items():

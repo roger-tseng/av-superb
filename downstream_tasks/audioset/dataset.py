@@ -147,7 +147,11 @@ class AudiosetDataset(Dataset):
                 )
             else:
                 if self.preprocess_audio is not None:
-                    processed_wav = self.preprocess_audio(wav, audio_sr)
+                    if 'mavil' in self.upstream_name:
+                        #print('model is mavil')
+                        processed_wav = self.preprocess_audio(wav, audio_sr, fbank_mean=-4.2677393, fbank_std=4.5689974)
+                    else:
+                        processed_wav = self.preprocess_audio(wav, audio_sr)
                 else:
                     processed_wav = wav
                 if self.preprocess_video is not None:
