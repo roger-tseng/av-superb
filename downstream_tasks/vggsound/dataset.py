@@ -66,7 +66,6 @@ class VggsoundDataset(Dataset):
         if self.pooled_features_path:
             pooled_feature_path = f"{self.pooled_features_path}/{self.upstream_name}_{self.upstream_feature_selection}/{basename}_pooled.pt"
             if os.path.exists(pooled_feature_path):
-                # print("feature", pooled_feature_path)
                 pooled_feature = torch.load(pooled_feature_path)
                 return pooled_feature, pooled_feature, label, True        
 
