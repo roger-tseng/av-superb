@@ -11,63 +11,64 @@ paths = {
     "avhubert_audio": {
         "audio": "NA", 
         "video": "NA", 
-        "fusion": "result/downstream/avhubert_audio_vggsound_lr1E03/states-5000.ckpt", 
+        "fusion": "NA",
     },
     "avhubert_video": {
         "audio": "NA", 
         "video": "NA", 
-        "fusion": "result/downstream/avhubert_video_vggsound_lr1E03/states-5000.ckpt", 
+        "fusion": "NA", 
     },
     "avhubert": {
         "audio": "NA", 
         "video": "NA", 
-        "fusion": "result/downstream/avhubert_vggsound_fusion_lr1E03/states-5000.ckpt", 
+        "fusion": "NA", 
     },
     "replai": {
-        "audio": "NA", # result/downstream/replai_vggsound_audio_lr1E02/states-5000.ckpt
-        "video": "NA", # result/downstream/replai_vggsound_video_lr1E03/states-5000.ckpt  
+        "audio": "NA",
+        "video": "NA",
         "fusion": "NA", 
     },
     "avbert": {
-        "audio": "result/downstream/avbert_vggsound_audio_lr1E03/states-5000.ckpt", 
-        "video": "result/downstream/avbert_vggsound_video_lr1E03/states-5000.ckpt", 
-        "fusion": "result/downstream/avbert_vggsound_fusion_lr1E03/states-5000.ckpt", 
+        "audio": "NA",
+        "video": "NA", 
+        "fusion": "NA", 
     },
     "mavil_base": {
-        "audio": "result/downstream/mavilbase_vggsound_audio_lr1E03/states-5000.ckpt", 
-        "video": "result/downstream/mavilbase_vggsound_video_lr1E04/states-5000.ckpt", 
-        "fusion": "result/downstream/mavilbase_vggsound_fusion_lr1E04/states-5000.ckpt", 
+        "audio": "NA", 
+        "video": "NA", 
+        "fusion": "NA", 
     },
     "mavil_local": {
-        "audio": "result/downstream/mavil_vggsound_audio_lr1E03/states-5000.ckpt", 
-        "video": "result/downstream/mavil_vggsound_video_lr1E04/states-5000.ckpt", 
-        "fusion": "result/downstream/mavil_vggsound_fusion_lr1E04/states-5000.ckpt", 
+        "audio": "NA", 
+        "video": "NA", 
+        "fusion": "NA", 
     },
     "hubert": {
-        "audio": "result/downstream/hubert_vggsound_audio_lr1E03/states-5000.ckpt", 
+        "audio": "NA", 
         "video": "NA", 
         "fusion": "NA", 
     },
     "avhubert_ft_lrs3_433": {
         "audio": "NA", 
         "video": "NA", 
-        "fusion": "result/downstream/avhubert_ft_lrs3_433_vggsound_fusion_lr1E03/states-5000.ckpt", 
+        "fusion": "NA", 
     },
     "avhubert_ft_lrs3_433_audio": {
         "audio": "NA", 
         "video": "NA", 
-        "fusion": "result/downstream/avhubert_ft_lrs3_433_audio_vggsound_lr1E03/states-5000.ckpt", 
+        "fusion": "NA", 
     },
     "avhubert_ft_lrs3_433_video": {
         "audio": "NA", 
         "video": "NA", 
-        "fusion": "result/downstream/avhubert_ft_lrs3_433_video_vggsound_lr1E03/states-5000.ckpt", 
+        "fusion": "NA", 
     },
+    
 }
 
 for model, ckpts in paths.items():
 
-    features_path = f"/work/u2707828/features/"
+    features_path = f"" # fill in the directory path where the features are saved
 
     print(f"Model: {model}")
 

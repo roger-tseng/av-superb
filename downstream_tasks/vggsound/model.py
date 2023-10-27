@@ -8,11 +8,8 @@ import torch.nn as nn
 
 class Model(nn.Module):
     def __init__(self, input_dim = 256, output_class_num = 310, **kwargs):
-
         super(Model, self).__init__()
-
-        self.linear = nn.Linear(input_dim, output_class_num)
-        
+        self.linear = nn.Linear(input_dim, output_class_num)        
         # without connector : self.linear = nn.Linear(kwargs["upstream_dim"], output_class_num)
 
     def forward(self, features):

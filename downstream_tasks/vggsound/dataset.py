@@ -11,19 +11,6 @@ import torchvision.transforms as transforms
 from torch.utils.data.dataset import Dataset
 from torchaudio.transforms import Resample
 
-"""
-SAMPLE_RATE = 16000
-EXAMPLE_WAV_MIN_SEC = 5
-EXAMPLE_WAV_MAX_SEC = 20
-EXAMPLE_DATASET_SIZE = 200
-"""
-
-SAMPLE_RATE = 16000
-VIDEO_FRAME_RATE = 25
-SEC = 10
-HEIGHT = 224
-WIDTH = 224
-
 
 class VggsoundDataset(Dataset):
     def __init__(
@@ -60,14 +47,10 @@ class VggsoundDataset(Dataset):
         self.upstream_feature_selection = kwargs['upstream_feature_selection']
         self.pooled_features_path = kwargs['pooled_features_path']
 
-
         print("dataset meta path", self.path)
         print("dataset length:", len(self.data))
         if len(self.data) > 0: print("data example:", self.data[0])
 
-    def get_rates(self, idx):
-        return SAMPLE_RATE, VIDEO_FRAME_RATE
-        # return self.audio_sample_rates[idx], self.video_frame_rates[idx]
 
     def __getitem__(self, idx):
 
@@ -104,22 +87,15 @@ class VggsoundDataset(Dataset):
             if self.preprocess is not None:
                 processed_frames, processed_wav = self.preprocess(frames, wav, video_fps, audio_fps)
             else:
-                ###################preprocess audio############################
                 if self.preprocess_audio is not None:
                     processed_wav = self.preprocess_audio(wav, audio_fps)
                 else:
                     processed_wav = wav
-                ###############################################################
-                ###################preprocess video############################
                 if self.preprocess_video is not None:
                     processed_frames = self.preprocess_video(frames, video_fps)
                 else:
                     processed_frames = frames
-                ################################################################
 
-            # if self.mode == "test" and self.save_features:
-                # print("save test data",basename)
-                # torch.save([processed_wav, processed_frames], feature_path)
 
         return processed_wav, processed_frames, label, basename
 
@@ -131,11 +107,3 @@ class VggsoundDataset(Dataset):
     def collate_fn(self, samples):
         wavs, videos, *others = zip(*samples)
         return wavs, videos, *others
-        """
-        wavs, videos, labels = [], [], []
-        for wav, frames, label in samples:
-            wavs.append(wav)
-            videos.append(frames)
-            labels.append(label)
-        return wavs, videos, labels
-        """
