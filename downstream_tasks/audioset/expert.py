@@ -257,7 +257,6 @@ class DownstreamExpert(nn.Module):
                 according to the evaluation result, like the best.ckpt on the dev set
                 You can return nothing or an empty list when no need to save the checkpoint
         """
-        mAP = average_precision_score(
             self.targets.cpu().detach().numpy(),
             self.predicts.cpu().detach().numpy(),
             average="macro",
