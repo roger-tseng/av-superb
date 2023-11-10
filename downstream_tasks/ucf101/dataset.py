@@ -10,10 +10,11 @@ import torch.nn as nn
 import torchvision
 from torch.utils.data.dataset import Dataset
 
-# Example parameters
-AUDIO_SAMPLE_RATE = 44100
-VIDEO_FRAME_RATE = 25
-
+groups = {
+    "train": ["g08", "g09", "g10", "g11", "g12", "g13", "g14", "g15", "g16", "g17", "g18", "g19", "g20", "g21", "g22", "g23", "g24", "g25"],
+    "dev": [],
+    "test": ["g01", "g02", "g03", "g04", "g05", "g06", "g07"],
+}
 
 class UCF101Dataset(Dataset):
     def __init__(
@@ -44,9 +45,13 @@ class UCF101Dataset(Dataset):
         self.class_num = class_num
         self.split = split
         self.base_path = base_path
-        self.video_list = os.listdir(f"{base_path}/UCF-101-VIDEO/{split}")
-        self.audio_sample_rates = [AUDIO_SAMPLE_RATE] * len(self)
-        self.video_frame_rates = [VIDEO_FRAME_RATE] * len(self)
+
+        videos = os.listdir(f"{base_path}")
+        self.video_list = list(filter(
+            lambda path : path[:-4].rsplit("_",2)[1] in groups[split], 
+            videos
+            ))
+        self.class_to_idx = sorted(set(v.rsplit("_",3)[1] for v in videos))
         self.preprocess = preprocess
         self.preprocess_audio = preprocess_audio
         self.preprocess_video = preprocess_video
@@ -54,22 +59,11 @@ class UCF101Dataset(Dataset):
         self.upstream_feature_selection = kwargs['upstream_feature_selection']
         self.pooled_features_path = kwargs['pooled_features_path']
 
-    def get_rates(self, idx):
-        """
-        Return the audio sample rate and video frame rate of the idx-th video.
-        (Datasets may contain data with different sample rates)
-        """
-        return self.audio_sample_rates[idx], self.video_frame_rates[idx]
-
     def __getitem__(self, idx):
-        audio_sr, video_fps = self.get_rates(idx)
-
         # You may use the following function to read video data:
-        video_name = self.video_list[idx]
-        video_path = os.path.join(self.base_path, "UCF-101-VIDEO", self.split, video_name)
-
-        basename = video_path.rsplit('/')[-1].rsplit('.')[0]
-        label = int(video_name.split(".")[0].split("_")[-1]) - 1
+        basename = self.video_list[idx]
+        video_path = os.path.join(self.base_path, basename)
+        label = self.class_to_idx.index(video_path.rsplit("_",3)[1])
 
         # Directly load pooled features if exist, 
         # skipping video loading and preprocessing
@@ -84,9 +78,11 @@ class UCF101Dataset(Dataset):
         if os.path.exists(feature_path):
             processed_wav, processed_frames = torch.load(feature_path)
         else:
-            frames, wav, _ = torchvision.io.read_video(
+            frames, wav, meta = torchvision.io.read_video(
                 video_path, pts_unit="sec", output_format="TCHW"
             )
+            audio_sr, video_fps = meta.get('audio_fps'), meta.get('video_fps')
+            assert audio_sr == 44100 and video_fps == 25.0, f"audio_sr: {audio_sr}, video_fps: {video_fps}, path: {video_path}"
             wav = wav.mean(dim=0).squeeze(0)
 
             if self.preprocess is not None:

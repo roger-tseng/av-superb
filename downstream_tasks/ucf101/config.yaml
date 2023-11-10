@@ -27,7 +27,7 @@ downstream_expert:
     train_batch_size: 8
     eval_batch_size: 8
     class_num: 101
-    base_path: "/work/u3933430"
+    base_path: "/work/b07901163/av/UCF101/avi"
 
   modelrc:
     input_dim: 256
