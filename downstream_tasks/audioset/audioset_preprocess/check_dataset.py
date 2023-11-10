@@ -64,12 +64,11 @@ if __name__ == "__main__":
             continue
         if filename == "..":
             continue
-        if filesize < 100000:
-            continue
 
         data = dictionary[filename]
         train.append(data)
-
+    # print(len(lsla), len(train), len(os.listdir(data_folder)))
+    # print(os.listdir(data_folder)[0])
     print("starting split valid and train")
     random.seed(324)
     random.shuffle(train)
