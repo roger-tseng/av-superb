@@ -4,6 +4,19 @@
     <a href="https://arxiv.org/abs/2309.10787">Paper</a>,
     <a href="https://av.superbbenchmark.org/">Submission leaderboard</a>
 </p>
+<p align="center">  
+    <i>ICASSP 2024</i>
+</p>
+
+## Plug and play pretrained audio-visual models 
+See [extract_feats.py](extract_feats.py) for feature extraction examples.
+We currently support the following models:
+- [AV-HuBERT](https://arxiv.org/abs/2201.02184) (ICLR 2022)
+- [RepLAI](https://arxiv.org/abs/2209.13583) (NeurIPS 2022)
+- [Lee et al.](https://arxiv.org/abs/2012.04124) (ICLR 2021), referred as AVBERT in this repo
+- [MAViL](https://arxiv.org/abs/2212.08071) (NeurIPS 2023)
+
+We also include handcrafted features to serve as baselines. Pull requests are welcome for adding more models.
 
 ## Model Evaluation
 
