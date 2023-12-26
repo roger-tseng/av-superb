@@ -243,14 +243,27 @@ class Runner:
                     if self.args.pooled_features_path and all(i == True for i in others[-1]):
                         source = None
                         features = dict()
-                        # "wavs" is overloaded into saved features here
-                        # can be list of Tensors, or list of list of Tensors
-                        if isinstance(wavs[0], (list, tuple)):
-                            lens = [len(wav[0]) for wav in wavs]
-                            features[self.args.upstream_feature_selection] = [pad_sequence(layer, batch_first=True).to(self.args.device) for layer in zip(*wavs)]
+                        
+                        # If the downstream task uses the whole representation sequence, 
+                        # then we need to pad the sequence as saved features of each data point can have different lengths
+                        if hasattr(self.downstream, "seq_task") and self.downstream.seq_task == True:
+                            # "wavs" is overloaded into saved features here
+                            # can be list of Tensors, or list of list of Tensors
+                            if isinstance(wavs[0], (list, tuple)):
+                                lens = [len(wav[0]) for wav in wavs]
+                                features[self.args.upstream_feature_selection] = [pad_sequence(layer, batch_first=True).to(self.args.device) for layer in zip(*wavs)]
+                            else:
+                                lens = [len(wav) for wav in wavs]
+                                features[self.args.upstream_feature_selection] = pad_sequence(wavs, batch_first=True).to(self.args.device)
+                        # If the downstream task uses the mean-pooled representation,
+                        # then we can directly stack the mean-pooled features from the saved files
                         else:
-                            lens = [len(wav) for wav in wavs]
-                            features[self.args.upstream_feature_selection] = pad_sequence(wavs, batch_first=True).to(self.args.device)
+                            # "wavs" is overloaded into saved features here
+                            # can be list of Tensors, or list of list of Tensors
+                            if isinstance(wavs[0], (list, tuple)):
+                                features[self.args.upstream_feature_selection] = [torch.stack(layer).to(self.args.device) for layer in zip(*wavs)]
+                            else:
+                                features[self.args.upstream_feature_selection] = torch.stack(wavs).to(self.args.device)
                     else:
                         source = [
                             (
@@ -278,10 +291,11 @@ class Runner:
                                     if key[0] == '_':
                                         continue
 
-                                    # if isinstance(feature, (list, tuple)):
-                                    #     feature = [layer.mean(dim=1, keepdim=True) for layer in feature]
-                                    # else:
-                                    #     feature = feature.mean(dim=1, keepdim=True)
+                                    if not hasattr(self.downstream, "seq_task") or self.downstream.seq_task == False:
+                                        if isinstance(feature, (list, tuple)):
+                                            feature = [layer.mean(dim=1, keepdim=True) for layer in feature]
+                                        else:
+                                            feature = feature.mean(dim=1, keepdim=True)
 
                                     for i, names_k in enumerate(others[-1]):
                                         if isinstance(feature, (list, tuple)):
@@ -455,14 +469,26 @@ class Runner:
             if self.args.pooled_features_path and all(i == True for i in others[-1]):
                 source = None
                 features = dict()
-                # "wavs" is overloaded into saved features here
-                # can be list of Tensors, or list of list of Tensors
-                if isinstance(wavs[0], (list, tuple)):
-                    lens = [len(wav[0]) for wav in wavs]
-                    features[self.args.upstream_feature_selection] = [pad_sequence(layer, batch_first=True).to(self.args.device) for layer in zip(*wavs)]
+                # If the downstream task uses the whole representation sequence, 
+                # then we need to pad the sequence as saved features of each data point can have different lengths
+                if hasattr(self.downstream, "seq_task") and self.downstream.seq_task == True:
+                    # "wavs" is overloaded into saved features here
+                    # can be list of Tensors, or list of list of Tensors
+                    if isinstance(wavs[0], (list, tuple)):
+                        lens = [len(wav[0]) for wav in wavs]
+                        features[self.args.upstream_feature_selection] = [pad_sequence(layer, batch_first=True).to(self.args.device) for layer in zip(*wavs)]
+                    else:
+                        lens = [len(wav) for wav in wavs]
+                        features[self.args.upstream_feature_selection] = pad_sequence(wavs, batch_first=True).to(self.args.device)
+                # If the downstream task uses the mean-pooled representation,
+                # then we can directly stack the mean-pooled features from the saved files
                 else:
-                    lens = [len(wav) for wav in wavs]
-                    features[self.args.upstream_feature_selection] = pad_sequence(wavs, batch_first=True).to(self.args.device)
+                    # "wavs" is overloaded into saved features here
+                    # can be list of Tensors, or list of list of Tensors
+                    if isinstance(wavs[0], (list, tuple)):
+                        features[self.args.upstream_feature_selection] = [torch.stack(layer).to(self.args.device) for layer in zip(*wavs)]
+                    else:
+                        features[self.args.upstream_feature_selection] = torch.stack(wavs).to(self.args.device)
             else:
                 source = [
                     (
@@ -488,10 +514,11 @@ class Runner:
                             if key[0] == '_':
                                 continue
 
-                            # if isinstance(feature, (list, tuple)):
-                            #     feature = [layer.mean(dim=1, keepdim=True) for layer in feature]
-                            # else:
-                            #     feature = feature.mean(dim=1, keepdim=True)
+                            if not hasattr(self.downstream, "seq_task") or self.downstream.seq_task == False:
+                                if isinstance(feature, (list, tuple)):
+                                    feature = [layer.mean(dim=1, keepdim=True) for layer in feature]
+                                else:
+                                    feature = feature.mean(dim=1, keepdim=True)
 
                             for i, names_k in enumerate(others[-1]):
                                 if isinstance(feature, (list, tuple)):
