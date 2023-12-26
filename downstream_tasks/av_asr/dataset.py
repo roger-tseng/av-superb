@@ -13,10 +13,6 @@ from torch.utils.data.dataset import Dataset
 
 from .fairseq_dictionary import Dictionary
 
-PATH_ROOT = (
-    "/home/rogert/Desktop/lrs"  # Inside Dataset init, appends either '2/' or '3/'
-)
-
 class RandomDataset(Dataset):
     def __init__(
         self,
@@ -53,9 +49,8 @@ class RandomDataset(Dataset):
         self.upstream_name = kwargs['upstream']
         self.upstream_feature_selection = kwargs['upstream_feature_selection']
         self.pooled_features_path = kwargs['pooled_features_path']
-        self.lrs_version = kwargs['lrs_version']
 
-        self.full_path_root = PATH_ROOT + str(self.lrs_version) + "/"
+        self.full_path_root = kwargs['PATH_ROOT'] + "/"
 
         if split == "train":
             self.dataset = json.load(
