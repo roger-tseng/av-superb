@@ -94,6 +94,7 @@ class DownstreamExpert(nn.Module):
         """
 
         super(DownstreamExpert, self).__init__()
+        self.seq_task = True
         self.upstream_dim = upstream_dim
         self.datarc = downstream_expert["datarc"]  # config for dataset
         self.modelrc = downstream_expert["modelrc"]  # config for model

@@ -50,7 +50,7 @@ class RandomDataset(Dataset):
         self.upstream_feature_selection = kwargs['upstream_feature_selection']
         self.pooled_features_path = kwargs['pooled_features_path']
 
-        self.full_path_root = kwargs['PATH_ROOT'] + "/"
+        self.full_path_root = kwargs['path_root'] + "/"
 
         if split == "train":
             self.dataset = json.load(
