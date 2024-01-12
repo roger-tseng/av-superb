@@ -246,7 +246,7 @@ class Runner:
                         
                         # If the downstream task uses the whole representation sequence, 
                         # then we need to pad the sequence as saved features of each data point can have different lengths
-                        if hasattr(self.downstream, "seq_task") and self.downstream.seq_task == True:
+                        if hasattr(self.downstream.model, "seq_task") and self.downstream.model.seq_task == True:
                             # "wavs" is overloaded into saved features here
                             # can be list of Tensors, or list of list of Tensors
                             if isinstance(wavs[0], (list, tuple)):
@@ -291,7 +291,7 @@ class Runner:
                                     if key[0] == '_':
                                         continue
 
-                                    if not hasattr(self.downstream, "seq_task") or self.downstream.seq_task == False:
+                                    if not hasattr(self.downstream.model, "seq_task") or self.downstream.model.seq_task == False:
                                         if isinstance(feature, (list, tuple)):
                                             feature = [layer.mean(dim=1, keepdim=True) for layer in feature]
                                         else:
@@ -471,7 +471,7 @@ class Runner:
                 features = dict()
                 # If the downstream task uses the whole representation sequence, 
                 # then we need to pad the sequence as saved features of each data point can have different lengths
-                if hasattr(self.downstream, "seq_task") and self.downstream.seq_task == True:
+                if hasattr(self.downstream.model, "seq_task") and self.downstream.model.seq_task == True:
                     # "wavs" is overloaded into saved features here
                     # can be list of Tensors, or list of list of Tensors
                     if isinstance(wavs[0], (list, tuple)):
@@ -514,7 +514,7 @@ class Runner:
                             if key[0] == '_':
                                 continue
 
-                            if not hasattr(self.downstream, "seq_task") or self.downstream.seq_task == False:
+                            if not hasattr(self.downstream.model, "seq_task") or self.downstream.model.seq_task == False:
                                 if isinstance(feature, (list, tuple)):
                                     feature = [layer.mean(dim=1, keepdim=True) for layer in feature]
                                 else:

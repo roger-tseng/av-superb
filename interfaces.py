@@ -322,9 +322,11 @@ class Featurizer(nn.Module):
         # ), f"{length_diff} >= {TOLERABLE_SEQLEN_DIFF}, {paired_feature.size(1)}, {max([len(wav[0]) for wav in paired_wavs])}"
         # feature = [f[:l] for f, l in zip(paired_feature, feature_len)]
         if lens is not None:
+            # unpad batch features by original length
             assert len(lens) == len(paired_feature)
             feature = [f[:l] for f, l in zip(paired_feature, lens)]
-        feature = [f for f in paired_feature]
+        else:
+            feature = [f for f in paired_feature]
         return feature
 
     def forward(
