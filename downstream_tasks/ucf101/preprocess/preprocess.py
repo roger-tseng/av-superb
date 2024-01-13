@@ -79,5 +79,5 @@ for typeName in os.listdir(f"{origin_base_path}"):
 
         try:
             ffmpeg.run(output, quiet=True)
-        except:
+        except ffmpeg.Error as e:
             pass
