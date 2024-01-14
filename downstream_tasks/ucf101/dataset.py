@@ -3,18 +3,12 @@ Custom class for loading audio-visual data
 Modified from https://github.com/s3prl/s3prl/blob/main/s3prl/downstream/example/dataset.py
 """
 import os
-import random
+import csv
 
 import torch
 import torch.nn as nn
 import torchvision
 from torch.utils.data.dataset import Dataset
-
-groups = {
-    "train": ["g08", "g09", "g10", "g11", "g12", "g13", "g14", "g15", "g16", "g17", "g18", "g19", "g20", "g21", "g22", "g23", "g24", "g25"],
-    "dev": [],
-    "test": ["g01", "g02", "g03", "g04", "g05", "g06", "g07"],
-}
 
 class UCF101Dataset(Dataset):
     def __init__(
@@ -47,11 +41,21 @@ class UCF101Dataset(Dataset):
         self.base_path = base_path
 
         videos = os.listdir(f"{base_path}")
-        self.video_list = list(filter(
-            lambda path : path[:-4].rsplit("_",2)[1] in groups[split], 
-            videos
-            ))
-        self.class_to_idx = sorted(set(v.rsplit("_",3)[1] for v in videos))
+        if split == "train":
+            self.path = kwargs.get("train_meta_location")
+        elif split == "dev":
+            self.path = kwargs.get("val_meta_location")
+        elif split == "test":
+            self.path = kwargs.get("test_meta_location")
+
+        try:
+            file = open(self.path, "r")
+            data = list(csv.reader(file, delimiter=","))
+            file.close()
+        except FileNotFoundError:
+            data = []
+
+        self.video_list = data
         self.preprocess = preprocess
         self.preprocess_audio = preprocess_audio
         self.preprocess_video = preprocess_video
@@ -61,9 +65,9 @@ class UCF101Dataset(Dataset):
 
     def __getitem__(self, idx):
         # You may use the following function to read video data:
-        basename = self.video_list[idx]
+        basename = self.video_list[idx][0]+".avi"
         video_path = os.path.join(self.base_path, basename)
-        label = self.class_to_idx.index(video_path.rsplit("_",3)[1])
+        label = int(self.video_list[idx][1])
 
         # Directly load pooled features if exist, 
         # skipping video loading and preprocessing

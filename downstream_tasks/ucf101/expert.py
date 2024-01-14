@@ -2,10 +2,6 @@
 Custom class for training/testing code for downstream audio-visual tasks
 Modified from https://github.com/s3prl/s3prl/blob/main/s3prl/downstream/example/expert.py
 """
-import math
-import os
-import random
-
 import torch
 import torch.nn as nn
 from torch.distributed import is_initialized

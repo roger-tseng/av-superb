@@ -27,7 +27,10 @@ downstream_expert:
     train_batch_size: 8
     eval_batch_size: 8
     class_num: 101
-    base_path: "/work/b07901163/av/UCF101/avi"
+    base_path: "/media/rogert/DATA/UCF101/avi"
+    train_meta_location: "/home/rogert/Desktop/code/audiovisual-benchmark/downstream_tasks/ucf101/train.csv"
+    val_meta_location: ""
+    test_meta_location: "/home/rogert/Desktop/code/audiovisual-benchmark/downstream_tasks/ucf101/test.csv"
 
   modelrc:
     input_dim: 256
