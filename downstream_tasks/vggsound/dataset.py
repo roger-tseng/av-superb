@@ -51,6 +51,9 @@ class VggsoundDataset(Dataset):
         print("dataset length:", len(self.data))
         if len(self.data) > 0: print("data example:", self.data[0])
 
+        if self.save_features:
+            if not os.path.exists(f"{self.feature_root}/{self.upstream_name}/"):
+                os.makedirs(f"{self.feature_root}/{self.upstream_name}/")
 
     def __getitem__(self, idx):
 
@@ -69,7 +72,7 @@ class VggsoundDataset(Dataset):
                 pooled_feature = torch.load(pooled_feature_path)
                 return pooled_feature, pooled_feature, label, True        
 
-        feature_path = f"/work/u2707828/testdata/{self.upstream_name}/{basename}.pt"
+        feature_path = f"{self.feature_root}/{self.upstream_name}/{basename}.pt"
 
         if os.path.exists(feature_path):
             processed_wav, processed_frames = torch.load(feature_path)
@@ -94,7 +97,8 @@ class VggsoundDataset(Dataset):
                     processed_frames = self.preprocess_video(frames, video_fps)
                 else:
                     processed_frames = frames
-
+            if self.save_features:
+                torch.save([processed_wav, processed_frames], feature_path)
 
         return processed_wav, processed_frames, label, basename
 

@@ -17,14 +17,14 @@ optimizer:
 
 downstream_expert:
   datarc:
-    vggsound_root:      "/work/u2707828/VGGSound/VGGSound"
-    feature_root:       "/work/u2707828/features"
+    vggsound_root:      "/work/u2707828/VGGSound/VGGSound_test"   #"VGGSOUND_DATA_PATH"
+    feature_root:       "/work/u2707828/testdata" #"PAVE_TO_SAVE_FEATURE"
     train_location:     "./downstream_tasks/vggsound/split/split/vggsound_train.csv"
     val_location:       "./downstream_tasks/vggsound/split/split/vggsound_dev.csv"
     test_location:      "./downstream_tasks/vggsound/split/split/vggsound_test.csv"
     save_features:      False
     class_num: 310 
-    num_workers: 13
+    num_workers: 4
     train_batch_size: 2
     eval_batch_size: 2
 
