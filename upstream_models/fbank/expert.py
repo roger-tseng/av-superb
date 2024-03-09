@@ -1,11 +1,14 @@
+# Author: Yuan Tseng
+# Modified from S3PRL
+# (Authors: Leo Yang, Andy T. Liu and S3PRL team, https://github.com/s3prl/s3prl/blob/main/s3prl/upstream/baseline/expert.py
+
 # -*- coding: utf-8 -*- #
 """*********************************************************************************************"""
-#   FileName     [ Modified from https://github.com/s3prl/s3prl/blob/main/s3prl/upstream/baseline/extracter.py ]
-#   Synopsis     [ the baseline wrapper ]
-#   Author       [ S3PRL (Leo Yang) ]
+#   FileName     [ upstream/baseline/extracter.py ]
+#   Synopsis     [ the baseline feature extracter with torchaudio.compliance.kaldi as backend ]
+#   Author       [ S3PRL ]
 #   Copyright    [ Copyleft(c), Speech Lab, NTU, Taiwan ]
 """*********************************************************************************************"""
-
 
 import yaml
 from torch.nn.utils.rnn import pad_sequence

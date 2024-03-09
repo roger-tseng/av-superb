@@ -1,3 +1,9 @@
+# Author: Yuan Tseng
+# Custom classes for interfacing upstream models and downstream tasks
+
+# Modified from S3PRL
+# (Authors: Leo Yang, Andy T. Liu and S3PRL team, https://github.com/s3prl/s3prl/blob/main/s3prl/upstream/interfaces.py)
+
 import random
 import sys
 from typing import Callable, Dict, List, Tuple, Union
@@ -303,7 +309,7 @@ class Featurizer(nn.Module):
 
         return weighted_feature
 
-    def tolist(self, paired_wavs: List[Tuple[Tensor, Tensor]], paired_feature: Tensor):
+    def tolist(self, paired_wavs: List[Tuple[Tensor, Tensor]], paired_feature: Tensor, lens=None):
         assert paired_feature.dim() == 3, "(batch_size, max_seq_len, feat_dim)"
         # TODO: check if this is needed
         # feature_len = [round(len(wav[0]) / self.downsample_rate) for wav in paired_wavs]
@@ -315,16 +321,22 @@ class Featurizer(nn.Module):
         #     length_diff < TOLERABLE_SEQLEN_DIFF
         # ), f"{length_diff} >= {TOLERABLE_SEQLEN_DIFF}, {paired_feature.size(1)}, {max([len(wav[0]) for wav in paired_wavs])}"
         # feature = [f[:l] for f, l in zip(paired_feature, feature_len)]
-        feature = [f for f in paired_feature]
+        if lens is not None:
+            # unpad batch features by original length
+            assert len(lens) == len(paired_feature)
+            feature = [f[:l] for f, l in zip(paired_feature, lens)]
+        else:
+            feature = [f for f in paired_feature]
         return feature
 
     def forward(
         self,
         paired_wavs: List[Tuple[Tensor, Tensor]],
         paired_features: Dict[str, Union[Tensor, List[Tensor], Dict[str, Tensor]]],
+        lens=None, 
     ):
         feature = self._select_feature(paired_features)
         if isinstance(feature, (list, tuple)):
             feature = self._weighted_sum(feature)
 
-        return self.tolist(paired_wavs, feature)
+        return self.tolist(paired_wavs, feature, lens)

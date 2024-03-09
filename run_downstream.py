@@ -1,3 +1,9 @@
+# Author: Yuan Tseng
+# Main script for running experiments
+
+# Modified from S3PRL 
+# (Authors: Leo Yang, Andy T. Liu and S3PRL team, https://github.com/s3prl/s3prl/blob/main/s3prl/run_downstream.py)
+
 import argparse
 import glob
 import logging
@@ -169,10 +175,6 @@ def get_downstream_args():
     parser.add_argument('--pooled_features_path', type=str)
     args = parser.parse_args()
     backup_files = []
-
-    if args.pooled_features_path:
-        for feature_selection in ['audio_feats', 'video_feats', 'fusion_feats']:
-            os.makedirs(f"{args.pooled_features_path}/{args.upstream}_{feature_selection}", exist_ok=True)
 
     if args.expdir is None:
         args.expdir = f"result/downstream/{args.expname}"

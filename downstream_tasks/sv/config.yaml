@@ -1,0 +1,69 @@
+runner:
+  total_steps: 20000
+  gradient_clipping: 1.0e+3
+  gradient_accumulate_steps: 1
+
+  log_step: 500
+  eval_step: 20000
+  save_step: 2000
+  max_keep: 20
+  eval_dataloaders: 
+    - dev
+    - test
+  
+optimizer: 
+  name: AdamW
+  lr: 1.0e-4
+  # name: TorchOptim
+  # torch_optim_name: AdamW
+  # lr: 1.0e-4
+
+# # comment the whole scheduler config block to disable learning rate scheduling
+# scheduler:
+#   name: linear_schedule_with_warmup
+#   num_warmup_steps: 6000
+
+downstream_expert: 
+  datarc:
+    
+    file_path: /path/to/VoxCeleb2/
+
+    max_timestep: 64000
+    train_batch_size: 16
+    eval_batch_size: 16
+    num_workers: 4
+
+  modelrc:
+    # module:
+    #   XVector  # support to [ XVector, Identity ]
+    input_dim: 256
+    # agg_module: SP # support for ASP / SP / AP / MP 
+    #                # (Attentive Statistic Pooling / Statistic Pooling / Attentive Pooling / Mean Pooling)
+    # utter_module:
+    #   UtteranceExtractor
+    
+    # module_config:
+    #   # You can comment it if you do not use this. To demo the usage, we will show all case.
+    #   XVector:
+    #     agg_dim: 1500
+    #     dropout_p: 0.0
+    #     batch_norm: False
+      
+    #   Identity:
+    #     no_args: True
+    #     # do nothing    
+    
+    ObjectiveLoss: AMSoftmaxLoss # You can specify config to AMSoftmaxLoss ,AAMSoftmaxLoss or SoftmaxLoss
+    
+    LossConfig:
+      # SoftmaxLoss: 
+      #   no_args: True
+    
+      AMSoftmaxLoss:
+        s: 30.0
+        m: 0.4
+
+      # AAMSoftmaxLoss:
+      #   s: 15
+      #   m: 0.3
+      #   easy_margin: False

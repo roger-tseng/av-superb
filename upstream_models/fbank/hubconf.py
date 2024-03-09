@@ -1,11 +1,14 @@
+# Author: Yuan Tseng
+# Modified from S3PRL
+# (Authors: Leo Yang, Andy T. Liu and S3PRL team, https://github.com/s3prl/s3prl/blob/main/s3prl/upstream/baseline/hubconf.py)
+
 # -*- coding: utf-8 -*- #
 """*********************************************************************************************"""
-#   FileName     [ Modified from https://github.com/s3prl/s3prl/blob/main/s3prl/upstream/baseline/hubconf.py ]
+#   FileName     [ upstream/baseline/hubconf.py ]
 #   Synopsis     [ the baseline torch hubconf ]
-#   Author       [ S3PRL (Leo Yang) ]
+#   Author       [ S3PRL ]
 #   Copyright    [ Copyleft(c), Speech Lab, NTU, Taiwan ]
 """*********************************************************************************************"""
-
 
 ###############
 # IMPORTATION #

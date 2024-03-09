@@ -1,7 +1,3 @@
-"""
-Custom class for loading audio-visual model and extract features 
-Modified from https://github.com/s3prl/s3prl/blob/main/s3prl/upstream/example/expert.py
-"""
 import math
 from collections import OrderedDict
 from typing import Dict, List, Tuple, Union
@@ -113,7 +109,13 @@ class UpstreamExpert(nn.Module):
 
         if len(audio.shape) == 1:
             waveform = audio.unsqueeze(0)
-        
+        else:
+            waveform = audio.mean(dim=0, keepdim=True)
+
+        if len(waveform[0]) < 16385:
+            pad = torch.nn.ZeroPad2d((0, 16385-len(waveform[0]), 0, 0))
+            waveform = pad(waveform)
+
         waveform = resample(
             waveform,
             audio_sample_rate,
