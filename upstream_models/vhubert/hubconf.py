@@ -1,4 +1,6 @@
-# Copyright (c) Facebook, Inc. All Rights Reserved
+# One needs to agree with the AV-HuBERT license (see COPYRIGHT under root 
+# directory of source tree) to use pretrained models listed in this file.
+# Copyright (c) Meta Platforms, Inc. All Rights Reserved.
 
 # -*- coding: utf-8 -*- #
 """*********************************************************************************************"""
@@ -6,10 +8,6 @@
 #   Synopsis     [ the avhubert torch hubconf ]
 #   Author       [ S3PRL / Puyuan Peng, UT Austin]
 """*********************************************************************************************"""
-
-
-# one needs to agree with the liscence agreement to be able to use the avhubert models
-# please go to this page https://facebookresearch.github.io/av_hubert/
 
 ###############
 # IMPORTATION #

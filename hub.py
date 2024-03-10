@@ -1,3 +1,9 @@
+# Author: Yuan Tseng
+# Hub for custom model classes
+
+# Modified from S3PRL 
+# (Authors: Leo Yang, Andy T. Liu and S3PRL team, https://github.com/s3prl/s3prl/blob/main/s3prl/hub.py)
+
 from upstream_models.example.hubconf import *
 # <<<<<<< HEAD
 # =======

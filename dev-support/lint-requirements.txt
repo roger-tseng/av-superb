@@ -1,2 +1,0 @@
-black
-isort==5.9.3

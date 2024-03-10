@@ -11,32 +11,22 @@ requests
 transformers
 tensorboardX
 gdown
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
 # histogram of gradients
 scikit-image
->>>>>>> 0ab89a26625e70b6f8fef98f8f11c4558b0a25f7
 # avhubert
-fairseq >=0.10.2        # tested with 0.12.2
+fairseq ==0.12.2        # tested with 0.12.2
 opencv-python-headless  # headless works better for twcc
 sentencepiece==0.1.96
 # replai
 munch
 pytorchvideo
-<<<<<<< HEAD
->>>>>>> origin/interface+avhubert+replai
-=======
 # avbert
 simplejson
 scipy
-<<<<<<< HEAD
->>>>>>> eb85f721a72e1d461c42a6fed2d566b4d610888b
-=======
 # mavil
-timm ==0.3.2 
 # after timm installation, replace line 6 of 
 # ENV_PATH/lib/python3.9/site-packages/timm/models/layers/helpers.py with 
 # import collections.abc as container_abcs
->>>>>>> b754712880c9262170e071b1fc979c9cffb32876
+timm ==0.3.2 
+# asr downstream task
+editdistance
