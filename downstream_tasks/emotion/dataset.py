@@ -10,7 +10,7 @@ import imageio
 import cv2
 import torch
 
-miss = './miss.txt' 
+miss = './downstream_tasks/emotion/miss.txt' 
 miss_list = []
 with open(miss, 'r') as f:
     line = f.readline()

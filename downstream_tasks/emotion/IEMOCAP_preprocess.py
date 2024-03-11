@@ -6,20 +6,22 @@ import json
 from librosa.util import find_files
 import shutil
 from moviepy.editor import*
+import yaml
+
+config_data = {}
+with open('./config.yaml', 'r') as stream:
+    config_data = yaml.load(stream, Loader=yaml.FullLoader)
 
 
 LABEL_DIR_PATH = 'dialog/EmoEvaluation'
 WAV_DIR_PATH = 'sentences/wav'
-DATA_DIR = './IEMOCAP/'
 
-miss = './IEMOCAP/miss.txt' 
-miss_list = []
+miss = './miss.txt' 
 miss_filename = []
 with open(miss, 'r') as f:
     line = f.readline()
     while line:
         line = f.readline().replace('\n','') #去掉換行
-        miss_list.append(line)
         miss_filename.append((os.path.splitext(line)[0]).split('/')[-1])  
 f.close()
 
@@ -44,7 +46,7 @@ def preprocess(data_dirs, paths, out_path):
         label_dir = path_join(data_dirs, path, LABEL_DIR_PATH)
         label_paths = list(os.listdir(label_dir))
         label_paths = [label_path for label_path in label_paths
-                       if splitext(label_path)[1] == '.txt']
+                       if splitext(label_path)[1] == '.txt' and not label_path.startswith('.')]
         for label_path in label_paths:
             with open(path_join(label_dir, label_path)) as f:
                 for line in f:
@@ -72,8 +74,8 @@ def video_clip_store(video_filename, clip_filename, start_time, end_time):
     video_clip = VideoFileClip(video_filename).subclip(start_time, end_time)
     video_clip.write_videofile(clip_filename, codec = "libx264")
 
-def avi_preprocess(i, path):
-    avi_path = DATA_DIR+path+'/dialog/avi/DivX/'
+def avi_preprocess(data_dir, i, path):
+    avi_path = data_dir+'/'+path+'/dialog/avi/DivX/'
     avi_all = []
     for root, dirs, files in os.walk(avi_path):
         for file in files:
@@ -83,11 +85,11 @@ def avi_preprocess(i, path):
     for avi in avi_all:
         video_filename = avi
         raw_name = os.path.splitext(avi.split('/')[-1])[0]
-        lab_F = DATA_DIR+path+'/dialog/lab/Ses0'+str(i+1)+'_F/'+raw_name+'.lab'
-        lab_M = DATA_DIR+path+'/dialog/lab/Ses0'+str(i+1)+'_M/'+raw_name+'.lab'
-        clip_dir = DATA_DIR+path+'/sentences/avi_sentence/'+raw_name
+        lab_F = data_dir+'/'+path+'/dialog/lab/Ses0'+str(i+1)+'_F/'+raw_name+'.lab'
+        lab_M = data_dir+'/'+path+'/dialog/lab/Ses0'+str(i+1)+'_M/'+raw_name+'.lab'
+        clip_dir = data_dir+'/'+path+'/sentences/avi_sentence/'+raw_name
         if not os.path.isdir(clip_dir):
-                os.mkdir(clip_dir)
+            os.makedirs(clip_dir, exist_ok=True)
 
         f_F = open(lab_F, 'r', encoding='iso-8859-1')
         line_F = f_F.readline()
@@ -114,8 +116,9 @@ def avi_preprocess(i, path):
                 clip_filename = clip_dir+'/'+sen_M.split(' ')[-1]+'.mp4'
                 video_clip_store(video_filename, clip_filename, sen_M.split(' ')[0], sen_M.split(' ')[1]) 
           
-def main(data_dir):
+def main():
     """Main function."""
+    data_dir = config_data['downstream_expert']['datarc']['iemocap_root']
     paths = list(os.listdir(data_dir))
     paths = [path for path in paths if path[:7] == 'Session']
     paths.sort()
@@ -125,7 +128,7 @@ def main(data_dir):
         os.makedirs(f"{out_dir}/{path}", exist_ok=True)
         preprocess(data_dir, paths[:i] + paths[i + 1:], path_join(f"{out_dir}/{path}", 'train_meta_data.json'))
         preprocess(data_dir, [path], path_join(f"{out_dir}/{path}", 'test_meta_data.json'))
-        avi_preprocess(i, path)
+        avi_preprocess(data_dir, i, path)
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    main()

@@ -14,7 +14,6 @@ from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader, DistributedSampler, random_split
 
 from .dataset import IEMOCAPDataset, collate_fn
-# from ..model import *
 from .model import *
 
 def get_ddp_sampler(dataset: IEMOCAPDataset, epoch: int):
