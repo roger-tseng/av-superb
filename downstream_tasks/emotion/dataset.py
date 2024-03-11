@@ -10,7 +10,7 @@ import imageio
 import cv2
 import torch
 
-miss = '/data/member1/user_tahsieh/IEMOCAP/miss.txt' 
+miss = './miss.txt' 
 miss_list = []
 with open(miss, 'r') as f:
     line = f.readline()
@@ -61,7 +61,7 @@ class IEMOCAPDataset(Dataset):
                 pooled_feature = torch.load(pooled_feature_path)
                 return pooled_feature, pooled_feature, label, True
 
-        feature_path = f"/data/member1/user_tahsieh/IEMOCAP/preprocess_features/{self.upstream_name}/{fname.split('/')[0]}/{fname.split('/')[-2]}/{basename}.pt"
+        feature_path = f"{self.iemocap_root}/preprocess_features/{self.upstream_name}/{fname.split('/')[0]}/{fname.split('/')[-2]}/{basename}.pt"
         
         if os.path.exists(feature_path):
             processed_wav, processed_frames = torch.load(feature_path)
@@ -83,10 +83,6 @@ class IEMOCAPDataset(Dataset):
                     processed_frames = self.preprocess_video(frames, video_fps)
                 else:
                     processed_frames = frames
-            
-            # if not os.path.isdir(os.path.dirname(feature_path)):
-            #     os.mkdir(os.path.dirname(feature_path))
-            # torch.save([processed_wav, processed_frames], feature_path)
 
         return processed_wav, processed_frames, label, basename
         
@@ -97,10 +93,3 @@ def collate_fn(samples):
     wavs, videos, *others = zip(*samples)
     
     return wavs, videos, *others
-    # wavs, videos, labels, files_name = [], [], [], []
-    # for wav, frames, label, file_name in samples:
-    #     wavs.append(wav)
-    #     videos.append(frames)
-    #     labels.append(label)
-    #     files_name.append(file_name)
-    # return wavs, videos, labels, files_name
