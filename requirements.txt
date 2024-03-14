@@ -11,6 +11,8 @@ requests
 transformers
 tensorboardX
 gdown
+#audioset
+scikit-learn
 # histogram of gradients
 scikit-image
 # avhubert
