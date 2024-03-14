@@ -21,6 +21,7 @@ class UpstreamExpert(nn.Module):
         Args:
             ckpt:
                 checkpoint path for loading pretrained weights.
+
             model_config:
                 config path for your model.
         """

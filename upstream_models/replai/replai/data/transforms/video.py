@@ -43,7 +43,7 @@ def crop_clip(clip, min_h, min_w, h, w):
 
 
 def resize_clip(clip, size, interpolation="bilinear"):
-    if isinstance(clip[0], np.ndarray):  # or isinstance(clip[0], torch.Tensor):
+    if isinstance(clip[0], np.ndarray): # or isinstance(clip[0], torch.Tensor):
         if isinstance(size, numbers.Number):
             im_h, im_w, im_c = clip[0].shape
             # Min spatial dim already matches minimal size

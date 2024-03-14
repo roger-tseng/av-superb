@@ -20,6 +20,7 @@ class PyAVDecoder(EncodedVideoPyAV):
         file_path: str,
         decode_audio: bool = True,
     ) -> None:
+
         with g_pathmgr.open(file_path, "rb") as fh:
             video_file = io.BytesIO(fh.read())
 
