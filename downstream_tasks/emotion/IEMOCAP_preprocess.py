@@ -71,8 +71,11 @@ def preprocess(data_dirs, paths, out_path):
         json.dump(data, f)
         
 def video_clip_store(video_filename, clip_filename, start_time, end_time):
-    video_clip = VideoFileClip(video_filename).subclip(start_time, end_time)
-    video_clip.write_videofile(clip_filename, codec = "libx264")
+    try:
+        video_clip = VideoFileClip(video_filename).subclip(start_time, end_time)
+        video_clip.write_videofile(clip_filename, codec = "libx264")
+    except:
+        pass
 
 def avi_preprocess(data_dir, i, path):
     avi_path = data_dir+'/'+path+'/dialog/avi/DivX/'
