@@ -57,7 +57,7 @@ class DownstreamExpert(nn.Module):
         self.modelrc = downstream_expert["modelrc"]  # config for model
         
         DATA_ROOT = self.datarc["iemocap_root"]
-        meta_data = self.datarc["meta_data"]
+        meta_data = f"{DATA_ROOT}/meta_data"
         
         self.fold = self.datarc.get('test_fold') or kwargs.get("downstream_variant")
         if self.fold is None:

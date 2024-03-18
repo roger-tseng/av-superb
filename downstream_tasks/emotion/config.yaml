@@ -25,7 +25,6 @@ optimizer:
 downstream_expert:
   datarc:
     iemocap_root: /work/u3933430/IEMOCAP
-    meta_data: ./downstream_tasks/emotion/meta_data
     test_fold: fold1
     train_batch_size: 4
     eval_batch_size: 4
