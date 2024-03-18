@@ -75,7 +75,11 @@ def video_clip_store(video_filename, clip_filename, start_time, end_time):
         video_clip = VideoFileClip(video_filename).subclip(start_time, end_time)
         video_clip.write_videofile(clip_filename, codec = "libx264")
     except:
-        pass
+        f = open('./your_miss.txt', 'w')
+        f.write('Session'+str(i)+':')
+        f.write(file)
+        f.write("\n")
+        f.close()
 
 def avi_preprocess(data_dir, i, path):
     avi_path = data_dir+'/'+path+'/dialog/avi/DivX/'
