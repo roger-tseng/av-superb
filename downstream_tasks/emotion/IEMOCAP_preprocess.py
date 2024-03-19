@@ -25,8 +25,6 @@ with open(miss, 'r') as f:
         miss_filename.append((os.path.splitext(line)[0]).split('/')[-1])  
 f.close()
 
-
-
 def get_wav_paths(data_dirs):
     wav_paths = find_files(data_dirs)
     wav_dict = {}
@@ -71,6 +69,7 @@ def preprocess(data_dirs, paths, out_path):
         json.dump(data, f)
         
 def video_clip_store(video_filename, clip_filename, start_time, end_time):
+    if not os.path.exists(clip_filename):
         video_clip = VideoFileClip(video_filename).subclip(start_time, end_time)
         video_clip.write_videofile(clip_filename, codec = "libx264")
 
@@ -108,28 +107,18 @@ def avi_preprocess(data_dir, i, path):
         f_M.close()
 
         for sen_F in sentences_F:
-            if sen_F not in miss_filename:
+            if sen_F.split(' ')[-1] not in miss_filename:
                 clip_filename = clip_dir+'/'+sen_F.split(' ')[-1]+'.mp4'
                 try:
                     video_clip_store(video_filename, clip_filename, sen_F.split(' ')[0], sen_F.split(' ')[1]) 
                 except:
-                    f = open('./your_miss.txt', 'w')
-                    f.write('Session'+str(i)+':')
-                    f.write(file)
-                    f.write("\n")
-                    f.close()
                     continue
         for sen_M in sentences_M:
-            if sen_M not in miss_filename:
+            if sen_M.split(' ')[-1] not in miss_filename:
                 clip_filename = clip_dir+'/'+sen_M.split(' ')[-1]+'.mp4'
                 try:
                     video_clip_store(video_filename, clip_filename, sen_M.split(' ')[0], sen_M.split(' ')[1]) 
                 except:
-                    f = open('./your_miss.txt', 'w')
-                    f.write('Session'+str(i)+':')
-                    f.write(file)
-                    f.write("\n")
-                    f.close()
                     continue
           
 def main():

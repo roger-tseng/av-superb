@@ -30,3 +30,4 @@ scipy
 timm ==0.3.2 
 # asr downstream task
 editdistance
+moviepy
