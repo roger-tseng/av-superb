@@ -173,6 +173,7 @@ def get_downstream_args():
     parser.add_argument("--disable_cudnn", action="store_true", help="Disable CUDNN")
     # Path to where to save the features
     parser.add_argument('--pooled_features_path', type=str)
+    parser.add_argument("--log_file", default="result.log", type=str, help="Path to save the log file (reletive to expdir)")
     args = parser.parse_args()
     backup_files = []
 

@@ -30,6 +30,7 @@ from interfaces import Featurizer
 from utils.helper import defaultdict, get_model_state, is_leader_process, show
 from utils.optimizers import get_optimizer
 from utils.schedulers import get_scheduler
+from utils.file_logger import FileWriter
 
 SAMPLE_RATE = 16000
 
@@ -202,6 +203,7 @@ class Runner:
         # Tensorboard logging
         if is_leader_process():
             logger = SummaryWriter(self.args.expdir)
+            file_logger = FileWriter(os.path.join(self.args.expdir, self.args.log_file))
 
         batch_ids = []
         backward_steps = 0
@@ -361,6 +363,7 @@ class Runner:
                         train_split,
                         records=records,
                         logger=logger,
+                        file_logger = file_logger,
                         global_step=global_step,
                         batch_ids=batch_ids,
                         total_batch_num=len(dataloader),
@@ -373,7 +376,7 @@ class Runner:
 
                 if global_step % self.config["runner"]["eval_step"] == 0:
                     for split in self.config["runner"]["eval_dataloaders"]:
-                        save_names += self.evaluate(split, logger, global_step)
+                        save_names += self.evaluate(split, logger, file_logger, global_step)
 
                 if global_step % self.config["runner"]["save_step"] == 0:
 
@@ -425,16 +428,18 @@ class Runner:
 
         if is_leader_process():
             logger.close()
+            file_logger.close()
 
-    def evaluate(self, split=None, logger=None, global_step=0):
+    def evaluate(self, split=None, logger=None, file_logger=None, global_step=0):
         """evaluate function will always be called on a single process even during distributed training"""
 
         # When this member function is called directly by command line
-        not_during_training = split is None and logger is None and global_step == 0
+        not_during_training = split is None and logger is None and file_logger is None and global_step == 0
         if not_during_training:
             split = self.args.evaluate_split
             tempdir = tempfile.mkdtemp()
             logger = SummaryWriter(tempdir)
+            file_logger = FileWriter(os.path.join(self.args.expdir, self.args.log_file))
 
         # fix seed to guarantee the same evaluation protocol across steps
         random.seed(self.args.seed)
@@ -543,6 +548,7 @@ class Runner:
             split,
             records=records,
             logger=logger,
+            file_logger=file_logger,
             global_step=global_step,
             batch_ids=batch_ids,
             total_batch_num=len(dataloader),
@@ -561,6 +567,7 @@ class Runner:
 
         if not_during_training:
             logger.close()
+            file_logger.close()
             shutil.rmtree(tempdir)
 
         return [] if type(save_names) is not list else save_names
