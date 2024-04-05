@@ -90,7 +90,7 @@ class UpstreamExpert(nn.Module):
             step = int(step)
             idxs = slice(None, None, step)
         else:
-            num_frames = int(len(video) / step)
+            num_frames = max(int(len(video) / step), 1)
             idxs = torch.arange(num_frames, dtype=torch.float32) * step
             idxs = idxs.floor().to(torch.int64)
         video = video[idxs]
@@ -221,10 +221,10 @@ class UpstreamExpert(nn.Module):
         # fusion_feats: features that consider both modalities
         # Each item should be a list of features that are of the same shape
         return {
-            "video_feats": video_pooled_feats,
-            "audio_feats": audio_pooled_feats,
-            "fusion_feats": fusion_pooled_feats,
-            "_video_seq_feats": video_seq_feats,
-            "_audio_seq_feats": audio_seq_feats,
-            "_fusion_seq_feats": fusion_seq_feats,
+            "_video_feats": video_pooled_feats,
+            "_audio_feats": audio_pooled_feats,
+            "_fusion_feats": fusion_pooled_feats,
+            "video_seq_feats": video_seq_feats,
+            "audio_seq_feats": audio_seq_feats,
+            "fusion_seq_feats": fusion_seq_feats,
         }
