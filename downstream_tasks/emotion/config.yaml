@@ -24,7 +24,7 @@ optimizer:
 
 downstream_expert:
   datarc:
-    iemocap_root: /data/member1/user_tahsieh/IEMOCAP
+    iemocap_root: /media/rogert/DATA1/IEMOCAP_full_release
     meta_data: ./downstream_tasks/emotion/meta_data
     test_fold: fold1
     pre_load: True

@@ -40,3 +40,4 @@ timm ==0.3.2
 # ENV_PATH/lib/python3.9/site-packages/timm/models/layers/helpers.py with 
 # import collections.abc as container_abcs
 >>>>>>> b754712880c9262170e071b1fc979c9cffb32876
+moviepy ==1.0.3

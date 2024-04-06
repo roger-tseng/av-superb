@@ -3,16 +3,17 @@ from os.path import basename, splitext, join as path_join
 import sys
 import re
 import json
-from librosa.util import find_files
+from glob import glob
 import shutil
 from moviepy.editor import*
 
 
 LABEL_DIR_PATH = 'dialog/EmoEvaluation'
 WAV_DIR_PATH = 'sentences/wav'
-DATA_DIR = './IEMOCAP/'
+DATA_DIR = '/media/rogert/DATA1/IEMOCAP_full_release/'
+CLIP_DIR = '/media/rogert/DATA1/IEMOCAP_full_release/clips/'
 
-miss = './IEMOCAP/miss.txt' 
+miss = 'downstream_tasks/emotion/miss.txt' 
 miss_list = []
 miss_filename = []
 with open(miss, 'r') as f:
@@ -26,7 +27,7 @@ f.close()
 
 
 def get_wav_paths(data_dirs):
-    wav_paths = find_files(data_dirs)
+    wav_paths = glob(os.path.join(data_dirs, '**/*.wav'), recursive=True)
     wav_dict = {}
     for wav_path in wav_paths:
         wav_name = splitext(basename(wav_path))[0]
@@ -85,9 +86,9 @@ def avi_preprocess(i, path):
         raw_name = os.path.splitext(avi.split('/')[-1])[0]
         lab_F = DATA_DIR+path+'/dialog/lab/Ses0'+str(i+1)+'_F/'+raw_name+'.lab'
         lab_M = DATA_DIR+path+'/dialog/lab/Ses0'+str(i+1)+'_M/'+raw_name+'.lab'
-        clip_dir = DATA_DIR+path+'/sentences/avi_sentence/'+raw_name
+        clip_dir = os.path.join(CLIP_DIR, path, raw_name)
         if not os.path.isdir(clip_dir):
-                os.mkdir(clip_dir)
+            os.makedirs(clip_dir)
 
         f_F = open(lab_F, 'r', encoding='iso-8859-1')
         line_F = f_F.readline()
@@ -128,4 +129,4 @@ def main(data_dir):
         avi_preprocess(i, path)
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    main("/media/rogert/DATA/IEMOCAP_full_release")

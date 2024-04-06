@@ -10,7 +10,7 @@ import imageio
 import cv2
 import torch
 
-miss = '/data/member1/user_tahsieh/IEMOCAP/miss.txt' 
+miss = 'downstream_tasks/emotion/miss.txt' 
 miss_list = []
 with open(miss, 'r') as f:
     line = f.readline()
@@ -32,6 +32,7 @@ class IEMOCAPDataset(Dataset):
             path = self.dataset['meta_data'][i]['path']
             if path in miss_list:
                 if i not in index:
+                    print(path, "is missing!")
                     index.append(i)             
         for i in index[::-1]:
             del self.dataset['meta_data'][i]
@@ -67,7 +68,8 @@ class IEMOCAPDataset(Dataset):
             processed_wav, processed_frames = torch.load(feature_path)
         else:
             wav, audio_sr = torchaudio.load(path_join(self.iemocap_root, self.meta_data[idx]['path']))
-            avi_path = path_join(self.iemocap_root, os.path.splitext(self.meta_data[idx]['path'])[0].replace('wav', 'avi_sentence')+'.mp4')
+            session, _, _, _, basename = self.meta_data[idx]['path'].split('/')
+            avi_path = path_join(self.iemocap_root, session, 'dialog/avi/DivX', basename.split('.')[0]+'.avi')
             frames, _, rates = torchvision.io.read_video(avi_path, pts_unit="sec", output_format="TCHW")
             video_fps = rates["video_fps"]
             
