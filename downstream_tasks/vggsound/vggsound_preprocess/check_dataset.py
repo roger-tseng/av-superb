@@ -52,13 +52,11 @@ if __name__ == '__main__':
     for data in datas:	dictionary[getFilename(data)] = data
 
 
-    lsla = [i.split() for i in os.popen('ls {} -la'.format(data_folder)).read().split("\n")[1:-1]]
+    lsla = os.listdir(data_folder)
     print("There're {} files in video directory".format(len(lsla)))
 
 
-    for file in lsla:
-        filename, filesize = file[8], int(file[4])
-        if filename == '.' or filename == '..': continue
+    for filename in lsla:
         test.append(dictionary[filename]) if dictionary[filename][-1]=='test' else train.append(dictionary[filename])
 
 
