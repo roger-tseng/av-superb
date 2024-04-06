@@ -17,8 +17,8 @@ optimizer:
 
 downstream_expert:
   datarc:
-    vggsound_root:      "/work/u2707828/VGGSound/VGGSound_test"   #"VGGSOUND_DATA_PATH"
-    feature_root:       "/work/u2707828/testdata" #"PAVE_TO_SAVE_FEATURE"
+    vggsound_root:      "/path/to/vggsound/"
+    feature_root:       "/path/to/save/preprocessed/features/" # optional, only used if save_features is True
     train_location:     "./downstream_tasks/vggsound/split/split/vggsound_train.csv"
     val_location:       "./downstream_tasks/vggsound/split/split/vggsound_dev.csv"
     test_location:      "./downstream_tasks/vggsound/split/split/vggsound_test.csv"
