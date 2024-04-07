@@ -86,10 +86,6 @@ def get_downstream_args():
         Typically downstream dataset need manual preparation.\
         Please check downstream/README.md for details",
     )
-    parser.add_argument(
-        "-v", "--downstream_variant", help="Downstream vairants given the same expert"
-    )
-
     # upstream settings
     parser.add_argument(
         "--hub",
