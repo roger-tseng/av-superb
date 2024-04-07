@@ -1,44 +1,19 @@
 import json
-from pathlib import Path
 from os.path import join as path_join
-import numpy as np
 import os
 import torchaudio
 import torchvision.io
 from torch.utils.data import Dataset
-import imageio
-import cv2
 import torch
-
-miss = './downstream_tasks/emotion/miss.txt' 
-miss_list = []
-with open(miss, 'r') as f:
-    line = f.readline()
-    while line:
-        line = f.readline().replace('\n','')
-        miss_list.append(line)
-f.close()
-
-
 class IEMOCAPDataset(Dataset):
     def __init__(self, iemocap_root, meta_path, preprocess=None, preprocess_audio=None, preprocess_video=None, **kwargs):
         
         self.iemocap_root = iemocap_root        
         with open(meta_path, 'r') as f:
             self.dataset = json.load(f)
-            
-        index = []
-        for i in range(len(self.dataset['meta_data'])):
-            path = self.dataset['meta_data'][i]['path']
-            if path in miss_list:
-                if i not in index:
-                    index.append(i)             
-        for i in index[::-1]:
-            del self.dataset['meta_data'][i]
  
         self.class_dict = self.dataset['labels']
         self.idx2emotion = {value: key for key, value in self.class_dict.items()}
-        self.class_num = len(self.class_dict)
         self.meta_data = self.dataset['meta_data']
         
         self.preprocess = preprocess
@@ -53,7 +28,7 @@ class IEMOCAPDataset(Dataset):
         label = self.class_dict[label]
         
         fname = self.meta_data[idx]['path']
-        basename = Path(self.meta_data[idx]['path']).stem
+        basename = os.path.basename(self.meta_data[idx]['path'])
         
         if self.pooled_features_path:
             pooled_feature_path = f"{self.pooled_features_path}/{self.upstream_name}_{self.upstream_feature_selection}/{basename}_pooled.pt"
@@ -67,7 +42,7 @@ class IEMOCAPDataset(Dataset):
             processed_wav, processed_frames = torch.load(feature_path)
         else:
             wav, audio_sr = torchaudio.load(path_join(self.iemocap_root, self.meta_data[idx]['path']))
-            avi_path = path_join(self.iemocap_root, os.path.splitext(self.meta_data[idx]['path'])[0].replace('wav', 'avi_sentence')+'.mp4')
+            avi_path = path_join(self.iemocap_root, "clips", os.path.splitext(self.meta_data[idx]['path'])[0].replace('sentences/wav/', '')+'.mp4')
             frames, _, rates = torchvision.io.read_video(avi_path, pts_unit="sec", output_format="TCHW")
             video_fps = rates["video_fps"]
             

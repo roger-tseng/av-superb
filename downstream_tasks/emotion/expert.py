@@ -56,10 +56,10 @@ class DownstreamExpert(nn.Module):
         self.datarc = downstream_expert["datarc"]  # config for dataset
         self.modelrc = downstream_expert["modelrc"]  # config for model
         
-        DATA_ROOT = self.datarc["iemocap_root"]
-        meta_data = f"{DATA_ROOT}/meta_data"
+        iemocap_root = self.datarc["iemocap_root"]
+        meta_data = f"{iemocap_root}/meta_data"
         
-        self.fold = self.datarc.get('test_fold') or kwargs.get("downstream_variant")
+        self.fold = self.datarc.get('test_fold')
         if self.fold is None:
             self.fold = "fold1"
         
@@ -67,13 +67,13 @@ class DownstreamExpert(nn.Module):
         test_path = os.path.join(meta_data, self.fold.replace('fold', 'Session'), 'test_meta_data.json')
         
         
-        dataset = IEMOCAPDataset(DATA_ROOT, train_path, preprocess, preprocess_audio, preprocess_video, upstream=kwargs['upstream'], pooled_features_path=kwargs['pooled_features_path'], upstream_feature_selection=kwargs['upstream_feature_selection'])
+        dataset = IEMOCAPDataset(iemocap_root, train_path, preprocess, preprocess_audio, preprocess_video, upstream=kwargs['upstream'], pooled_features_path=kwargs['pooled_features_path'], upstream_feature_selection=kwargs['upstream_feature_selection'])
         trainlen = int((1 - self.datarc['valid_ratio']) * len(dataset))
         lengths = [trainlen, len(dataset) - trainlen]
 
         torch.manual_seed(0)
         self.train_dataset, self.dev_dataset = random_split(dataset, lengths)
-        self.test_dataset = IEMOCAPDataset(DATA_ROOT, test_path, preprocess, preprocess_audio, preprocess_video, upstream=kwargs['upstream'], pooled_features_path=kwargs['pooled_features_path'], upstream_feature_selection=kwargs['upstream_feature_selection'])
+        self.test_dataset = IEMOCAPDataset(iemocap_root, test_path, preprocess, preprocess_audio, preprocess_video, upstream=kwargs['upstream'], pooled_features_path=kwargs['pooled_features_path'], upstream_feature_selection=kwargs['upstream_feature_selection'])
 
         self.connector = nn.Linear(upstream_dim, self.modelrc["input_dim"])
         self.model = Model(

@@ -24,7 +24,7 @@ optimizer:
 
 downstream_expert:
   datarc:
-    iemocap_root: /work/u3933430/IEMOCAP_full_release
+    iemocap_root: /media/rogert/DATA1/IEMOCAP_full_release
     test_fold: fold1
     train_batch_size: 4
     eval_batch_size: 4
