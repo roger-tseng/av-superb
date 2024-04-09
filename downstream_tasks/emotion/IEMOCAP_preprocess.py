@@ -3,6 +3,7 @@ from os.path import basename, splitext, join as path_join
 import re
 import json
 from glob import glob
+from tqdm import tqdm
 from moviepy.editor import VideoFileClip
 
 LABEL_DIR_PATH = 'dialog/EmoEvaluation'
@@ -51,7 +52,7 @@ def write_metadata_json(data_dirs, paths, out_path):
         label_paths = list(os.listdir(label_dir))
         label_paths = [label_path for label_path in label_paths
                        if splitext(label_path)[1] == '.txt' and not label_path.startswith('._')]
-        
+
         for label_path in label_paths:
             with open(path_join(label_dir, label_path)) as f:
                 for line in f:
@@ -63,7 +64,7 @@ def write_metadata_json(data_dirs, paths, out_path):
                         continue
                     if line[1] not in wav_paths:
                         continue
-                    
+
                     meta_data.append({
                         'path': wav_paths[line[1]],
                         'label': line[2].replace('exc', 'hap'),
@@ -75,26 +76,26 @@ def write_metadata_json(data_dirs, paths, out_path):
     }
     with open(out_path, 'w') as f:
         json.dump(data, f)
-        
+
 def video_clip_store(video_filename, clip_filename, start_time, end_time):
     if not os.path.exists(clip_filename):
         video_clip = VideoFileClip(video_filename).subclip(start_time, end_time)
         video_clip.write_videofile(clip_filename, codec = "libx264", logger=None)
 
 def avi_to_clips(data_dir, clips_output_dir, i, path):
-    avi_path = path_join(data_dir, path, '/dialog/avi/DivX/')
+    avi_path = os.path.join(data_dir, path, 'dialog/avi/DivX/')
     avi_all = []
     for root, dirs, files in os.walk(avi_path):
         for file in files:
             if file.endswith('.avi') and not file.startswith('._'):
                 avi_all.append(path_join(avi_path, file))
 
-    for avi in avi_all:
+    for avi in tqdm(avi_all):
         video_filename = avi
         raw_name = os.path.splitext(avi.split('/')[-1])[0]
-        lab_F = path_join(data_dir, path, '/dialog/lab/Ses0', str(i+1), '_F/', raw_name, '.lab')
-        lab_M = path_join(data_dir, path, '/dialog/lab/Ses0', str(i+1), '_M/', raw_name, '.lab')
-        
+        lab_F = path_join(data_dir, path, f'dialog/lab/Ses0{str(i+1)}_F', f'{raw_name}.lab')
+        lab_M = path_join(data_dir, path, f'dialog/lab/Ses0{str(i+1)}_M', f'{raw_name}.lab')
+
         clip_dir = path_join(clips_output_dir, path, raw_name)
         os.makedirs(clip_dir, exist_ok=True)
 
@@ -129,7 +130,7 @@ def avi_to_clips(data_dir, clips_output_dir, i, path):
                     print(f"Line: {sen_M}")
                     print(sen_M.split(' ')[-1])
                     print(e)
-          
+
 def main(data_dir, clips_output_dir, metadata_output_dir):
     """Main function."""
     paths = ['Session1', 'Session2', 'Session3', 'Session4', 'Session5']
@@ -146,7 +147,7 @@ def main(data_dir, clips_output_dir, metadata_output_dir):
         avi_to_clips(data_dir, clips_output_dir, i, path)
 
 if __name__ == "__main__":
-    data_dir = "/media/rogert/DATA1/IEMOCAP_full_release"
+    data_dir = "/livingrooms/public/avsuperb/IEMOCAP_full_release"
     assert os.path.exists(data_dir), f"Make sure IEMOCAP exists at {data_dir}."
 
     clips_output_dir = path_join(data_dir, 'clips')
