@@ -227,9 +227,9 @@ class Runner:
                 "gradient_accumulate_steps"
             )
             dataloader.dataset.skip_steps = dataloader.batch_size * gradient_accumulate_steps * init_step % len(dataloader.dataset)
-            for batch_id, (wavs, frames, *others) in enumerate(
-                tqdm(dataloader, dynamic_ncols=True, desc="train", file=tqdm_file)
-            ):
+            
+            train_pbar = tqdm(dataloader, dynamic_ncols=True, desc="train", file=tqdm_file)
+            for batch_id, (wavs, frames, *others) in enumerate(train_pbar):
                 # try/except block for forward/backward
                 if batch_id < init_step * gradient_accumulate_steps % len(dataloader.dataset):
                     continue
@@ -284,7 +284,7 @@ class Runner:
                                         continue
                                     os.makedirs(f"{self.args.pooled_features_path}/{self.args.upstream}_{feature_selection}", exist_ok=True)
 
-                            show(f"[Runner] - Save mean-pooled features of batch no. {batch_id}")
+                            train_pbar.set_description(f"train: Saving mean-pooled feats ({batch_id}th batch)")
                             assert isinstance(others[-1][0], str)
                             with torch.no_grad():
                                 for key, feature in features.items():
@@ -458,9 +458,9 @@ class Runner:
 
         batch_ids = []
         records = defaultdict(list)
-        for batch_id, (wavs, frames, *others) in enumerate(
-            tqdm(dataloader, dynamic_ncols=True, desc=split, total=evaluate_steps)
-        ):
+
+        test_pbar = tqdm(dataloader, dynamic_ncols=True, desc=split, total=evaluate_steps)
+        for batch_id, (wavs, frames, *others) in enumerate(test_pbar):
             if batch_id > evaluate_steps:
                 break
 
@@ -506,7 +506,7 @@ class Runner:
                                 continue
                             os.makedirs(f"{self.args.pooled_features_path}/{self.args.upstream}_{feature_selection}", exist_ok=True)
 
-                    show(f"[Runner] - Save mean-pooled features of batch no. {batch_id}")
+                    test_pbar.set_description(f"{split}: Saving mean-pooled feats ({batch_id}th batch)")
                     assert isinstance(others[-1][0], str)
                     with torch.no_grad():
                         for key, feature in features.items():
