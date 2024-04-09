@@ -1,6 +1,6 @@
 from typing import Dict, List, Tuple, Union
 
-import numpy as np
+import math
 import torch
 import torch.nn as nn
 import torchaudio
@@ -76,7 +76,7 @@ class UpstreamExpert(nn.Module):
         
         # 1. TCHW -> THWC and repeat until four sec. if too short
         video = torch.permute(video, (0,2,3,1))
-        n_target_frm = int(self.video_len * video_frame_rate)
+        n_target_frm = math.ceil(self.video_len * video_frame_rate)
         if video.shape[0] < n_target_frm:
             n_repeats = n_target_frm//video.shape[0] + 1
             video = video.repeat(n_repeats,1,1,1)
