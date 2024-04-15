@@ -83,7 +83,7 @@ class UpstreamExpert(nn.Module):
     def preprocess_audio(self, audio, audio_sample_rate):
         """
         Replace this function to preprocess audio waveforms into your input format
-        audio: (audio_channels, audio_length), where audio_channels is usually 1 or 2
+        audio: (audio_channels, audio_length) or (audio_length,), where audio_channels is usually 1 or 2
         """
         if len(audio.shape) == 1:
             audio = audio.unsqueeze(0)

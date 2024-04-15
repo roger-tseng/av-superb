@@ -127,10 +127,9 @@ class UpstreamExpert(nn.Module):
     def preprocess_audio(self, audio, audio_sample_rate):
         """
         Replace this function to preprocess audio waveforms into your input format
-        audio: (audio_channels, audio_length), where audio_channels is usually 1 or 2
-        In RepLAI, they use 2.0 sec audio with raw sample rate of 32khz
-        It then first downsample to 16kHz and take 128 temporal frames on mel.
-        So I follow the same proportion
+        audio: (audio_channels, audio_length) or (audio_length,), where audio_channels is usually 1 or 2
+        RepLAI uses 2.0 secs of audio at 16kHz, and take 128 temporal frames on the mel-spectrogram domain.
+        In this implementation, we take variable lengths of audio as input, hence we rescale the number of mel frames accordingly.
         """
         if len(audio.shape) == 2:
             audio = audio.mean(dim=0)
