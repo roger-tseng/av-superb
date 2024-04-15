@@ -75,6 +75,8 @@ class UpstreamExpert(nn.Module):
 
         # Other preprocessing steps (i.e. cropping, flipping, etc.)
         # e.g. take first three frames to ensure all videos have same size
+        if video.shape[0] < 3:
+            video = video.repeat(3,1,1,1)
         video = video[:3]
         return video.float()
 
@@ -83,6 +85,9 @@ class UpstreamExpert(nn.Module):
         Replace this function to preprocess audio waveforms into your input format
         audio: (audio_channels, audio_length), where audio_channels is usually 1 or 2
         """
+        if len(audio.shape) == 1:
+            audio = audio.unsqueeze(0)
+
         # Resample audio
         if audio_sample_rate != self.audio_sample_rate:
             audio = torchaudio.functional.resample(
@@ -90,7 +95,7 @@ class UpstreamExpert(nn.Module):
             )
 
         # Other preprocessing steps (e.g. trimming, transform to melspectrogram etc.)
-        mel_specgram = self.melspec_transform[0](audio).transpose(0, 1)
+        mel_specgram = self.melspec_transform[0](audio).transpose(0, 2)
 
         return mel_specgram
 
