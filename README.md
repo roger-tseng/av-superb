@@ -23,7 +23,7 @@ We also include handcrafted features to serve as baselines. Pull requests are we
 ### 1. Using our toolkit:
 Training:
 ```
-python run_downsteam -m train -u <upstream model name> -d <downstream task name> -s <feature type>
+python run_downstream.py -m train -u <upstream model name> -d <downstream task name> -s <feature type>
 ```
 TBA
 

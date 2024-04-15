@@ -231,7 +231,7 @@ class DownstreamExpert(nn.Module):
 
     # interface
     def log_records(
-        self, split, records, logger, global_step, batch_ids, total_batch_num, **kwargs
+        self, split, records, logger, file_logger, global_step, batch_ids, total_batch_num, **kwargs
     ):
         """
         Args:
@@ -273,7 +273,9 @@ class DownstreamExpert(nn.Module):
             logger.add_scalar(
                 f"example/{split}-{key}", average, global_step=global_step
             )
-            if split == "dev" and key == "acc" and average > self.best_score:
+            if key == "acc":
+                file_logger.write(f"{split}-{key} {average}")
+            if split == "dev" and average > self.best_score:
                 self.best_score = torch.ones(1) * average
                 save_names.append(f"{split}-best.ckpt")
         return save_names

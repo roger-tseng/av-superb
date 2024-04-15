@@ -1,0 +1,38 @@
+runner:
+  total_steps: 5000
+  gradient_clipping: 1
+  gradient_accumulate_steps: 50
+
+  log_step: 20
+  eval_step: 1000
+  save_step: 1000
+  max_keep: 20
+  eval_dataloaders:
+   #- dev
+    - test
+
+optimizer:
+  name: AdamW
+  lr: 1.0e-3
+
+
+# comment the whole scheduler config block
+# # to disable learning rate scheduling
+#scheduler:
+#  name: linear_schedule_with_warmup
+#  num_warmup_steps: 1400
+
+downstream_expert:
+  datarc:
+    csv_root: "./downstream_tasks/audioset/audioset_preprocess/csv"
+    train_root: "/path/to/AudioSet/balanced_train/"
+    test_root: "/path/to/AudioSet/eval/"
+    num_workers: 4
+    train_batch_size: 2
+    eval_batch_size: 2
+    #threshold: 0.5
+
+  modelrc:
+    input_dim: 256
+    hidden_dim : 512
+

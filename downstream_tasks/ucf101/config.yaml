@@ -1,0 +1,36 @@
+runner:
+  total_steps: 30000
+  gradient_clipping: 1
+  gradient_accumulate_steps: 2
+
+  log_step: 100
+  eval_step: 1000
+  save_step: 1000
+  max_keep: 1
+  eval_dataloaders:
+    - test
+
+optimizer:
+  name: TorchOptim
+  torch_optim_name: Adam
+  lr: 1.0e-3
+
+# comment the whole scheduler config block
+# to disable learning rate scheduling
+#scheduler:
+#  name: linear_schedule_with_warmup
+#  num_warmup_steps: 1400
+
+downstream_expert:
+  datarc:
+    num_workers: 4
+    train_batch_size: 8
+    eval_batch_size: 8
+    class_num: 101
+    base_path: "/path/to/UCF101/avi"
+    train_meta_location: "./downstream_tasks/ucf101/train.csv"
+    val_meta_location: ""
+    test_meta_location: "./downstream_tasks/ucf101/test.csv"
+
+  modelrc:
+    input_dim: 256

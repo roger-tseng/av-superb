@@ -86,10 +86,6 @@ def get_downstream_args():
         Typically downstream dataset need manual preparation.\
         Please check downstream/README.md for details",
     )
-    parser.add_argument(
-        "-v", "--downstream_variant", help="Downstream vairants given the same expert"
-    )
-
     # upstream settings
     parser.add_argument(
         "--hub",
@@ -173,6 +169,7 @@ def get_downstream_args():
     parser.add_argument("--disable_cudnn", action="store_true", help="Disable CUDNN")
     # Path to where to save the features
     parser.add_argument('--pooled_features_path', type=str)
+    parser.add_argument("--log_file", default="result.log", type=str, help="Path to save the log file (reletive to expdir)")
     args = parser.parse_args()
     backup_files = []
 

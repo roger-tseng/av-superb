@@ -63,7 +63,7 @@ class UpstreamExpert(nn.Module):
     def preprocess_audio(self, audio, audio_sample_rate):
         """
         Replace this function to preprocess audio waveforms into your input format
-        audio: (audio_channels, audio_length), where audio_channels is usually 1 or 2
+        audio: (audio_channels, audio_length) or (audio_length,), where audio_channels is usually 1 or 2
         """
 
         return audio
@@ -111,6 +111,10 @@ class UpstreamExpert(nn.Module):
             waveform = audio.unsqueeze(0)
         else:
             waveform = audio.mean(dim=0, keepdim=True)
+
+        if len(waveform[0]) < 16385:
+            pad = torch.nn.ZeroPad2d((0, 16385-len(waveform[0]), 0, 0))
+            waveform = pad(waveform)
 
         waveform = resample(
             waveform,

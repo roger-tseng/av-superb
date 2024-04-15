@@ -1,0 +1,37 @@
+# Use batch size of 1 to save unpadded features for whole LRS3
+
+runner:
+  total_steps: 500
+  gradient_clipping: 1
+  gradient_accumulate_steps: 64
+
+  log_step: 500
+  eval_step: 500
+  save_step: 50000
+  max_keep: 1
+  eval_dataloaders:
+    - dev
+    - test
+
+optimizer:
+  name: AdamW
+  lr: 1.0e-3
+
+# comment the whole scheduler config block
+# to disable learning rate scheduling
+scheduler:
+  name: linear_schedule_with_warmup
+  num_warmup_steps: 1400
+
+downstream_expert:
+  datarc:
+    num_workers: 0
+    train_batch_size: 1
+    eval_batch_size: 1
+    path_root: /path/to/lrs3
+    # lrs_version: 3 # choices are 2 (BBC) or 3 (TED)
+
+  modelrc:
+    input_dim: 256
+    upsample_rate: 1
+    dropout_rate: .25

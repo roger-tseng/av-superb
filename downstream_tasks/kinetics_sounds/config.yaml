@@ -1,0 +1,37 @@
+runner:
+  total_steps: 50000
+  gradient_clipping: 1
+  gradient_accumulate_steps: 2
+
+  log_step: 40
+  eval_step: 1000
+  save_step: 1000
+  max_keep: 1
+  eval_dataloaders:
+    - dev
+    - test
+
+optimizer:
+  name: AdamW
+  lr: 1.0e-3
+
+# comment the whole scheduler config block
+# to disable learning rate scheduling
+# scheduler:
+#   name: linear_schedule_with_warmup
+#   num_warmup_steps: 1400
+
+downstream_expert:
+  datarc:
+    class_num: 32
+    kinetics_root: "/path/to/k400/" 
+    train_meta_location: "./downstream_tasks/kinetics_sounds/train_data_path.csv"
+    val_meta_location: "./downstream_tasks/kinetics_sounds/val_data_path.csv"
+    test_meta_location: "./downstream_tasks/kinetics_sounds/test_data_path.csv"
+    num_workers: 2
+    train_batch_size: 16
+    eval_batch_size: 16
+    logs_file: "./downstream_tasks/kinetics_sounds/log.txt"
+
+  modelrc:
+    input_dim: 256
