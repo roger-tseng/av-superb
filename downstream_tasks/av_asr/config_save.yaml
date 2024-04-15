@@ -28,7 +28,7 @@ downstream_expert:
     num_workers: 0
     train_batch_size: 1
     eval_batch_size: 1
-    path_root: /home/rogert/Desktop/lrs3
+    path_root: /path/to/lrs3
     # lrs_version: 3 # choices are 2 (BBC) or 3 (TED)
 
   modelrc:
