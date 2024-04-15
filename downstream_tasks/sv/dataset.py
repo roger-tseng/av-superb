@@ -228,30 +228,28 @@ class Classification_Dataset(Dataset):
         TrainSavePath = Path(roots, "train_5vid.lst")
         ValidSavePath = Path(roots, "valid_5vid.lst")
 
-        if TrainSavePath.exists() and ValidSavePath.exists():
-            with open(TrainSavePath, "r") as file:
-                lines = file.readlines()
-            train_list = [
-                (
-                    line.strip().split(",")[0],
-                    line.strip().split(",")[1],
-                    line.strip().split(",")[2],
-                )
-                for line in lines
-            ]
-            with open(ValidSavePath, "r") as file:
-                lines = file.readlines()
-            valid_list = [
-                (
-                    line.strip().split(",")[0],
-                    line.strip().split(",")[1],
-                    line.strip().split(",")[2],
-                )
-                for line in lines
-            ]
-            AllSpeakers = list(set([line.strip().split(",")[0] for line in lines]))
-        else:
-            train_list, valid_list, AllSpeakers = _get_train_list(roots)
+        assert TrainSavePath.exists() and ValidSavePath.exists()
+        with open(TrainSavePath, "r") as file:
+            lines = file.readlines()
+        train_list = [
+            (
+                line.strip().split(",")[0],
+                line.strip().split(",")[1],
+                line.strip().split(",")[2],
+            )
+            for line in lines
+        ]
+        with open(ValidSavePath, "r") as file:
+            lines = file.readlines()
+        valid_list = [
+            (
+                line.strip().split(",")[0],
+                line.strip().split(",")[1],
+                line.strip().split(",")[2],
+            )
+            for line in lines
+        ]
+        AllSpeakers = list(set([line.strip().split(",")[0] for line in lines]))
 
         if self.split == "train":
             self.dataset = train_list
@@ -271,7 +269,7 @@ class Classification_Dataset(Dataset):
             # Skip this datapoint to resume training
             self.skip_steps -= 1
             return False, False, False, False
-        path = self.dataset[idx][2]
+        path = str(Path(self.dataroot, self.dataset[idx][2]))
         label = int(self.dataset[idx][1])
         basename = path.replace('/', '_').rsplit('.')[0]
         if self.pooled_features_path:
@@ -289,7 +287,7 @@ class Classification_Dataset(Dataset):
         except:
             print(f"damaged file: {path}")
 
-            path = self.dataset[0][2]
+            path = str(Path(self.dataroot, self.dataset[0][2]))
             label = int(self.dataset[0][1])
             frames, wav, info = torchvision.io.read_video(
                 path, pts_unit="sec", output_format="TCHW"
@@ -351,21 +349,17 @@ class Verification_Dataset(Dataset):
 
     def _processing(self):
         TestSavePath = Path(self.root, "test.lst")
-
-        if TestSavePath.exists():
-            with open(TestSavePath, "r") as file:
-                lines = file.readlines()
-            test_trials = [
-                (
-                    line.strip().split(",")[0],
-                    line.strip().split(",")[1],
-                    line.strip().split(",")[2],
-                )
-                for line in lines
-            ]
-
-        else:
-            test_trials = _get_test_list(self.root)
+        assert TestSavePath.exists()
+        with open(TestSavePath, "r") as file:
+            lines = file.readlines()
+        test_trials = [
+            (
+                line.strip().split(",")[0],
+                line.strip().split(",")[1],
+                line.strip().split(",")[2],
+            )
+            for line in lines
+        ]
 
         pair_table = []
         spk_paths = set()
@@ -388,7 +382,7 @@ class Verification_Dataset(Dataset):
         return len(self.dataset)
 
     def __getitem__(self, idx):
-        path = self.dataset[idx]
+        path = str(Path(self.root, self.dataset[idx]))
         x_name = path
 
         basename = path.replace('/', '_').rsplit('.')[0]
