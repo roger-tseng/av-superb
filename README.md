@@ -21,14 +21,30 @@ We also include handcrafted features to serve as baselines. Pull requests are we
 ## Model Evaluation
 
 ### 1. Using our toolkit:
-Training:
+
+Installation:
+```bash
+conda create -n av python=3.9 -y
+conda activate av
+pip install -r requirements.txt
 ```
-python run_downstream.py -m train -u <upstream model name> -d <downstream task name> -s <feature type>
+
+Downstream Task Evaluation:
 ```
-TBA
+python run_downstream.py -m train \
+  -u <upstream model name> \
+  -d <downstream task name> \
+  -s <feature type> \
+  --pooled_features_path <path to save features>
+```
 
 ### 2. Using our submission platform:
-TBA
+
+Researchers can also submit model code and weights to our submission platform to easily evaluate on the AV-SUPERB benchmark. 
+
+We expect two Python files to be submitted, `expert.py`, which implements the model forward pass and preprocessing functions for each of the two modalities, and `hubconf.py`, which downloads model weights.
+
+Please refer to [this example model](upstream_models/example) and the [submission platform](https://av.superbbenchmark.org/) for more details.
 
 ## Citation
 
